@@ -1,0 +1,12 @@
+{
+  "values": [
+    "caustics:sapphire_block",
+    "caustics:cinnabar_block",
+    "caustics:peridot_block",
+    "caustics:topaz_block",
+    "caustics:sunstone_block",
+    "caustics:selenite_block",
+    "caustics:tourmaline_block",
+    "minecraft:amethyst_block"
+  ]
+}

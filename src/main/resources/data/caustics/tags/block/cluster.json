@@ -1,0 +1,11 @@
+{
+  "values": [
+    "caustics:sapphire_cluster",
+    "caustics:peridot_cluster",
+    "caustics:sunstone_cluster",
+    "caustics:topaz_cluster",
+    "caustics:cinnabar_cluster",
+    "caustics:tourmaline_cluster",
+    "caustics:selenite_cluster"
+  ]
+}

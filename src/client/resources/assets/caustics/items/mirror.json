@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "caustics:block/mirror/mirror_up_standing"
+  }
+}

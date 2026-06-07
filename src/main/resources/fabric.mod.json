@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "caustics",
+  "version": "${version}",
+  "name": "Caustics",
+  "description": "Adds new crystals and a transportation system. What more could you want?",
+  "authors": [
+    "Ramixin"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/caustics/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "net.ramixin.caustics.datagen.CausticsDataGenerator"
+    ],
+    "client": [
+      "net.ramixin.caustics.client.CausticsClient"
+    ],
+    "main": [
+      "net.ramixin.caustics.Caustics"
+    ]
+  },
+  "mixins": [
+    "caustics.mixins.json",
+    {
+      "config": "caustics.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}",
+    "mixson": ">=${mixson_version} ~${mixson_version}"
+  }
+}
