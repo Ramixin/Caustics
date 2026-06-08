@@ -1,12 +1,12 @@
-package net.ramixin.caustics.nodes.builders;
+package net.ramixin.caustics.nodes.steppers;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.AmethystClusterBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.ramixin.ModGameRules;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.ModGameRules;
 import net.ramixin.caustics.ModTags;
 import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.nodes.BlocksOfInterest;
@@ -20,6 +20,7 @@ public class NodeBuilder {
     private final BlocksOfInterest blocks = new BlocksOfInterest();
     private final List<BlockPos> potentialStarts = new ArrayList<>();
     private boolean filteredStarts = false;
+    private int stepsLeft = -1;
     private final Queue<BlockPos> posQueue = new LinkedList<>();
     private final Set<BlockPos> crystalBlocks = new HashSet<>();
     private final Set<BlockPos> clusterBlocks = new HashSet<>();
@@ -35,6 +36,10 @@ public class NodeBuilder {
     }
 
     public void tick(ServerLevel level) {
+        if(stepsLeft == -1) {
+            stepsLeft = level.getGameRules().get(ModGameRules.MAX_STEPS);
+        }
+
         if(pauseTicks > 0) {
             pauseTicks--;
             return;
@@ -54,9 +59,15 @@ public class NodeBuilder {
 
         int stepsPerTick = level.getGameRules().get(ModGameRules.STEPS_PER_TICK);
         for(int i = 0; i < stepsPerTick; i++) {
+            if(stepsLeft == 0) {
+                Caustics.LOGGER.error("Node builder ran out of steps");
+                return;
+            }
+
             if(posQueue.isEmpty()) return;
             BlockPos pos = posQueue.poll();
             if(visitedPositions.contains(pos)) continue;
+            stepsLeft--;
             visitedPositions.add(pos);
             step(level, pos);
         }
@@ -72,8 +83,6 @@ public class NodeBuilder {
         if(state.is(ModTags.Blocks.CLUSTER))
             clusterBlocks.add(pos);
         else if(state.is(ModTags.Blocks.CRYSTAL)) {
-            if(state.is(ModBlocks.TOURMALINE_GROUP.block()))
-                blocks.tourmalineBlocks().add(pos);
             crystalBlocks.add(pos);
             posQueue.add(pos.above());
             posQueue.add(pos.below());
@@ -85,10 +94,10 @@ public class NodeBuilder {
     }
 
     public boolean isBuilding() {
-        return !posQueue.isEmpty() || !filteredStarts;
+        return (!posQueue.isEmpty() || !filteredStarts) && (stepsLeft > 0 || stepsLeft == -1);
     }
 
-    public Optional<CrystalNode> build(ServerLevel level) {
+    public Optional<CrystalNode> build(ServerLevel level, Optional<CrystalNode> oldNode) {
 
         boolean overlapping = populateClusters(level);
         if(overlapping) return Optional.empty();
@@ -105,7 +114,10 @@ public class NodeBuilder {
 
         NodeBuilder nodeBuilder = new NodeBuilder(blocks.sapphireClusters());
         nodeBuilder.pause(20);
-        return Optional.of(new CrystalNode(blocks, nodeBuilder));
+
+        CrystalNode node;
+        node = oldNode.map(crystalNode -> new CrystalNode(blocks.toImmutable(), nodeBuilder, crystalNode.checkers())).orElseGet(() -> new CrystalNode(blocks.toImmutable(), nodeBuilder));
+        return Optional.of(node);
     }
 
     private boolean populateClusters(ServerLevel level) {
@@ -131,6 +143,8 @@ public class NodeBuilder {
                 blocks.seleniteClusters().add(pos);
             else if(state.is(ModBlocks.SUNSTONE_GROUP.cluster()))
                 blocks.sunstoneClusters().add(pos);
+            else if(state.is(ModBlocks.TOURMALINE_GROUP.cluster()))
+                blocks.tourmalineClusters().add(pos);
             else if(state.is(ModBlocks.SAPPHIRE_GROUP.cluster())) {
                 Optional<CrystalNode> maybeNode = network.getNodeAt(pos);
                 if(maybeNode.isPresent() && maybeNode.get().builder() != this)

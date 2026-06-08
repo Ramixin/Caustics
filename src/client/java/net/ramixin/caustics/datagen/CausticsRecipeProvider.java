@@ -12,8 +12,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.Blocks;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.ModItems;
 import net.ramixin.caustics.blocks.ModBlocks;
+import net.ramixin.caustics.items.ModItems;
 import org.jspecify.annotations.NonNull;
 
 import java.util.concurrent.CompletableFuture;
@@ -43,8 +43,19 @@ public class CausticsRecipeProvider extends FabricRecipeProvider {
                         .pattern("SDS")
                         .define('T', Blocks.TINTED_GLASS)
                         .define('S', Items.STICK)
-                        .define('D', Blocks.POLISHED_DEEPSLATE)
+                        .define('D', Blocks.POLISHED_DEEPSLATE_SLAB)
+                        .unlockedBy("has_glass", has(Blocks.TINTED_GLASS))
                         .save(output, getKey("mirror"));
+
+                shaped(RecipeCategory.TOOLS, ModItems.TUNING_FORK)
+                        .pattern("A A")
+                        .pattern("ACA")
+                        .pattern(" S ")
+                        .define('A', Items.AMETHYST_SHARD)
+                        .define('C', Items.COPPER_INGOT)
+                        .define('S', Items.STICK)
+                        .unlockedBy("has_iron", has(Items.AMETHYST_SHARD))
+                        .save(output, getKey("tuning_fork"));
 
             }
         };

@@ -1,4 +1,4 @@
-package net.ramixin.caustics;
+package net.ramixin.caustics.items;
 
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.minecraft.core.Registry;
@@ -10,6 +10,7 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpyglassItem;
+import net.ramixin.caustics.Caustics;
 
 import java.util.function.Function;
 
@@ -25,13 +26,17 @@ public class ModItems {
 
     public static final Item ALIDADE = register("alidade", SpyglassItem::new, new Item.Properties());
 
+    public static final Item TUNING_FORK = register("tuning_fork", TuningForkItem::new, new Item.Properties());
+
     public static void onInitialize() {
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.INGREDIENTS).register(event ->
                 event.insertAfter(Items.AMETHYST_SHARD,
                     SAPPHIRE_SHARD, CINNABAR_SHARD, PERIDOT_SHARD, TOPAZ_SHARD, SUNSTONE_SHARD, SELENITE_SHARD, TOURMALINE_SHARD));
 
-        CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(event ->
-                event.insertAfter(Items.SPYGLASS, ALIDADE)
+        CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(event -> {
+            event.insertAfter(Items.SPYGLASS, ALIDADE);
+            event.insertAfter(Items.BRUSH, TUNING_FORK);
+        }
         );
     }
 

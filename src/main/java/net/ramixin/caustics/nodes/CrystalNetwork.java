@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.nodes.builders.NodeBuilder;
+import net.ramixin.caustics.nodes.steppers.NodeBuilder;
 
 import java.util.*;
 
@@ -67,7 +67,7 @@ public class CrystalNetwork extends SavedData {
             unregisterNode(node);
             setDirty();
 
-            Optional<CrystalNode> maybeNewNode = node.builder().build(level);
+            Optional<CrystalNode> maybeNewNode = node.builder().build(level, Optional.of(node));
             if(maybeNewNode.isEmpty()) continue;
             CrystalNode newNode = maybeNewNode.get();
             if(!newNode.builder().isBuilding()) {
@@ -82,7 +82,7 @@ public class CrystalNetwork extends SavedData {
             builder.tick(level);
             if(builder.isBuilding()) continue;
             builders.remove(builder);
-            Optional<CrystalNode> maybeNode = builder.build(level);
+            Optional<CrystalNode> maybeNode = builder.build(level, Optional.empty());
             if(maybeNode.isEmpty()) continue;
             CrystalNode newNode = maybeNode.get();
 

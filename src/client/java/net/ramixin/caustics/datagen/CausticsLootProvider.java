@@ -21,9 +21,9 @@ import net.minecraft.world.level.storage.loot.functions.ApplyExplosionDecay;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.predicates.MatchTool;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
-import net.ramixin.caustics.ModItems;
 import net.ramixin.caustics.blocks.CrystalBlockGroup;
 import net.ramixin.caustics.blocks.ModBlocks;
+import net.ramixin.caustics.items.ModItems;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

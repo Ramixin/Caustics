@@ -3,9 +3,9 @@ package net.ramixin.caustics.datagen;
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
 import net.minecraft.core.HolderLookup;
-import net.ramixin.caustics.ModItems;
 import net.ramixin.caustics.blocks.CrystalBlockGroup;
 import net.ramixin.caustics.blocks.ModBlocks;
+import net.ramixin.caustics.items.ModItems;
 import org.jspecify.annotations.NonNull;
 
 import java.util.concurrent.CompletableFuture;
@@ -33,6 +33,11 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         generateGroupTranslations("Sunstone", ModBlocks.SUNSTONE_GROUP, translationBuilder);
         generateGroupTranslations("Selenite", ModBlocks.SELENITE_GROUP, translationBuilder);
         generateGroupTranslations("Tourmaline", ModBlocks.TOURMALINE_GROUP, translationBuilder);
+
+        translationBuilder.add(ModItems.ALIDADE, "Alidade");
+        translationBuilder.add(ModBlocks.MIRROR, "Mirror");
+
+        translationBuilder.add("container.caustics.tuning_fork", "Tuning Fork");
     }
 
     private static void generateGroupTranslations(String name, CrystalBlockGroup group, TranslationBuilder translationBuilder) {

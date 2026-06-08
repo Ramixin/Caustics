@@ -9,9 +9,9 @@ import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.ModItems;
 import net.ramixin.caustics.blocks.CrystalBlockGroup;
 import net.ramixin.caustics.blocks.ModBlocks;
+import net.ramixin.caustics.items.ModItems;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
@@ -50,6 +50,7 @@ public class CausticsModelProvider extends FabricModelProvider {
         generators.generateFlatItem(ModItems.TOURMALINE_SHARD, ModelTemplates.FLAT_ITEM);
 
         generators.generateSpyglass(ModItems.ALIDADE);
+        generators.generateSpyglass(ModItems.TUNING_FORK);
 
         generateGroupItems(ModBlocks.SAPPHIRE_GROUP, generators);
         generateGroupItems(ModBlocks.CINNABAR_GROUP, generators);
@@ -58,9 +59,6 @@ public class CausticsModelProvider extends FabricModelProvider {
         generateGroupItems(ModBlocks.SUNSTONE_GROUP, generators);
         generateGroupItems(ModBlocks.SELENITE_GROUP, generators);
         generateGroupItems(ModBlocks.TOURMALINE_GROUP, generators);
-
-
-
 
     }
 

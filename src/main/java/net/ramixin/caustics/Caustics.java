@@ -3,10 +3,16 @@ package net.ramixin.caustics;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
-import net.ramixin.ModGameRules;
 import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.features.ModFeatures;
+import net.ramixin.caustics.items.ModDataComponents;
+import net.ramixin.caustics.items.ModItems;
+import net.ramixin.caustics.menus.ModMenus;
+import net.ramixin.caustics.networking.SetFrequencyPayload;
 import net.ramixin.caustics.nodes.CrystalNetwork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,12 +27,20 @@ public class Caustics implements ModInitializer {
     public void onInitialize() {
         LOGGER.info("Initializing (1/1)");
         ModItems.onInitialize();
+        ModDataComponents.onInitialize();
         ModBlocks.onInitialize();
         ModFeatures.onInitialize();
         ModMixson.onInitialize();
         ModGameRules.onInitialize();
+        ModMenus.onInitialize();
 
-        CommandRegistrationCallback.EVENT.register(ModCommands::onInitialize);
+        PayloadTypeRegistry.serverboundPlay().register(SetFrequencyPayload.PACKET_ID, SetFrequencyPayload.PACKET_CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(SetFrequencyPayload.PACKET_ID, SetFrequencyPayload.PACKET_CODEC);
+
+        ServerPlayNetworking.registerGlobalReceiver(SetFrequencyPayload.PACKET_ID, SetFrequencyPayload::serverHandle);
+
+        if(FabricLoader.getInstance().isDevelopmentEnvironment())
+            CommandRegistrationCallback.EVENT.register(ModCommands::onInitialize);
 
         ServerTickEvents.END_LEVEL_TICK.register(level -> CrystalNetwork.get(level).tick(level));
     }
