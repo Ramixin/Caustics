@@ -37,7 +37,7 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add(ModItems.ALIDADE, "Alidade");
         translationBuilder.add(ModBlocks.MIRROR, "Mirror");
 
-        translationBuilder.add("container.caustics.tuning_fork", "Tuning Fork");
+        translationBuilder.add("caustics.network_frequency.tooltip", "Network Frequency:");
     }
 
     private static void generateGroupTranslations(String name, CrystalBlockGroup group, TranslationBuilder translationBuilder) {

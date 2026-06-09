@@ -1,6 +1,7 @@
 package net.ramixin.caustics.items;
 
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.item.v1.ItemComponentTooltipProviderRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -24,9 +25,9 @@ public class ModItems {
     public static final Item SELENITE_SHARD = register("selenite_shard", Item::new, new Item.Properties());
     public static final Item TOURMALINE_SHARD = register("tourmaline_shard", Item::new, new Item.Properties());
 
-    public static final Item ALIDADE = register("alidade", SpyglassItem::new, new Item.Properties());
+    public static final Item ALIDADE = register("alidade", SpyglassItem::new, new Item.Properties().stacksTo(1));
 
-    public static final Item TUNING_FORK = register("tuning_fork", TuningForkItem::new, new Item.Properties());
+    public static final Item TUNING_FORK = register("tuning_fork", TuningForkItem::new, new Item.Properties().stacksTo(1));
 
     public static void onInitialize() {
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.INGREDIENTS).register(event ->
@@ -38,6 +39,8 @@ public class ModItems {
             event.insertAfter(Items.BRUSH, TUNING_FORK);
         }
         );
+
+        ItemComponentTooltipProviderRegistry.addLast(ModDataComponents.NETWORK_FREQUENCY);
     }
 
     private static <T extends Item> T register(String name, Function<Item.Properties, T> constructor, Item.Properties properties) {

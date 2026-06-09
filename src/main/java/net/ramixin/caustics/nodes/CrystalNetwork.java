@@ -1,7 +1,7 @@
 package net.ramixin.caustics.nodes;
 
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -13,9 +13,10 @@ import java.util.*;
 
 public class CrystalNetwork extends SavedData {
 
-    private static final Codec<CrystalNetwork> CODEC = Codec.pair(CrystalNode.CODEC.listOf(), BlockPos.CODEC.listOf().listOf()).xmap(
-            listListPair -> new CrystalNetwork(listListPair.getFirst(), listListPair.getSecond()),
-            crystalNetwork -> Pair.of(List.copyOf(crystalNetwork.nodes), List.copyOf(crystalNetwork.builders.values()))
+    private static final Codec<CrystalNetwork> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            CrystalNode.CODEC.listOf().fieldOf("nodes").forGetter(CrystalNetwork::getNodes),
+            BlockPos.CODEC.listOf().listOf().fieldOf("builders").forGetter(CrystalNetwork::getBuildersAsList)
+            ).apply(instance, CrystalNetwork::new)
     );
     @SuppressWarnings("DataFlowIssue") // doesn't want null datafixer
     private static final SavedDataType<CrystalNetwork> TYPE = new SavedDataType<>(
@@ -27,15 +28,19 @@ public class CrystalNetwork extends SavedData {
 
     private final HashMap<NodeBuilder, List<BlockPos>> builders = new HashMap<>();
     private final HashMap<BlockPos, CrystalNode> sapphireToNode = new HashMap<>();
-    private final HashSet<CrystalNode> nodes = new HashSet<>();
+    private final HashMap<BlockPos, CrystalNode> sunstoneToNode = new HashMap<>();
+    private final List<CrystalNode> nodes = new LinkedList<>();
 
     private CrystalNetwork() {}
 
     private CrystalNetwork(List<CrystalNode> nodes, List<List<BlockPos>> builders) {
         int delay = 0;
         for(CrystalNode node : nodes) {
-            for(BlockPos pos : node.blocks().sapphireClusters()) {
+            for(BlockPos pos : node.data().sapphireClusters()) {
                 sapphireToNode.put(pos, node);
+            }
+            for(BlockPos pos : node.data().sunstoneClusters()) {
+                sunstoneToNode.put(pos, node);
             }
             node.builder().pause(delay++);
             this.nodes.add(node);
@@ -52,12 +57,8 @@ public class CrystalNetwork extends SavedData {
         return level.getDataStorage().computeIfAbsent(TYPE);
     }
 
-    public boolean hasNodeAt(BlockPos pos) {
-        return sapphireToNode.containsKey(pos);
-    }
-
     public Optional<CrystalNode> getNodeAt(BlockPos pos) {
-        return Optional.ofNullable(sapphireToNode.get(pos));
+        return Optional.ofNullable(sapphireToNode.get(pos)).or(() -> Optional.ofNullable(sunstoneToNode.get(pos)));
     }
 
     public void tick(ServerLevel level) {
@@ -94,15 +95,24 @@ public class CrystalNetwork extends SavedData {
 
     private void registerNode(CrystalNode node) {
         nodes.add(node);
-        for(BlockPos pos : node.blocks().sapphireClusters()) {
+        if(nodes.size() > 5) {
+            System.out.println("too many nodes");
+        }
+        for(BlockPos pos : node.data().sapphireClusters()) {
             sapphireToNode.put(pos, node);
+        }
+        for(BlockPos pos : node.data().sunstoneClusters()) {
+            sunstoneToNode.put(pos, node);
         }
     }
 
     private void unregisterNode(CrystalNode node) {
         nodes.remove(node);
-        for(BlockPos pos : node.blocks().sapphireClusters()) {
+        for(BlockPos pos : node.data().sapphireClusters()) {
             sapphireToNode.remove(pos);
+        }
+        for(BlockPos pos : node.data().sunstoneClusters()) {
+            sunstoneToNode.remove(pos);
         }
     }
 
@@ -130,5 +140,13 @@ public class CrystalNetwork extends SavedData {
         this.builders.clear();
         this.sapphireToNode.clear();
         setDirty();
+    }
+
+    private List<List<BlockPos>> getBuildersAsList() {
+        return List.copyOf(builders.values());
+    }
+
+    private List<CrystalNode> getNodes() {
+        return nodes;
     }
 }

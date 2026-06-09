@@ -4,13 +4,13 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.items.components.Frequency;
+import net.ramixin.caustics.items.components.NetworkFrequency;
 
 import java.util.function.UnaryOperator;
 
 public class ModDataComponents {
 
-    public static final DataComponentType<Frequency> FREQUENCY = register("frequency", (builder) -> builder.persistent(Frequency.CODEC).networkSynchronized(Frequency.STREAM_CODEC));
+    public static final DataComponentType<NetworkFrequency> NETWORK_FREQUENCY = register("network_frequency", (builder) -> builder.persistent(NetworkFrequency.CODEC).networkSynchronized(NetworkFrequency.STREAM_CODEC));
 
     public static void onInitialize() {
 

@@ -9,8 +9,6 @@ import net.ramixin.caustics.Caustics;
 
 public class ModMenus {
 
-    public static final MenuType<TuningForkMenu> TUNING_FORK_MENU_TYPE = register("tuning_fork", TuningForkMenu::new);
-
     public static void onInitialize() {
 
     }

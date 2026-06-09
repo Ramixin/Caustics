@@ -9,6 +9,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.ramixin.caustics.items.components.NetworkFrequency;
 import net.ramixin.caustics.nodes.CrystalNetwork;
 import net.ramixin.caustics.nodes.CrystalNode;
 
@@ -25,6 +26,7 @@ public class ModCommands {
         caustics.addChild(printNodes());
         caustics.addChild(nuke());
         caustics.addChild(testVisibility());
+        caustics.addChild(getFrequency());
 
         root.addChild(caustics);
     }
@@ -60,6 +62,25 @@ public class ModCommands {
                         ctx.getSource().sendSuccess(() -> Component.literal("Node at " + pos + " is not visible"), false);
                     return 0;
                 })).build();
+    }
+
+    public static CommandNode<CommandSourceStack> getFrequency() {
+        return Commands.literal("getfrequency").then(Commands.argument("pos", BlockPosArgument.blockPos())
+                .executes(ctx -> {
+                    BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
+                    Optional<CrystalNode> maybeNode = CrystalNetwork.get(ctx.getSource().getLevel()).getNodeAt(pos);
+                    if(maybeNode.isEmpty()) {
+                        ctx.getSource().sendFailure(Component.literal("No node at " + pos));
+                        return 1;
+                    }
+                    CrystalNode node = maybeNode.get();
+                    Optional<NetworkFrequency> freq = node.networkFrequencyAt(pos);
+                    if(freq.isEmpty())
+                        ctx.getSource().sendFailure(Component.literal("No sunstone cluster at " + pos));
+                    else
+                        ctx.getSource().sendSuccess(() -> Component.literal("Frequency at " + pos + " is " + freq.get()), false);
+                    return 0;
+        })).build();
     }
 
 }

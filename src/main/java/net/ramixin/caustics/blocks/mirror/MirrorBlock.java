@@ -54,7 +54,9 @@ public class MirrorBlock extends Block {
         BlockState state = defaultBlockState().setValue(FACING, facing);
         boolean shifting = player.isShiftKeyDown();
         boolean lookingUp = player.getXRot() >= 0;
-        return state.setValue(STANCE, getStance(shifting, lookingUp)).setValue(GRIP, getGrip(shifting, lookingUp, placedOn, facing));
+        MirrorGrip grip = getGrip(shifting, lookingUp, placedOn, facing);
+        if(grip == null) return null;
+        return state.setValue(STANCE, getStance(shifting, lookingUp)).setValue(GRIP, grip);
     }
 
     private MirrorStance getStance(boolean shifting, boolean lookingUp) {
@@ -62,13 +64,13 @@ public class MirrorBlock extends Block {
         return lookingUp ? MirrorStance.UP : MirrorStance.DOWN;
     }
 
-    private MirrorGrip getGrip(boolean shifting, boolean lookingUp, Direction placedOn, Direction facing) {
+    private @Nullable MirrorGrip getGrip(boolean shifting, boolean lookingUp, Direction placedOn, Direction facing) {
         if(placedOn == Direction.UP && (!shifting || lookingUp)) return MirrorGrip.STANDING;
         if(placedOn == Direction.DOWN && (!shifting || !lookingUp)) return MirrorGrip.UP;
         if(placedOn.getClockWise() == facing) return MirrorGrip.LEFT;
         if((shifting && placedOn.getCounterClockWise() == facing) || (!shifting && placedOn == facing)) return MirrorGrip.RIGHT;
         if(shifting && placedOn == facing) return MirrorGrip.BACK;
         Caustics.LOGGER.error("Invalid grip combination: {}, {}, {}, {}", placedOn, facing, shifting, lookingUp);
-        return MirrorGrip.STANDING;
+        return null;
     }
 }

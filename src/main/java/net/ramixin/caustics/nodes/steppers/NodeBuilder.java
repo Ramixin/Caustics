@@ -9,15 +9,15 @@ import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.ModGameRules;
 import net.ramixin.caustics.ModTags;
 import net.ramixin.caustics.blocks.ModBlocks;
-import net.ramixin.caustics.nodes.BlocksOfInterest;
 import net.ramixin.caustics.nodes.CrystalNetwork;
 import net.ramixin.caustics.nodes.CrystalNode;
+import net.ramixin.caustics.nodes.NodeData;
 
 import java.util.*;
 
 public class NodeBuilder {
 
-    private final BlocksOfInterest blocks = new BlocksOfInterest();
+    private final NodeData data = new NodeData();
     private final List<BlockPos> potentialStarts = new ArrayList<>();
     private boolean filteredStarts = false;
     private int stepsLeft = -1;
@@ -97,13 +97,13 @@ public class NodeBuilder {
         return (!posQueue.isEmpty() || !filteredStarts) && (stepsLeft > 0 || stepsLeft == -1);
     }
 
-    public Optional<CrystalNode> build(ServerLevel level, Optional<CrystalNode> oldNode) {
+    public Optional<CrystalNode> build(ServerLevel level, Optional<CrystalNode> maybeOldNode) {
 
         boolean overlapping = populateClusters(level);
         if(overlapping) return Optional.empty();
-        if(blocks.sapphireClusters().isEmpty()) return Optional.empty();
+        if(data.sapphireClusters().isEmpty()) return Optional.empty();
 
-        for(BlockPos pos : blocks.sapphireClusters()) {
+        for(BlockPos pos : data.sapphireClusters()) {
             potentialStarts.remove(pos);
         }
 
@@ -112,11 +112,11 @@ public class NodeBuilder {
             network.addBuilder(new NodeBuilder(potentialStarts), potentialStarts);
         }
 
-        NodeBuilder nodeBuilder = new NodeBuilder(blocks.sapphireClusters());
+        NodeBuilder nodeBuilder = new NodeBuilder(data.sapphireClusters());
         nodeBuilder.pause(20);
 
         CrystalNode node;
-        node = oldNode.map(crystalNode -> new CrystalNode(blocks.toImmutable(), nodeBuilder, crystalNode.checkers())).orElseGet(() -> new CrystalNode(blocks.toImmutable(), nodeBuilder));
+        node = maybeOldNode.map(oldNode -> new CrystalNode(data.toImmutable(), oldNode.networks(), nodeBuilder, oldNode.checkers())).orElseGet(() -> new CrystalNode(data.toImmutable(), new HashMap<>()));
         return Optional.of(node);
     }
 
@@ -133,26 +133,22 @@ public class NodeBuilder {
             if(!crystalBlocks.contains(pos.relative(facing.getOpposite())))
                 continue;
 
-            if(state.is(ModBlocks.CINNABAR_GROUP.cluster()))
-                blocks.cinnabarClusters().add(pos);
-            else if(state.is(ModBlocks.PERIDOT_GROUP.cluster()))
-                blocks.peridotClusters().add(pos);
+             if(state.is(ModBlocks.PERIDOT_GROUP.cluster()))
+                data.peridotClusters().add(pos);
             else if(state.is(ModBlocks.TOPAZ_GROUP.cluster()))
-                blocks.topazClusters().add(pos);
+                data.topazClusters().add(pos);
             else if(state.is(ModBlocks.SELENITE_GROUP.cluster()))
-                blocks.seleniteClusters().add(pos);
+                data.seleniteClusters().add(pos);
             else if(state.is(ModBlocks.SUNSTONE_GROUP.cluster()))
-                blocks.sunstoneClusters().add(pos);
+                data.sunstoneClusters().add(pos);
             else if(state.is(ModBlocks.TOURMALINE_GROUP.cluster()))
-                blocks.tourmalineClusters().add(pos);
+                data.tourmalineClusters().add(pos);
             else if(state.is(ModBlocks.SAPPHIRE_GROUP.cluster())) {
                 Optional<CrystalNode> maybeNode = network.getNodeAt(pos);
                 if(maybeNode.isPresent() && maybeNode.get().builder() != this)
                     return true;
-                blocks.sapphireClusters().add(pos);
-            } else
-                Caustics.LOGGER.error("Unknown cluster block: {}", state.getBlock());
-
+                data.sapphireClusters().add(pos);
+            }
         }
         return false;
     }
