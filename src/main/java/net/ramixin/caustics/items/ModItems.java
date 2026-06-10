@@ -10,7 +10,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.SpyglassItem;
 import net.ramixin.caustics.Caustics;
 
 import java.util.function.Function;
@@ -25,7 +24,7 @@ public class ModItems {
     public static final Item SELENITE_SHARD = register("selenite_shard", Item::new, new Item.Properties());
     public static final Item TOURMALINE_SHARD = register("tourmaline_shard", Item::new, new Item.Properties());
 
-    public static final Item ALIDADE = register("alidade", SpyglassItem::new, new Item.Properties().stacksTo(1));
+    public static final Item ALIDADE = register("alidade", AlidadeItem::new, new Item.Properties().stacksTo(1));
 
     public static final Item TUNING_FORK = register("tuning_fork", TuningForkItem::new, new Item.Properties().stacksTo(1));
 

@@ -57,6 +57,15 @@ public class CausticsRecipeProvider extends FabricRecipeProvider {
                         .unlockedBy("has_iron", has(Items.AMETHYST_SHARD))
                         .save(output, getKey("tuning_fork"));
 
+                shaped(RecipeCategory.TOOLS, ModItems.ALIDADE)
+                        .pattern(" C ")
+                        .pattern(" G ")
+                        .pattern(" G ")
+                        .define('C', ModItems.CINNABAR_SHARD)
+                        .define('G', Items.GOLD_INGOT)
+                        .unlockedBy("has_cinnabar", has(ModItems.CINNABAR_SHARD))
+                        .save(output, getKey("alidade"));
+
             }
         };
     }

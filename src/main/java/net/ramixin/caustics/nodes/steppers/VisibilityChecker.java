@@ -32,6 +32,10 @@ public class VisibilityChecker {
     public void tick(ServerLevel level) {
         if(mustOrient) {
             BlockState state = level.getBlockState(curPos);
+            if(!state.is(ModBlocks.SAPPHIRE_GROUP.cluster())) {
+                verdict(false);
+                return;
+            }
             curDir = state.getValue(AmethystClusterBlock.FACING);
             mustOrient = false;
         }

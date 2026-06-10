@@ -19,25 +19,31 @@ public class NodeBuilder {
 
     private final NodeData data = new NodeData();
     private final List<BlockPos> potentialStarts = new ArrayList<>();
-    private boolean filteredStarts = false;
-    private int stepsLeft = -1;
+    private boolean started = false;
+    private int stepsLeft = 0;
     private final Queue<BlockPos> posQueue = new LinkedList<>();
     private final Set<BlockPos> crystalBlocks = new HashSet<>();
     private final Set<BlockPos> clusterBlocks = new HashSet<>();
     private final Set<BlockPos> visitedPositions = new HashSet<>();
     private int pauseTicks = 0;
-    
+
     public NodeBuilder(BlockPos startingPos) {
         this.potentialStarts.add(startingPos);
     }
 
-    public NodeBuilder(List<BlockPos> startingPosList) {
+    public NodeBuilder(Collection<BlockPos> startingPosList) {
         this.potentialStarts.addAll(startingPosList);
     }
 
     public void tick(ServerLevel level) {
-        if(stepsLeft == -1) {
+        if(!started) {
             stepsLeft = level.getGameRules().get(ModGameRules.MAX_STEPS);
+            potentialStarts.removeIf(pos -> !level.getBlockState(pos).is(ModBlocks.SAPPHIRE_GROUP.cluster()));
+            started = true;
+            if(potentialStarts.isEmpty()) return;
+            BlockPos first = potentialStarts.getFirst();
+            clusterBlocks.add(first);
+            posQueue.add(first.relative(level.getBlockState(first).getValue(AmethystClusterBlock.FACING).getOpposite()));
         }
 
         if(pauseTicks > 0) {
@@ -45,17 +51,7 @@ public class NodeBuilder {
             return;
         }
 
-        for(int i = potentialStarts.size() - 1; i >= 0; i--) {
-            BlockPos pos = potentialStarts.get(i);
-            if(!level.getBlockState(pos).is(ModBlocks.SAPPHIRE_GROUP.cluster()))
-                potentialStarts.remove(i);
-        }
-        filteredStarts = true;
-        if(potentialStarts.isEmpty()) return;
-        BlockPos first = potentialStarts.getFirst();
-        clusterBlocks.add(first);
-        posQueue.add(first.relative(level.getBlockState(first).getValue(AmethystClusterBlock.FACING).getOpposite()));
-
+        if(posQueue.isEmpty()) return;
 
         int stepsPerTick = level.getGameRules().get(ModGameRules.STEPS_PER_TICK);
         for(int i = 0; i < stepsPerTick; i++) {
@@ -66,9 +62,8 @@ public class NodeBuilder {
 
             if(posQueue.isEmpty()) return;
             BlockPos pos = posQueue.poll();
-            if(visitedPositions.contains(pos)) continue;
+            if(!visitedPositions.add(pos)) continue;
             stepsLeft--;
-            visitedPositions.add(pos);
             step(level, pos);
         }
     }
@@ -77,47 +72,32 @@ public class NodeBuilder {
         pauseTicks = ticks;
     }
 
-    public void step(ServerLevel level, BlockPos pos) {
+    private void step(ServerLevel level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
 
         if(state.is(ModTags.Blocks.CLUSTER))
             clusterBlocks.add(pos);
         else if(state.is(ModTags.Blocks.CRYSTAL)) {
             crystalBlocks.add(pos);
-            posQueue.add(pos.above());
-            posQueue.add(pos.below());
-            posQueue.add(pos.north());
-            posQueue.add(pos.south());
-            posQueue.add(pos.east());
-            posQueue.add(pos.west());
+            posQueue.addAll(List.of(pos.above(), pos.below(), pos.north(), pos.south(), pos.east(), pos.west()));
         }
     }
 
     public boolean isBuilding() {
-        return (!posQueue.isEmpty() || !filteredStarts) && (stepsLeft > 0 || stepsLeft == -1);
+        return (!posQueue.isEmpty() || !started) && (stepsLeft > 0 || stepsLeft == -1);
     }
 
-    public Optional<CrystalNode> build(ServerLevel level, Optional<CrystalNode> maybeOldNode) {
-
-        boolean overlapping = populateClusters(level);
-        if(overlapping) return Optional.empty();
+    public Optional<NodeData> build(ServerLevel level) {
+        if(populateClusters(level)) return Optional.empty();
         if(data.sapphireClusters().isEmpty()) return Optional.empty();
 
-        for(BlockPos pos : data.sapphireClusters()) {
-            potentialStarts.remove(pos);
-        }
-
+        potentialStarts.removeAll(data.sapphireClusters());
         if(!potentialStarts.isEmpty()) {
-            CrystalNetwork network = CrystalNetwork.get(level);
-            network.addBuilder(new NodeBuilder(potentialStarts), potentialStarts);
+            CrystalNetwork.get(level).addBuilder(new NodeBuilder(potentialStarts), potentialStarts);
         }
 
-        NodeBuilder nodeBuilder = new NodeBuilder(data.sapphireClusters());
-        nodeBuilder.pause(20);
 
-        CrystalNode node;
-        node = maybeOldNode.map(oldNode -> new CrystalNode(data.toImmutable(), oldNode.networks(), nodeBuilder, oldNode.checkers())).orElseGet(() -> new CrystalNode(data.toImmutable(), new HashMap<>()));
-        return Optional.of(node);
+        return Optional.of(data.toImmutable());
     }
 
     private boolean populateClusters(ServerLevel level) {
@@ -127,13 +107,11 @@ public class NodeBuilder {
             if(!state.is(ModTags.Blocks.CLUSTER)) {
                 Caustics.LOGGER.error("Found non-cluster block in cluster block list: {} @ {}", state.getBlock(), pos);
                 continue;
-            } //somehow getting air in here. No clue how
+            }
             Direction facing = state.getValue(AmethystClusterBlock.FACING);
+            if(!crystalBlocks.contains(pos.relative(facing.getOpposite()))) continue;
 
-            if(!crystalBlocks.contains(pos.relative(facing.getOpposite())))
-                continue;
-
-             if(state.is(ModBlocks.PERIDOT_GROUP.cluster()))
+            if(state.is(ModBlocks.PERIDOT_GROUP.cluster()))
                 data.peridotClusters().add(pos);
             else if(state.is(ModBlocks.TOPAZ_GROUP.cluster()))
                 data.topazClusters().add(pos);
@@ -145,8 +123,16 @@ public class NodeBuilder {
                 data.tourmalineClusters().add(pos);
             else if(state.is(ModBlocks.SAPPHIRE_GROUP.cluster())) {
                 Optional<CrystalNode> maybeNode = network.getNodeAt(pos);
-                if(maybeNode.isPresent() && maybeNode.get().builder() != this)
-                    return true;
+                if(maybeNode.isPresent()) {
+                    CrystalNode node = maybeNode.get();
+                    Optional<CrystalNode> maybeOtherNode = network.getNodeForBuilder(this);
+                    if(maybeOtherNode.isPresent()) {
+                        CrystalNode otherNode = maybeOtherNode.get();
+                        if(otherNode != node)
+                            return true;
+                    } else
+                        return true;
+                }
                 data.sapphireClusters().add(pos);
             }
         }

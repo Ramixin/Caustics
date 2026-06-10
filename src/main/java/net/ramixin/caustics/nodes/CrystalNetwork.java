@@ -2,22 +2,28 @@ package net.ramixin.caustics.nodes;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.networking.clientbound.NetworkSyncPayload;
 import net.ramixin.caustics.nodes.steppers.NodeBuilder;
+import org.apache.commons.lang3.mutable.Mutable;
+import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.util.*;
+import java.util.function.Function;
 
 public class CrystalNetwork extends SavedData {
 
     private static final Codec<CrystalNetwork> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             CrystalNode.CODEC.listOf().fieldOf("nodes").forGetter(CrystalNetwork::getNodes),
             BlockPos.CODEC.listOf().listOf().fieldOf("builders").forGetter(CrystalNetwork::getBuildersAsList)
-            ).apply(instance, CrystalNetwork::new)
-    );
+    ).apply(instance, CrystalNetwork::new));
     @SuppressWarnings("DataFlowIssue") // doesn't want null datafixer
     private static final SavedDataType<CrystalNetwork> TYPE = new SavedDataType<>(
             Caustics.id("crystal_network"),
@@ -26,127 +32,191 @@ public class CrystalNetwork extends SavedData {
             null
     );
 
-    private final HashMap<NodeBuilder, List<BlockPos>> builders = new HashMap<>();
-    private final HashMap<BlockPos, CrystalNode> sapphireToNode = new HashMap<>();
-    private final HashMap<BlockPos, CrystalNode> sunstoneToNode = new HashMap<>();
-    private final List<CrystalNode> nodes = new LinkedList<>();
+    private final Map<NodeBuilder, CrystalNode> rebuildBuilders = new HashMap<>();
+    private final Map<NodeBuilder, List<BlockPos>> newBuilders = new HashMap<>();
+
+    private final Map<BlockPos, CrystalNode> sapphireToNode = new HashMap<>();
+    private final Map<BlockPos, CrystalNode> sunstoneToNode = new HashMap<>();
+    private final List<CrystalNode> nodes = new ArrayList<>();
+
+    private final Mutable<Function<UUID, Optional<ServerPlayer>>> playerGetter = new MutableObject<>();
+    private final Set<UUID> syncingPlayers = new HashSet<>();
 
     private CrystalNetwork() {}
 
     private CrystalNetwork(List<CrystalNode> nodes, List<List<BlockPos>> builders) {
         int delay = 0;
         for(CrystalNode node : nodes) {
-            for(BlockPos pos : node.data().sapphireClusters()) {
-                sapphireToNode.put(pos, node);
-            }
-            for(BlockPos pos : node.data().sunstoneClusters()) {
-                sunstoneToNode.put(pos, node);
-            }
-            node.builder().pause(delay++);
-            this.nodes.add(node);
+            registerNode(node);
+            NodeBuilder builder = new NodeBuilder(node.data().sapphireClusters());
+            builder.pause(delay++);
+            rebuildBuilders.put(builder, node);
         }
         for(List<BlockPos> positions : builders) {
             NodeBuilder builder = new NodeBuilder(positions);
             builder.pause(delay++);
-            this.builders.put(builder, positions);
+            newBuilders.put(builder, positions);
         }
     }
-
 
     public static CrystalNetwork get(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(TYPE);
     }
 
-    public Optional<CrystalNode> getNodeAt(BlockPos pos) {
-        return Optional.ofNullable(sapphireToNode.get(pos)).or(() -> Optional.ofNullable(sunstoneToNode.get(pos)));
+    public void tick(ServerLevel level) {
+        if(playerGetter.get() == null)
+            playerGetter.setValue(playerGetter(level));
+        for(CrystalNode node : nodes) {
+            node.tick(level);
+        }
+        tickRebuildBuilders(level);
+        tickNewBuilders(level);
     }
 
-    public void tick(ServerLevel level) {
-        for (CrystalNode node : Set.copyOf(nodes)) {
-            node.tick(level);
-            if(node.builder().isBuilding()) continue;
-            unregisterNode(node);
-            setDirty();
-
-            Optional<CrystalNode> maybeNewNode = node.builder().build(level, Optional.of(node));
-            if(maybeNewNode.isEmpty()) continue;
-            CrystalNode newNode = maybeNewNode.get();
-            if(!newNode.builder().isBuilding()) {
-                System.out.println("node has no more sapphire clusters");
-                continue;
+    private Function<UUID, Optional<ServerPlayer>> playerGetter(ServerLevel level) {
+        return (uuid) -> {
+            Player player = level.getPlayerByUUID(uuid);
+            if(!(player instanceof ServerPlayer serverPlayer)) {
+                syncingPlayers.remove(uuid);
+                return Optional.empty();
             }
-            registerNode(newNode);
+            return Optional.of(serverPlayer);
+        };
+    }
 
-        }
-
-        for (NodeBuilder builder : List.copyOf(builders.keySet())) {
+    private void tickRebuildBuilders(ServerLevel level) {
+        for(NodeBuilder builder : List.copyOf(rebuildBuilders.keySet())) {
             builder.tick(level);
             if(builder.isBuilding()) continue;
-            builders.remove(builder);
-            Optional<CrystalNode> maybeNode = builder.build(level, Optional.empty());
-            if(maybeNode.isEmpty()) continue;
-            CrystalNode newNode = maybeNode.get();
 
-            if(!newNode.builder().isBuilding()) continue;
-            registerNode(newNode);
-            setDirty();
+            CrystalNode oldNode = rebuildBuilders.get(builder);
+            Optional<NodeData> maybeData = builder.build(level);
+            rebuildBuilders.remove(builder);
+
+            if(maybeData.isEmpty()) {
+                unregisterNode(oldNode);
+                setDirty();
+                return;
+            }
+
+            NodeData newData = maybeData.get();
+            if(!newData.equals(oldNode.data())) {
+                unregisterNode(oldNode);
+                CrystalNode newNode = oldNode.withData(newData);
+                registerNode(newNode);
+                scheduleRebuild(newNode);
+                setDirty();
+            } else
+                scheduleRebuild(oldNode);
         }
+    }
+
+    private void tickNewBuilders(ServerLevel level) {
+        for(NodeBuilder builder : List.copyOf(newBuilders.keySet())) {
+            builder.tick(level);
+            if(builder.isBuilding()) continue;
+
+            builder.build(level).ifPresent(data -> {
+                CrystalNode newNode = new CrystalNode(data, new HashMap<>());
+                registerNode(newNode);
+                scheduleRebuild(newNode);
+                setDirty();
+            });
+            newBuilders.remove(builder);
+        }
+    }
+
+    private void scheduleRebuild(CrystalNode node) {
+        NodeBuilder builder = new NodeBuilder(node.data().sapphireClusters());
+        builder.pause(20);
+        rebuildBuilders.put(builder, node);
     }
 
     private void registerNode(CrystalNode node) {
         nodes.add(node);
-        if(nodes.size() > 5) {
-            System.out.println("too many nodes");
-        }
-        for(BlockPos pos : node.data().sapphireClusters()) {
-            sapphireToNode.put(pos, node);
-        }
-        for(BlockPos pos : node.data().sunstoneClusters()) {
-            sunstoneToNode.put(pos, node);
-        }
+        for(BlockPos pos : node.data().sapphireClusters()) sapphireToNode.put(pos, node);
+        for(BlockPos pos : node.data().sunstoneClusters()) sunstoneToNode.put(pos, node);
     }
 
     private void unregisterNode(CrystalNode node) {
         nodes.remove(node);
-        for(BlockPos pos : node.data().sapphireClusters()) {
-            sapphireToNode.remove(pos);
-        }
-        for(BlockPos pos : node.data().sunstoneClusters()) {
-            sunstoneToNode.remove(pos);
-        }
+        node.data().sapphireClusters().forEach(sapphireToNode::remove);
+        node.data().sunstoneClusters().forEach(sunstoneToNode::remove);
     }
 
     public void generateNodeAt(BlockPos pos) {
-        NodeBuilder nodeBuilder = new NodeBuilder(pos);
-        List<BlockPos> positions = new ArrayList<>();
-        positions.add(pos);
-        builders.put(nodeBuilder, positions);
+        NodeBuilder builder = new NodeBuilder(pos);
+        newBuilders.put(builder, List.of(pos));
         setDirty();
     }
 
     public void addBuilder(NodeBuilder builder, List<BlockPos> positions) {
-        builders.put(builder, positions);
+        newBuilders.put(builder, positions);
     }
 
     public void printNodes() {
-        for(CrystalNode node : nodes) {
-            System.out.println(node);
-        }
         if(nodes.isEmpty()) System.out.println("no nodes");
+        else nodes.forEach(System.out::println);
     }
 
     public void nuke() {
-        this.nodes.clear();
-        this.builders.clear();
-        this.sapphireToNode.clear();
+        nodes.clear();
+        rebuildBuilders.clear();
+        newBuilders.clear();
+        sapphireToNode.clear();
+        sunstoneToNode.clear();
         setDirty();
     }
 
     private List<List<BlockPos>> getBuildersAsList() {
-        return List.copyOf(builders.values());
+        return List.copyOf(newBuilders.values());
     }
 
     private List<CrystalNode> getNodes() {
         return nodes;
+    }
+
+    public Optional<CrystalNode> getNodeAt(BlockPos pos) {
+        CrystalNode node = sapphireToNode.get(pos);
+        return node != null ? Optional.of(node) : Optional.ofNullable(sunstoneToNode.get(pos));
+    }
+
+    public Optional<CrystalNode> getNodeForBuilder(NodeBuilder builder) {
+        return Optional.ofNullable(rebuildBuilders.get(builder));
+    }
+
+    @Override
+    public void setDirty() {
+        if(!syncingPlayers.isEmpty()) {
+            NetworkSyncPayload payload = getSyncPayload();
+            for(UUID uuid : syncingPlayers)
+                updateSyncer(uuid, payload);
+        }
+
+        super.setDirty();
+    }
+
+    public void startSyncing(UUID uuid) {
+        NetworkSyncPayload payload = getSyncPayload();
+        updateSyncer(uuid, payload);
+        syncingPlayers.add(uuid);
+    }
+
+    private void updateSyncer(UUID uuid, NetworkSyncPayload payload) {
+        Optional<ServerPlayer> player = playerGetter.get().apply(uuid);
+        if(player.isEmpty()) return;
+        ServerPlayNetworking.send(player.get(), payload);
+    }
+
+    private NetworkSyncPayload getSyncPayload() {
+        List<NodeSyncData> data = new ArrayList<>();
+        for(CrystalNode node : nodes) {
+            data.add(node.createSyncData());
+        }
+        return new NetworkSyncPayload(data);
+    }
+
+    public void stopSyncing(UUID uuid) {
+        syncingPlayers.remove(uuid);
     }
 }

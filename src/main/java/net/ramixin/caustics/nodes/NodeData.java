@@ -4,25 +4,54 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public record NodeData(List<BlockPos> sapphireClusters, List<BlockPos> peridotClusters, List<BlockPos> topazClusters, List<BlockPos> sunstoneClusters, List<BlockPos> seleniteClusters, List<BlockPos> tourmalineClusters) {
+public record NodeData(Set<BlockPos> sapphireClusters, Set<BlockPos> peridotClusters, Set<BlockPos> topazClusters, Set<BlockPos> sunstoneClusters, Set<BlockPos> seleniteClusters, Set<BlockPos> tourmalineClusters) {
 
     public static final Codec<NodeData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            BlockPos.CODEC.listOf().fieldOf("sapphireClusters").forGetter(NodeData::sapphireClusters),
-            BlockPos.CODEC.listOf().fieldOf("peridotClusters").forGetter(NodeData::peridotClusters),
-            BlockPos.CODEC.listOf().fieldOf("topazClusters").forGetter(NodeData::topazClusters),
-            BlockPos.CODEC.listOf().fieldOf("sunstoneClusters").forGetter(NodeData::sunstoneClusters),
-            BlockPos.CODEC.listOf().fieldOf("seleniteClusters").forGetter(NodeData::seleniteClusters),
-            BlockPos.CODEC.listOf().fieldOf("tourmalineClusters").forGetter(NodeData::tourmalineClusters)
+            BlockPos.CODEC.listOf().fieldOf("sapphireClusters").forGetter(NodeData::sapphireList),
+            BlockPos.CODEC.listOf().fieldOf("peridotClusters").forGetter(NodeData::peridotList),
+            BlockPos.CODEC.listOf().fieldOf("topazClusters").forGetter(NodeData::topazList),
+            BlockPos.CODEC.listOf().fieldOf("sunstoneClusters").forGetter(NodeData::sunstoneList),
+            BlockPos.CODEC.listOf().fieldOf("seleniteClusters").forGetter(NodeData::seleniteList),
+            BlockPos.CODEC.listOf().fieldOf("tourmalineClusters").forGetter(NodeData::tourmalineList)
     ).apply(instance, NodeData::new));
 
     public NodeData() {
-        this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>());
+    }
+
+    public NodeData(List<BlockPos> blockPos, List<BlockPos> blockPos1, List<BlockPos> blockPos2, List<BlockPos> blockPos3, List<BlockPos> blockPos4, List<BlockPos> blockPos5) {
+        this(new HashSet<>(blockPos), new HashSet<>(blockPos1), new HashSet<>(blockPos2), new HashSet<>(blockPos3), new HashSet<>(blockPos4), new HashSet<>(blockPos5));
     }
 
     public NodeData toImmutable() {
-        return new NodeData(List.copyOf(sapphireClusters), List.copyOf(peridotClusters), List.copyOf(topazClusters), List.copyOf(sunstoneClusters), List.copyOf(seleniteClusters), List.copyOf(tourmalineClusters));
+        return new NodeData(Set.copyOf(sapphireClusters), Set.copyOf(peridotClusters), Set.copyOf(topazClusters), Set.copyOf(sunstoneClusters), Set.copyOf(seleniteClusters), Set.copyOf(tourmalineClusters));
+    }
+
+    public List<BlockPos> sapphireList() {
+        return List.copyOf(sapphireClusters);
+    }
+
+    public List<BlockPos> peridotList() {
+        return List.copyOf(peridotClusters);
+    }
+
+    public List<BlockPos> topazList() {
+        return List.copyOf(topazClusters);
+    }
+
+    public List<BlockPos> sunstoneList() {
+        return List.copyOf(sunstoneClusters);
+    }
+
+    public List<BlockPos> seleniteList() {
+        return List.copyOf(seleniteClusters);
+    }
+
+    public List<BlockPos> tourmalineList() {
+        return List.copyOf(tourmalineClusters);
     }
 }
