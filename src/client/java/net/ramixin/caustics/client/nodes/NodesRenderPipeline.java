@@ -10,22 +10,33 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.*;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.ModUtils;
+import net.ramixin.caustics.client.ducks.GuiGraphicsExtractorDuck;
 import net.ramixin.caustics.items.ModItems;
+import net.ramixin.caustics.items.components.NetworkFrequency;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -44,7 +55,8 @@ public class NodesRenderPipeline {
             .build()
     );
 
-    private static final List<NodeRenderState> RENDERSTATES = new ArrayList<>();
+    private static final List<NodeRenderState> RENDER_STATES = new ArrayList<>();
+    private static HudRenderState HUD_RENDER_STATE = null;
     private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);
     private static final Vector4f COLOR_MODULATOR = new Vector4f(1f, 1f, 1f, 1f);
     private static final Vector3f MODEL_OFFSET = new Vector3f();
@@ -61,34 +73,75 @@ public class NodesRenderPipeline {
     public void onInitialize() {
         LevelRenderEvents.END_EXTRACTION.register(this::extractNodes);
         LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(this::renderAndDrawNodes);
+        HudElementRegistry.addLast(Caustics.id("alidade_node_info"), NodesRenderPipeline::renderHud);
     }
 
     private void extractNodes(LevelExtractionContext ctx) {
-        RENDERSTATES.clear();
+        RENDER_STATES.clear();
+        HUD_RENDER_STATE = null;
         Player player = Minecraft.getInstance().player;
         if(player == null) return;
         if(!player.getMainHandItem().is(ModItems.ALIDADE)) return;
         if(!player.isUsingItem()) return;
-        for(ClientCrystalNode node : ClientCrystalNetwork.getNodes()) {
-            for(BlockPos pos : node.positions()) {
-                RENDERSTATES.add(new NodeRenderState(pos.getX(), pos.getY(), pos.getZ()));
-            }
+        BlockPos[] positions = ClientCrystalNetwork.getNodes().stream().flatMap(node -> node.positions().stream()).toArray(BlockPos[]::new);
+        Vec3[] vectors = ModUtils.calculateUnitVectors(player, positions);
+        double[] angles = ModUtils.calculateDisplacementAngles(player, vectors);
+        Optional<Integer> closest = ModUtils.closestLooking(angles);
+        Set<Integer> ambigui = ModUtils.ambiguousPositions(vectors);
+        for(int i = 0; i < positions.length; i++) {
+            BlockPos pos = positions[i];
+            boolean ambiguous = ambigui.contains(i);
+            boolean lookingAt = !ambiguous && closest.isPresent() && closest.get().equals(i);
+
+            RENDER_STATES.add(new NodeRenderState(pos.getX(), pos.getY(), pos.getZ(), lookingAt, ambiguous));
         }
+        if(closest.isEmpty()) return;
+        int closestIndex = closest.get();
+        BlockPos closestPos = positions[closestIndex];
+        Optional<ClientCrystalNode> maybeClosestNode = ClientCrystalNetwork.getNodeAt(closestPos);
+        if(maybeClosestNode.isEmpty()) return;
+        ClientCrystalNode closestNode = maybeClosestNode.get();
+        HUD_RENDER_STATE = new HudRenderState(closestNode.name().orElse(null), closestNode.frequencies().stream().map(NetworkFrequency::asFriendlyString).toList());
     }
 
     private void renderAndDrawNodes(LevelRenderContext ctx) {
-        for(NodeRenderState state : RENDERSTATES) {
+        for(NodeRenderState state : RENDER_STATES) {
             renderNode(ctx, state);
             drawFilledThroughWalls(Minecraft.getInstance());
         }
     }
 
+    private static void renderHud(@NonNull GuiGraphicsExtractor evilGraphics, @NonNull DeltaTracker deltaTracker) {
+        if(HUD_RENDER_STATE == null) return;
+        GuiGraphicsExtractorDuck duck = GuiGraphicsExtractorDuck.get(evilGraphics);
+        duck.caustics$enableTooltipBatching();
+
+        String name = HUD_RENDER_STATE.nodeName() == null ? "Unnamed Crystal Node" : HUD_RENDER_STATE.nodeName();
+        easyTooltip(duck, List.of(Component.literal(name)), -5, 20);
+
+        if(!HUD_RENDER_STATE.frequencies().isEmpty()) {
+            List<Component> text = new ArrayList<>();
+            text.add(Component.translatable("caustics.node.frequencies"));
+            text.add(Component.literal(""));
+            for(String freq : HUD_RENDER_STATE.frequencies()) {
+                text.add(Component.literal(freq));
+            }
+            easyTooltip(duck, text, -5,40);
+        }
+
+        int mouseX = (int) Minecraft.getInstance().mouseHandler.xpos();
+        int mouseY = (int) Minecraft.getInstance().mouseHandler.ypos();
+        evilGraphics.extractDeferredElements(mouseX, mouseY, 0);
+    }
+
+    private static void easyTooltip(GuiGraphicsExtractorDuck duck, List<Component> tooltip, int x, int y) {
+        List<ClientTooltipComponent> components = tooltip.stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).toList();
+        duck.caustics$addTooltipToBatch(graphics -> graphics.tooltip(Minecraft.getInstance().font, components, x, y, DefaultTooltipPositioner.INSTANCE, null));
+    }
+
     private void renderNode(LevelRenderContext ctx, NodeRenderState state) {
         PoseStack matrices = ctx.poseStack();
-        //matrices.pushPose();
-
         Vec3 cameraPos = ctx.levelState().cameraRenderState.pos;
-        //matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
         if (this.buffer == null)
             this.buffer = new BufferBuilder(ALLOCATOR, PIPELINE.getVertexFormatMode(), PIPELINE.getVertexFormat());
@@ -97,7 +150,7 @@ public class NodesRenderPipeline {
         double dy = cameraPos.y - state.y;
         double dz = cameraPos.z - state.z;
         double dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-        float scale = (float) (dist * 0.05f);
+        float scale = (float) (dist * (state.lookingAt ? 0.0625f : 0.05f));
 
         Camera camera = Minecraft.getInstance()
                 .gameRenderer
@@ -112,10 +165,15 @@ public class NodesRenderPipeline {
 
         Matrix4f matrix = matrices.last().pose();
 
-        buffer.addVertex(matrix, cx + up.x * scale, cy + up.y * scale, cz + up.z * scale).setColor(255, 0, 0, 200);
-        buffer.addVertex(matrix, cx + right.x * scale, cy + right.y * scale, cz + right.z * scale).setColor(255, 0, 0, 200);
-        buffer.addVertex(matrix, cx - up.x * scale, cy - up.y * scale, cz - up.z * scale).setColor(255, 0, 0, 200);
-        buffer.addVertex(matrix, cx - right.x * scale, cy - right.y * scale, cz - right.z * scale).setColor(255, 0, 0, 200);
+        int color;
+        if(state.ambiguous) color = 0xFF_00_00_FF;
+        else if(state.lookingAt) color = 0xFF_00_FF_00;
+        else color = 0xFF_FF_00_00;
+
+        buffer.addVertex(matrix, cx + up.x * scale, cy + up.y * scale, cz + up.z * scale).setColor(color);
+        buffer.addVertex(matrix, cx + right.x * scale, cy + right.y * scale, cz + right.z * scale).setColor(color);
+        buffer.addVertex(matrix, cx - up.x * scale, cy - up.y * scale, cz - up.z * scale).setColor(color);
+        buffer.addVertex(matrix, cx - right.x * scale, cy - right.y * scale, cz - right.z * scale).setColor(color);
     }
 
     private void drawFilledThroughWalls(Minecraft client) {
@@ -201,6 +259,7 @@ public class NodesRenderPipeline {
         builtBuffer.close();
     }
 
-    private record NodeRenderState(int x, int y, int z) { }
+    private record NodeRenderState(int x, int y, int z, boolean lookingAt, boolean ambiguous) { }
 
+    private record HudRenderState(@Nullable String nodeName, List<String> frequencies) { }
 }

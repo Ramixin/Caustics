@@ -1,4 +1,4 @@
-package net.ramixin.caustics.features;
+package net.ramixin.caustics;
 
 import net.fabricmc.fabric.api.biome.v1.BiomeModification;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
@@ -8,7 +8,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
-import net.ramixin.caustics.Caustics;
 
 public class ModFeatures {
 

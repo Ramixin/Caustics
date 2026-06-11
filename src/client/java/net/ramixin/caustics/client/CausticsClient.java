@@ -2,6 +2,7 @@ package net.ramixin.caustics.client;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
@@ -17,5 +18,14 @@ public class CausticsClient implements ClientModInitializer {
         NodesRenderPipeline.getInstance().onInitialize();
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkSyncPayload.TYPE, (payload, _) -> ClientCrystalNetwork.onSync(payload.nodeData()));
+    }
+
+    public static void onAlidadeAttack(LocalPlayer player) {
+//        BlockPos[] positions = ClientCrystalNetwork.getNodes().stream().flatMap(node -> node.positions().stream()).toArray(BlockPos[]::new);
+//        Vec3[] vectors = ModUtils.calculateUnitVectors(player, positions);
+//        double[] angles = ModUtils.calculateDisplacementAngles(player, vectors);
+//        Optional<Integer> closest = ModUtils.closestLooking(angles);
+//        if(closest.isEmpty()) return;
+//        boolean isAmbiguous = ModUtils.isAmbiguous(vectors, closest.get());
     }
 }

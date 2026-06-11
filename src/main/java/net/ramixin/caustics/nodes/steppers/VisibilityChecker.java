@@ -23,10 +23,17 @@ public class VisibilityChecker {
     private int pauseTicks = 0;
     private boolean mustOrient = true;
     private boolean cachedVisibility = false;
+    private boolean syncingDirty = false;
 
     public VisibilityChecker(BlockPos pos) {
         this.startPos = pos;
         this.curPos = pos;
+    }
+
+    public boolean consumeSyncingDirty() {
+        boolean val = syncingDirty;
+        syncingDirty = false;
+        return val;
     }
 
     public void tick(ServerLevel level) {
@@ -96,6 +103,7 @@ public class VisibilityChecker {
         curPos = startPos;
         pauseTicks = 40;
         stepsLeft = -1;
+        syncingDirty = true;
     }
 
     private Optional<Direction> applyMirror(BlockState state) {

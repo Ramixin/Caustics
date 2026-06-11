@@ -1,32 +1,18 @@
 package net.ramixin.caustics;
 
 import com.mojang.serialization.Codec;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import net.minecraft.core.BlockPos;
 
 public interface CodecUtils {
 
-    Codec<UUID> UUID_STRING_CODEC = Codec.STRING.xmap(UUID::fromString, UUID::toString);
-
-
-    static <K, V> Codec<Map<V, K>> invertMap(Codec<Map<K, V>> codec) {
-        return codec.xmap(
-                kvMap -> {
-                    Map<V, K> inverted = new HashMap<>();
-                    for(Map.Entry<K, V> entry : kvMap.entrySet()) {
-                        inverted.put(entry.getValue(), entry.getKey());
-                    }
-                    return inverted;
-                },
-                vkMap -> {
-                    Map<K, V> reverted = new HashMap<>();
-                    for(Map.Entry<V, K> entry : vkMap.entrySet()) {
-                        reverted.put(entry.getValue(), entry.getKey());
-                    }
-                    return reverted;
-                }
-        );
-    }
+    Codec<BlockPos> STRINGABLE_BLOCK_POS_CODEC = Codec.STRING.xmap(
+            s -> {
+                String[] splits = s.split(",");
+                int x = Integer.parseInt(splits[0].substring(1));
+                int y = Integer.parseInt(splits[1]);
+                int z = Integer.parseInt(splits[2].substring(0, splits[2].length() - 1));
+                return new BlockPos(x, y, z);
+            },
+            pos -> "[" + pos.getX() + "," + pos.getY() + "," + pos.getZ() + "]"
+    );
 }

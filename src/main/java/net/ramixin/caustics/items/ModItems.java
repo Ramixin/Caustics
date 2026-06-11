@@ -11,6 +11,7 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.items.components.ModDataComponents;
 
 import java.util.function.Function;
 

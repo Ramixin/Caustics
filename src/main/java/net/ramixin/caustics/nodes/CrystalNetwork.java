@@ -66,11 +66,17 @@ public class CrystalNetwork extends SavedData {
     public void tick(ServerLevel level) {
         if(playerGetter.get() == null)
             playerGetter.setValue(playerGetter(level));
+        boolean syncDirty = false;
         for(CrystalNode node : nodes) {
             node.tick(level);
+            if(node.consumeSyncingDirty())
+                syncDirty = true;
         }
         tickRebuildBuilders(level);
         tickNewBuilders(level);
+
+        if(syncDirty)
+            syncAll();
     }
 
     private Function<UUID, Optional<ServerPlayer>> playerGetter(ServerLevel level) {
@@ -185,14 +191,16 @@ public class CrystalNetwork extends SavedData {
         return Optional.ofNullable(rebuildBuilders.get(builder));
     }
 
+    public void syncAll() {
+        if(syncingPlayers.isEmpty()) return;
+        NetworkSyncPayload payload = getSyncPayload();
+        for(UUID uuid : syncingPlayers)
+            updateSyncer(uuid, payload);
+    }
+
     @Override
     public void setDirty() {
-        if(!syncingPlayers.isEmpty()) {
-            NetworkSyncPayload payload = getSyncPayload();
-            for(UUID uuid : syncingPlayers)
-                updateSyncer(uuid, payload);
-        }
-
+        syncAll();
         super.setDirty();
     }
 
@@ -211,7 +219,8 @@ public class CrystalNetwork extends SavedData {
     private NetworkSyncPayload getSyncPayload() {
         List<NodeSyncData> data = new ArrayList<>();
         for(CrystalNode node : nodes) {
-            data.add(node.createSyncData());
+            Optional<NodeSyncData> maybeData = node.createSyncData();
+            maybeData.ifPresent(data::add);
         }
         return new NetworkSyncPayload(data);
     }

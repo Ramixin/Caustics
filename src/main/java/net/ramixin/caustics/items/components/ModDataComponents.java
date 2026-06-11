@@ -1,10 +1,9 @@
-package net.ramixin.caustics.items;
+package net.ramixin.caustics.items.components;
 
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.items.components.NetworkFrequency;
 
 import java.util.function.UnaryOperator;
 

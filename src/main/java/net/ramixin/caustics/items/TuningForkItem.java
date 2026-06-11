@@ -14,6 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.ramixin.caustics.items.components.ModDataComponents;
 import net.ramixin.caustics.items.components.NetworkFrequency;
 import net.ramixin.caustics.nodes.CrystalNetwork;
 import net.ramixin.caustics.nodes.CrystalNode;

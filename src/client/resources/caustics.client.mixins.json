@@ -13,6 +13,8 @@
   },
   "mixins": [
     "AbstractClientPlayerMixin",
-    "GuiMixin"
+    "GuiGraphicsExtractorMixin",
+    "GuiMixin",
+    "MinecraftMixin"
   ]
 }
