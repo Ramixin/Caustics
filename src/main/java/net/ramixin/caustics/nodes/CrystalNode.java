@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.ramixin.caustics.CodecUtils;
 import net.ramixin.caustics.items.components.NetworkFrequency;
+import net.ramixin.caustics.nodes.steppers.DepositChecker;
 import net.ramixin.caustics.nodes.steppers.VisibilityChecker;
 import org.jspecify.annotations.NonNull;
 
@@ -15,42 +16,74 @@ public final class CrystalNode {
 
     public static final Codec<CrystalNode> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             NodeData.CODEC.fieldOf("data").forGetter(CrystalNode::data),
-            Codec.unboundedMap(CodecUtils.STRINGABLE_BLOCK_POS_CODEC, NetworkFrequency.CODEC).fieldOf("networks").forGetter(CrystalNode::networks)
+            Codec.unboundedMap(CodecUtils.STRINGABLE_BLOCK_POS_CODEC, NetworkFrequency.CODEC).fieldOf("networks").forGetter(CrystalNode::networks),
+            Codec.unboundedMap(CodecUtils.STRINGABLE_BLOCK_POS_CODEC, Codec.STRING).fieldOf("clusterNames").forGetter(CrystalNode::clusterNames)
     ).apply(instance, CrystalNode::new));
 
     private final NodeData data;
     private final Map<BlockPos, NetworkFrequency> networks;
-    private final Map<BlockPos, VisibilityChecker> checkers;
+    private final Map<BlockPos, String> clusterNames;
+    private final Map<BlockPos, VisibilityChecker> visibilityCheckers;
+    private final Map<BlockPos, DepositChecker> depositCheckers;
     private boolean syncingDirty = false;
-    private final String name = "Jeff";
     private int delay = 0;
 
-
-    public CrystalNode(NodeData data, Map<BlockPos, NetworkFrequency> networks) {
-        HashMap<BlockPos, VisibilityChecker> deducers = new HashMap<>();
-        for(BlockPos pos : data.sapphireClusters()) {
-            deducers.put(pos, new VisibilityChecker(pos));
-        }
-
-        this(data, networks, deducers);
+    private CrystalNode(NodeData data, Map<BlockPos, NetworkFrequency> networks, Map<BlockPos, String> clusterNames) {
+        this(data, networks, Map.of(), Map.of(), clusterNames);
     }
 
-    public CrystalNode(NodeData data, Map<BlockPos, NetworkFrequency> networks, Map<BlockPos, VisibilityChecker> checkers) {
+    public CrystalNode(NodeData data) {
         this.data = data;
-        HashMap<BlockPos, VisibilityChecker> newCheckers = new HashMap<>();
-        for(BlockPos pos : data.sapphireClusters()) {
-            if(checkers.containsKey(pos)) {
-                newCheckers.put(pos, checkers.get(pos));
-            } else
-                newCheckers.put(pos, new VisibilityChecker(pos));
-        }
-        Set<BlockPos> sunstoneClusters = data.sunstoneClusters();
-        for(BlockPos pos : Set.copyOf(networks.keySet()))
-            if(!sunstoneClusters.contains(pos))
-                networks.remove(pos);
+        this.visibilityCheckers = new HashMap<>();
+        addCheckersForEach(data.sapphireClusters(), Map.of());
+        addCheckersForEach(data.topazClusters(), Map.of());
+        addCheckersForEach(data.tourmalineClusters(), Map.of());
 
-        this.checkers = newCheckers;
-        this.networks = new HashMap<>(networks);
+        this.depositCheckers = new HashMap<>();
+        for(BlockPos pos : data.peridotClusters())
+            depositCheckers.put(pos, new DepositChecker(pos));
+
+        this.clusterNames = new HashMap<>();
+        this.networks = new HashMap<>();
+    }
+
+    public CrystalNode(NodeData data, Map<BlockPos, NetworkFrequency> networks, Map<BlockPos, VisibilityChecker> visibilityCheckers, Map<BlockPos, DepositChecker> depositCheckers, Map<BlockPos, String> clusterNames) {
+        this.data = data;
+
+        this.visibilityCheckers = new HashMap<>();
+        addCheckersForEach(data.sapphireClusters(), visibilityCheckers);
+        addCheckersForEach(data.topazClusters(), visibilityCheckers);
+        addCheckersForEach(data.tourmalineClusters(), visibilityCheckers);
+
+        this.depositCheckers = new HashMap<>();
+        for(BlockPos pos : data.peridotClusters())
+            if(depositCheckers.containsKey(pos))
+                this.depositCheckers.put(pos, depositCheckers.get(pos));
+            else
+                this.depositCheckers.put(pos, new DepositChecker(pos));
+
+        this.networks = new HashMap<>();
+
+        Set<BlockPos> sunstoneClusters = data.sunstoneClusters();
+        for(BlockPos pos : sunstoneClusters)
+            if(networks.containsKey(pos))
+                this.networks.put(pos, networks.get(pos));
+
+        this.clusterNames = new HashMap<>();
+        Set<BlockPos> peridotClusters = data.peridotClusters();
+        for(BlockPos pos : peridotClusters)
+            if(clusterNames.containsKey(pos))
+                this.clusterNames.put(pos, clusterNames.get(pos));
+            else
+                this.clusterNames.put(pos, UUID.randomUUID().toString());
+    }
+
+    private void addCheckersForEach(Set<BlockPos> set, Map<BlockPos, VisibilityChecker> oldCheckers) {
+        for(BlockPos pos : set)
+            if(!oldCheckers.containsKey(pos))
+                visibilityCheckers.put(pos, new VisibilityChecker(pos));
+            else
+                visibilityCheckers.put(pos, oldCheckers.get(pos));
     }
 
     public boolean consumeSyncingDirty() {
@@ -70,11 +103,17 @@ public final class CrystalNode {
             return;
         }
 
-        for(VisibilityChecker checker : checkers.values()) {
+        for(VisibilityChecker checker : visibilityCheckers.values()) {
             checker.tick(level);
             if(checker.consumeSyncingDirty())
                 syncingDirty = true;
         }
+        for(DepositChecker checker : depositCheckers.values()) {
+            checker.tick(level);
+            if(checker.consumeSyncingDirty())
+                syncingDirty = true;
+        }
+
     }
 
     private boolean isLoaded(ServerLevel level) {
@@ -86,8 +125,14 @@ public final class CrystalNode {
     }
 
     public boolean visibleClusterAt(BlockPos pos) {
-        if(!checkers.containsKey(pos)) return false;
-        return checkers.get(pos).isVisible();
+        if(!visibilityCheckers.containsKey(pos)) return false;
+        return visibilityCheckers.get(pos).getValue();
+    }
+
+    public Optional<Optional<BlockPos>> getDepositingPosAt(BlockPos pos) {
+        if(!data.peridotClusters().contains(pos)) return Optional.empty();
+        if(!depositCheckers.containsKey(pos)) return Optional.empty();
+        return Optional.of(depositCheckers.get(pos).getValue());
     }
 
     public Optional<NetworkFrequency> networkFrequencyAt(BlockPos pos) {
@@ -104,7 +149,7 @@ public final class CrystalNode {
     }
 
     public CrystalNode withData(NodeData newData) {
-        return new CrystalNode(newData.toImmutable(), this.networks, this.checkers);
+        return new CrystalNode(newData, this.networks, this.visibilityCheckers, this.depositCheckers, this.clusterNames);
     }
 
     public Optional<NodeSyncData> createSyncData() {
@@ -112,34 +157,40 @@ public final class CrystalNode {
         for(BlockPos pos : data.sapphireClusters())
             if(visibleClusterAt(pos)) sapphires.add(pos);
 
-        if(sapphires.isEmpty()) return Optional.empty();
-        return Optional.of(new NodeSyncData(sapphires, networks.values().stream().toList(), Optional.of(name)));
+        List<BlockPos> topazes = new ArrayList<>();
+        for(BlockPos pos : data.topazClusters())
+            if(visibleClusterAt(pos)) topazes.add(pos);
+        if(sapphires.isEmpty() && topazes.isEmpty()) return Optional.empty();
+        return Optional.of(new NodeSyncData(sapphires, topazes, networks.values().stream().toList(), clusterNames));
     }
 
     @Override
     public @NonNull String toString() {
-        return data.sapphireClusters() + " freqs: " + networks;
+        return String.format("CrystalNode Report:\n - Sapphire Clusters: %s\n - Networks: %s\n - Names: %s\n - Tourmaline Clusters: %s\n - Topaz Clusters: %s", data.sapphireClusters(), networks, clusterNames, data.tourmalineClusters(), data.topazClusters());
     }
 
     public NodeData data() {
         return data;
     }
 
-    public Map<BlockPos, NetworkFrequency> networks() {
+    private Map<BlockPos, NetworkFrequency> networks() {
         return networks;
+    }
+
+    private Map<BlockPos, String> clusterNames() {
+        return clusterNames;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if(!(obj instanceof CrystalNode that)) return false;
-        return Objects.equals(this.data, that.data) &&
-                Objects.equals(this.networks, that.networks);
+        return Objects.equals(this.data, that.data);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(data, networks);
+        return Objects.hash(data);
     }
 
 

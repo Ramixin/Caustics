@@ -9,6 +9,7 @@ public interface ModTags {
     interface Blocks {
         TagKey<Block> CRYSTAL = TagKey.create(Registries.BLOCK, Caustics.id("crystal"));
         TagKey<Block> CLUSTER = TagKey.create(Registries.BLOCK, Caustics.id("cluster"));
+        TagKey<Block> NETWORK_CLUSTER = TagKey.create(Registries.BLOCK, Caustics.id("network_cluster"));
     }
 
 

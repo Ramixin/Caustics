@@ -21,6 +21,10 @@ public class AlidadeItem extends SpyglassItem {
     public @NonNull InteractionResult use(@NonNull Level level, @NonNull Player player, @NonNull InteractionHand hand) {
         if (!(level instanceof ServerLevel serverLevel))
             return InteractionResult.PASS;
+        if(player.isShiftKeyDown()) {
+
+            return InteractionResult.PASS;
+        }
         CrystalNetwork network = CrystalNetwork.get(serverLevel);
         network.startSyncing(player.getUUID());
         return super.use(level, player, hand);

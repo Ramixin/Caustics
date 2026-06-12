@@ -24,11 +24,7 @@ public record NodeData(Set<BlockPos> sapphireClusters, Set<BlockPos> peridotClus
     }
 
     public NodeData(List<BlockPos> blockPos, List<BlockPos> blockPos1, List<BlockPos> blockPos2, List<BlockPos> blockPos3, List<BlockPos> blockPos4, List<BlockPos> blockPos5) {
-        this(new HashSet<>(blockPos), new HashSet<>(blockPos1), new HashSet<>(blockPos2), new HashSet<>(blockPos3), new HashSet<>(blockPos4), new HashSet<>(blockPos5));
-    }
-
-    public NodeData toImmutable() {
-        return new NodeData(Set.copyOf(sapphireClusters), Set.copyOf(peridotClusters), Set.copyOf(topazClusters), Set.copyOf(sunstoneClusters), Set.copyOf(seleniteClusters), Set.copyOf(tourmalineClusters));
+        this(Set.copyOf(blockPos), Set.copyOf(blockPos1), Set.copyOf(blockPos2), Set.copyOf(blockPos3), Set.copyOf(blockPos4), Set.copyOf(blockPos5));
     }
 
     public List<BlockPos> sapphireList() {

@@ -37,7 +37,13 @@ public class CrystalNetwork extends SavedData {
 
     private final Map<BlockPos, CrystalNode> sapphireToNode = new HashMap<>();
     private final Map<BlockPos, CrystalNode> sunstoneToNode = new HashMap<>();
+    private final Map<BlockPos, CrystalNode> topazToNode = new HashMap<>();
+    private final Map<BlockPos, CrystalNode> tourmalineToNode = new HashMap<>();
+    private final Map<BlockPos, CrystalNode> peridotToNode = new HashMap<>();
+
     private final List<CrystalNode> nodes = new ArrayList<>();
+    private final List<CrystalNode> routerNodes = new ArrayList<>();
+    private final List<CrystalNode> jammerNodes = new ArrayList<>();
 
     private final Mutable<Function<UUID, Optional<ServerPlayer>>> playerGetter = new MutableObject<>();
     private final Set<UUID> syncingPlayers = new HashSet<>();
@@ -107,6 +113,7 @@ public class CrystalNetwork extends SavedData {
 
             NodeData newData = maybeData.get();
             if(!newData.equals(oldNode.data())) {
+                Caustics.LOGGER.debug("Rebuilding node with data: {}", newData);
                 unregisterNode(oldNode);
                 CrystalNode newNode = oldNode.withData(newData);
                 registerNode(newNode);
@@ -123,7 +130,7 @@ public class CrystalNetwork extends SavedData {
             if(builder.isBuilding()) continue;
 
             builder.build(level).ifPresent(data -> {
-                CrystalNode newNode = new CrystalNode(data, new HashMap<>());
+                CrystalNode newNode = new CrystalNode(data);
                 registerNode(newNode);
                 scheduleRebuild(newNode);
                 setDirty();
@@ -140,14 +147,30 @@ public class CrystalNetwork extends SavedData {
 
     private void registerNode(CrystalNode node) {
         nodes.add(node);
+
+        if(!node.data().topazClusters().isEmpty()) {
+            for(BlockPos pos : node.data().topazClusters()) topazToNode.put(pos, node);
+            routerNodes.add(node);
+        }
+        if(!node.data().tourmalineClusters().isEmpty()) {
+            for(BlockPos pos : node.data().tourmalineClusters()) tourmalineToNode.put(pos, node);
+            jammerNodes.add(node);
+        }
+
         for(BlockPos pos : node.data().sapphireClusters()) sapphireToNode.put(pos, node);
         for(BlockPos pos : node.data().sunstoneClusters()) sunstoneToNode.put(pos, node);
+        for(BlockPos pos : node.data().peridotClusters()) peridotToNode.put(pos, node);
     }
 
     private void unregisterNode(CrystalNode node) {
         nodes.remove(node);
+        routerNodes.remove(node);
+        jammerNodes.remove(node);
         node.data().sapphireClusters().forEach(sapphireToNode::remove);
         node.data().sunstoneClusters().forEach(sunstoneToNode::remove);
+        node.data().tourmalineClusters().forEach(tourmalineToNode::remove);
+        node.data().topazClusters().forEach(topazToNode::remove);
+        node.data().peridotClusters().forEach(peridotToNode::remove);
     }
 
     public void generateNodeAt(BlockPos pos) {
@@ -183,8 +206,17 @@ public class CrystalNetwork extends SavedData {
     }
 
     public Optional<CrystalNode> getNodeAt(BlockPos pos) {
-        CrystalNode node = sapphireToNode.get(pos);
-        return node != null ? Optional.of(node) : Optional.ofNullable(sunstoneToNode.get(pos));
+        CrystalNode sapphireNode = sapphireToNode.get(pos);
+        if(sapphireNode != null) return Optional.of(sapphireNode);
+        CrystalNode topazNode = topazToNode.get(pos);
+        if(topazNode != null) return Optional.of(topazNode);
+        CrystalNode tourmalineNode = tourmalineToNode.get(pos);
+        if(tourmalineNode != null) return Optional.of(tourmalineNode);
+        CrystalNode sunstoneNode = sunstoneToNode.get(pos);
+        if(sunstoneNode != null) return Optional.of(sunstoneNode);
+        CrystalNode peridotNode = peridotToNode.get(pos);
+        if(peridotNode != null) return Optional.of(peridotNode);
+        return Optional.empty();
     }
 
     public Optional<CrystalNode> getNodeForBuilder(NodeBuilder builder) {

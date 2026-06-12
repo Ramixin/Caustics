@@ -38,7 +38,7 @@ public class NodeBuilder {
     public void tick(ServerLevel level) {
         if(!started) {
             stepsLeft = level.getGameRules().get(ModGameRules.MAX_STEPS);
-            potentialStarts.removeIf(pos -> !level.getBlockState(pos).is(ModBlocks.SAPPHIRE_GROUP.cluster()));
+            potentialStarts.removeIf(pos -> !level.getBlockState(pos).is(ModTags.Blocks.NETWORK_CLUSTER));
             started = true;
             if(potentialStarts.isEmpty()) return;
             BlockPos first = potentialStarts.getFirst();
@@ -89,7 +89,7 @@ public class NodeBuilder {
 
     public Optional<NodeData> build(ServerLevel level) {
         if(populateClusters(level)) return Optional.empty();
-        if(data.sapphireClusters().isEmpty()) return Optional.empty();
+        if(data.sapphireClusters().isEmpty() && data.topazClusters().isEmpty() && data.tourmalineClusters().isEmpty()) return Optional.empty();
 
         potentialStarts.removeAll(data.sapphireClusters());
         if(!potentialStarts.isEmpty()) {
@@ -97,7 +97,7 @@ public class NodeBuilder {
         }
 
 
-        return Optional.of(data.toImmutable());
+        return Optional.of(data);
     }
 
     private boolean populateClusters(ServerLevel level) {
@@ -113,30 +113,32 @@ public class NodeBuilder {
 
             if(state.is(ModBlocks.PERIDOT_GROUP.cluster()))
                 data.peridotClusters().add(pos);
-            else if(state.is(ModBlocks.TOPAZ_GROUP.cluster()))
+            else if(state.is(ModBlocks.TOPAZ_GROUP.cluster())) {
+                if(checkOverlap(network, pos)) return true;
                 data.topazClusters().add(pos);
-            else if(state.is(ModBlocks.SELENITE_GROUP.cluster()))
+            } else if(state.is(ModBlocks.SELENITE_GROUP.cluster()))
                 data.seleniteClusters().add(pos);
             else if(state.is(ModBlocks.SUNSTONE_GROUP.cluster()))
                 data.sunstoneClusters().add(pos);
-            else if(state.is(ModBlocks.TOURMALINE_GROUP.cluster()))
+            else if(state.is(ModBlocks.TOURMALINE_GROUP.cluster())) {
                 data.tourmalineClusters().add(pos);
-            else if(state.is(ModBlocks.SAPPHIRE_GROUP.cluster())) {
-                Optional<CrystalNode> maybeNode = network.getNodeAt(pos);
-                if(maybeNode.isPresent()) {
-                    CrystalNode node = maybeNode.get();
-                    Optional<CrystalNode> maybeOtherNode = network.getNodeForBuilder(this);
-                    if(maybeOtherNode.isPresent()) {
-                        CrystalNode otherNode = maybeOtherNode.get();
-                        if(otherNode != node)
-                            return true;
-                    } else
-                        return true;
-                }
+                checkOverlap(network, pos);
+            } else if(state.is(ModBlocks.SAPPHIRE_GROUP.cluster())) {
+                if(checkOverlap(network, pos)) return true;
                 data.sapphireClusters().add(pos);
             }
         }
         return false;
+    }
+
+    private boolean checkOverlap(CrystalNetwork network, BlockPos pos) {
+        Optional<CrystalNode> maybeNode = network.getNodeAt(pos);
+        if(maybeNode.isEmpty()) return false;
+        CrystalNode node = maybeNode.get();
+        Optional<CrystalNode> maybeOtherNode = network.getNodeForBuilder(this);
+        if(maybeOtherNode.isEmpty()) return false;
+        CrystalNode otherNode = maybeOtherNode.get();
+        return otherNode != node;
     }
     
 }

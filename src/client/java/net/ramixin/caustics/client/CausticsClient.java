@@ -2,22 +2,42 @@ package net.ramixin.caustics.client;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.ModUtils;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.NodesRenderPipeline;
 import net.ramixin.caustics.networking.clientbound.NetworkSyncPayload;
 
+import java.util.Optional;
+
 public class CausticsClient implements ClientModInitializer {
 
     public static final Identifier ALIDADE_GUI_TEXTURE = Caustics.id("textures/misc/alidade_scope.png");
+
+    public static final LookManager LOOK_MANAGER = new LookManager();
 
     @Override
     public void onInitializeClient() {
         NodesRenderPipeline.getInstance().onInitialize();
 
         ClientPlayNetworking.registerGlobalReceiver(NetworkSyncPayload.TYPE, (payload, _) -> ClientCrystalNetwork.onSync(payload.nodeData()));
+
+        ClientHotbarScrollEvents.ALLOW.register((inventory, _, _, _, dy) -> {
+            Optional<BlockPos> lookingAt = ModUtils.getLookingAt(inventory.player, ClientCrystalNetwork.getTargetablePositions());
+            if(lookingAt.isEmpty()) {
+                ClientCrystalNetwork.clearScrollPos();
+                return true;
+            }
+            ClientCrystalNetwork.deltaScrollPos(-dy);
+            return false;
+        });
+
+        LevelRenderEvents.END_MAIN.register(_ -> LOOK_MANAGER.wipe());
     }
 
     public static void onAlidadeAttack(LocalPlayer player) {

@@ -29,6 +29,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.ModUtils;
+import net.ramixin.caustics.client.CausticsClient;
+import net.ramixin.caustics.client.LookManager;
 import net.ramixin.caustics.client.ducks.GuiGraphicsExtractorDuck;
 import net.ramixin.caustics.items.ModItems;
 import net.ramixin.caustics.items.components.NetworkFrequency;
@@ -83,14 +85,14 @@ public class NodesRenderPipeline {
         if(player == null) return;
         if(!player.getMainHandItem().is(ModItems.ALIDADE)) return;
         if(!player.isUsingItem()) return;
-        BlockPos[] positions = ClientCrystalNetwork.getNodes().stream().flatMap(node -> node.positions().stream()).toArray(BlockPos[]::new);
-        Vec3[] vectors = ModUtils.calculateUnitVectors(player, positions);
-        double[] angles = ModUtils.calculateDisplacementAngles(player, vectors);
-        Optional<Integer> closest = ModUtils.closestLooking(angles);
-        Set<Integer> ambigui = ModUtils.ambiguousPositions(vectors);
+        LookManager lookManager = CausticsClient.LOOK_MANAGER;
+        BlockPos[] positions = lookManager.getPositions();
+        double[] angles = lookManager.getAngles();
+        Optional<Integer> closest = ModUtils.calculateClosestLooking(angles);
+        Set<Integer> ambiguities = lookManager.getAmbiguityIndices();
         for(int i = 0; i < positions.length; i++) {
             BlockPos pos = positions[i];
-            boolean ambiguous = ambigui.contains(i);
+            boolean ambiguous = ambiguities.contains(i);
             boolean lookingAt = !ambiguous && closest.isPresent() && closest.get().equals(i);
 
             RENDER_STATES.add(new NodeRenderState(pos.getX(), pos.getY(), pos.getZ(), lookingAt, ambiguous));
@@ -98,10 +100,13 @@ public class NodesRenderPipeline {
         if(closest.isEmpty()) return;
         int closestIndex = closest.get();
         BlockPos closestPos = positions[closestIndex];
-        Optional<ClientCrystalNode> maybeClosestNode = ClientCrystalNetwork.getNodeAt(closestPos);
+        ClientCrystalNetwork.setLastLookingAt(closestPos);
+        Optional<ClientCrystalNode> maybeClosestNode = ClientCrystalNetwork.getTargetableNodeAt(closestPos);
         if(maybeClosestNode.isEmpty()) return;
         ClientCrystalNode closestNode = maybeClosestNode.get();
-        HUD_RENDER_STATE = new HudRenderState(closestNode.name().orElse(null), closestNode.frequencies().stream().map(NetworkFrequency::asFriendlyString).toList());
+        int scrollPos = ClientCrystalNetwork.getScrollPos();
+        Optional<String> closestDepositName = closestNode.getDeposit(scrollPos);
+        HUD_RENDER_STATE = new HudRenderState(null, closestNode.frequencies().stream().map(NetworkFrequency::asFriendlyString).toList(), closestDepositName);
     }
 
     private void renderAndDrawNodes(LevelRenderContext ctx) {
@@ -119,6 +124,15 @@ public class NodesRenderPipeline {
         String name = HUD_RENDER_STATE.nodeName() == null ? "Unnamed Crystal Node" : HUD_RENDER_STATE.nodeName();
         easyTooltip(duck, List.of(Component.literal(name)), -5, 20);
 
+        if(HUD_RENDER_STATE.maybeDepositName().isPresent()) {
+            String depositName = HUD_RENDER_STATE.maybeDepositName().get();
+            List<Component> text = List.of(
+                    Component.translatable("caustics.node.deposit"),
+                    Component.literal(depositName)
+            );
+            easyTooltip(duck, text, -5,40);
+        }
+
         if(!HUD_RENDER_STATE.frequencies().isEmpty()) {
             List<Component> text = new ArrayList<>();
             text.add(Component.translatable("caustics.node.frequencies"));
@@ -126,7 +140,7 @@ public class NodesRenderPipeline {
             for(String freq : HUD_RENDER_STATE.frequencies()) {
                 text.add(Component.literal(freq));
             }
-            easyTooltip(duck, text, -5,40);
+            easyTooltip(duck, text, -5,80);
         }
 
         int mouseX = (int) Minecraft.getInstance().mouseHandler.xpos();
@@ -261,5 +275,5 @@ public class NodesRenderPipeline {
 
     private record NodeRenderState(int x, int y, int z, boolean lookingAt, boolean ambiguous) { }
 
-    private record HudRenderState(@Nullable String nodeName, List<String> frequencies) { }
+    private record HudRenderState(@Nullable String nodeName, List<String> frequencies, Optional<String> maybeDepositName) { }
 }

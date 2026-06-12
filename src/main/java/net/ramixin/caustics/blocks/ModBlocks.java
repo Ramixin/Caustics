@@ -23,15 +23,13 @@ import java.util.function.Function;
 
 public class ModBlocks {
 
-    public static final CrystalBlockGroup AMETHYST_GROUP = new CrystalBlockGroup(Blocks.AMETHYST_BLOCK, Blocks.BUDDING_AMETHYST, Blocks.AMETHYST_CLUSTER, Blocks.LARGE_AMETHYST_BUD, Blocks.MEDIUM_AMETHYST_BUD, Blocks.SMALL_AMETHYST_BUD);
-
-    public static final CrystalBlockGroup SAPPHIRE_GROUP = registerGroup("sapphire", BuddingSapphireBlock::new, SapphireClusterBlock::new);
+    public static final CrystalBlockGroup SAPPHIRE_GROUP = registerGroup("sapphire", BuddingSapphireBlock::new, NetworkClusterBlock::new);
     public static final CrystalBlockGroup CINNABAR_GROUP = registerGroup("cinnabar", BuddingCinnabarBlock::new);
     public static final CrystalBlockGroup PERIDOT_GROUP = registerGroup("peridot", BuddingPeridotBlock::new);
-    public static final CrystalBlockGroup TOPAZ_GROUP = registerGroup("topaz", BuddingTopazBlock::new);
+    public static final CrystalBlockGroup TOPAZ_GROUP = registerGroup("topaz", BuddingTopazBlock::new, NetworkClusterBlock::new);
     public static final CrystalBlockGroup SUNSTONE_GROUP = registerGroup("sunstone", BuddingSunstoneBlock::new);
     public static final CrystalBlockGroup SELENITE_GROUP = registerGroup("selenite", BuddingSeleniteBlock::new);
-    public static final CrystalBlockGroup TOURMALINE_GROUP = registerGroup("tourmaline", BuddingTourmalineBlock::new);
+    public static final CrystalBlockGroup TOURMALINE_GROUP = registerGroup("tourmaline", BuddingTourmalineBlock::new, NetworkClusterBlock::new);
 
     public static final Block MIRROR = register("mirror", MirrorBlock::new, BlockBehaviour.Properties.of());
 

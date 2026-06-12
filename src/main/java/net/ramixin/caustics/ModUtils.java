@@ -13,6 +13,12 @@ public interface ModUtils {
     float lookThreshold = 3f;
     float ambiguityThreshold = 1f;
 
+    static Optional<BlockPos> getLookingAt(Player player, BlockPos[] positions) {
+        Vec3[] vectors = calculateUnitVectors(player, positions);
+        double[] angles = calculateDisplacementAngles(player, vectors);
+        return calculateClosestLooking(angles).map(i -> positions[i]);
+    }
+
     static Vec3[] calculateUnitVectors(Player player, BlockPos[] positions) {
         Vec3 playerPos = player.position();
         Vec3[] vectors = new Vec3[positions.length];
@@ -36,7 +42,7 @@ public interface ModUtils {
         return angles;
     }
 
-    static Optional<Integer> closestLooking(double[] angles) {
+    static Optional<Integer> calculateClosestLooking(double[] angles) {
         double bestAngle = Double.MAX_VALUE;
         int bestIndex = -1;
         for(int i = 0; i < angles.length; i++) {
@@ -50,16 +56,16 @@ public interface ModUtils {
     }
 
     static Set<Integer> ambiguousPositions(Vec3[] vectors) {
-        Set<Integer> ambigui = new HashSet<>();
+        Set<Integer> ambiguities = new HashSet<>();
         for(int i = 0; i < vectors.length; i++)
             for(int j = i + 1; j < vectors.length; j++) {
                 double angle = Math.toDegrees(Math.acos(Math.clamp(vectors[i].dot(vectors[j]), -1.0, 1.0)));
                 if (angle <= ambiguityThreshold) {
-                    ambigui.add(i);
-                    ambigui.add(j);
+                    ambiguities.add(i);
+                    ambiguities.add(j);
                 }
             }
-        return ambigui;
+        return ambiguities;
     }
 
     static boolean isAmbiguous(Vec3[] vectors, int i) {

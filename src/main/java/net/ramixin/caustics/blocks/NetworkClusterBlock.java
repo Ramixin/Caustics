@@ -8,9 +8,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.ramixin.caustics.nodes.CrystalNetwork;
 import org.jspecify.annotations.NonNull;
 
-public class SapphireClusterBlock extends AmethystClusterBlock {
+public class NetworkClusterBlock extends AmethystClusterBlock {
 
-    public SapphireClusterBlock(Properties props) {
+    public NetworkClusterBlock(Properties props) {
         super(7, 10, props);
     }
 
