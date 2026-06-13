@@ -8,10 +8,11 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.ModUtils;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.NodesRenderPipeline;
 import net.ramixin.caustics.networking.clientbound.NetworkSyncPayload;
+import net.ramixin.caustics.networking.clientbound.SignalRangeChangedPayload;
+import net.ramixin.caustics.utils.LookUtil;
 
 import java.util.Optional;
 
@@ -21,14 +22,21 @@ public class CausticsClient implements ClientModInitializer {
 
     public static final LookManager LOOK_MANAGER = new LookManager();
 
+    public static int MAX_SIGNAL_RANGE = 256;
+
     @Override
     public void onInitializeClient() {
         NodesRenderPipeline.getInstance().onInitialize();
 
-        ClientPlayNetworking.registerGlobalReceiver(NetworkSyncPayload.TYPE, (payload, _) -> ClientCrystalNetwork.onSync(payload.nodeData()));
+        ClientPlayNetworking.registerGlobalReceiver(NetworkSyncPayload.TYPE, (payload, _) -> ClientCrystalNetwork.onSync(payload.nodeData(), payload.frequencies()));
+        ClientPlayNetworking.registerGlobalReceiver(SignalRangeChangedPayload.TYPE, (payload, _) -> {
+            int val = payload.newValue();
+            Caustics.LOGGER.info("Signal range changed to {} on client", val);
+            MAX_SIGNAL_RANGE = val * val;
+        });
 
         ClientHotbarScrollEvents.ALLOW.register((inventory, _, _, _, dy) -> {
-            Optional<BlockPos> lookingAt = ModUtils.getLookingAt(inventory.player, ClientCrystalNetwork.getTargetablePositions());
+            Optional<BlockPos> lookingAt = LookUtil.getLookingAt(inventory.player, ClientCrystalNetwork.getTargetablePositions());
             if(lookingAt.isEmpty()) {
                 ClientCrystalNetwork.clearScrollPos();
                 return true;

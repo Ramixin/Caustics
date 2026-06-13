@@ -1,47 +1,59 @@
 package net.ramixin.caustics.client.nodes;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.ramixin.caustics.client.CausticsClient;
+import net.ramixin.caustics.items.components.Frequency;
 import net.ramixin.caustics.nodes.NodeSyncData;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.mutable.MutableObject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class ClientCrystalNetwork {
 
     private static final List<ClientCrystalNode> nodes = new ArrayList<>();
     private static final HashMap<BlockPos, ClientCrystalNode> sapphireToNode = new HashMap<>();
-    private static final HashMap<BlockPos, ClientCrystalNode> topazToNode = new HashMap<>();
 
     private static final MutableInt scrollPos = new MutableInt();
     private static final Mutable<BlockPos> lastLookingAt = new MutableObject<>();
 
-    public static void onSync(List<NodeSyncData> syncData) {
+    private static final Map<BlockPos, Frequency> frequencies = new HashMap<>();
+
+    public static void onSync(List<NodeSyncData> syncData, Map<BlockPos, Frequency> freqs) {
         nodes.clear();
         sapphireToNode.clear();
-        topazToNode.clear();
+        frequencies.clear();
 
         for(NodeSyncData data : syncData) {
             nodes.add(ClientCrystalNode.fromSyncData(data));
             for(BlockPos pos : data.sapphirePositions()) sapphireToNode.put(pos, ClientCrystalNode.fromSyncData(data));
-            for(BlockPos pos : data.topazPositions()) topazToNode.put(pos, ClientCrystalNode.fromSyncData(data));
         }
+        frequencies.putAll(freqs);
     }
 
     public static Optional<ClientCrystalNode> getTargetableNodeAt(BlockPos pos) {
         return Optional.ofNullable(sapphireToNode.get(pos));
     }
 
-    public static Optional<ClientCrystalNode> getRouterNodeAt(BlockPos pos) {
-        return Optional.ofNullable(topazToNode.get(pos));
+    public static List<Frequency> getNodeFrequencies(ClientCrystalNode node) {
+        List<Frequency> freqs = new ArrayList<>();
+        for(BlockPos pos : node.sunstonePositions()) {
+            Frequency freq = frequencies.get(pos);
+            if(freq != null) freqs.add(freq);
+        }
+        return freqs;
     }
 
     public static BlockPos[] getTargetablePositions() {
-        return sapphireToNode.keySet().toArray(BlockPos[]::new);
+        List<BlockPos> visiblePositions = new ArrayList<>();
+        for(BlockPos pos : sapphireToNode.keySet()) {
+            if(Minecraft.getInstance().player == null) throw new IllegalStateException("Player is null");
+            if(pos.distToCenterSqr(Minecraft.getInstance().player.position()) < CausticsClient.MAX_SIGNAL_RANGE)
+                visiblePositions.add(pos);
+        }
+        return visiblePositions.toArray(BlockPos[]::new);
     }
 
     public static void clearScrollPos() {
@@ -55,7 +67,7 @@ public class ClientCrystalNetwork {
             BlockPos lookingAt = lastLookingAt.get();
             if(lookingAt == null) return;
             ClientCrystalNode node = sapphireToNode.get(lookingAt);
-            if(scrollPos.intValue() < node.getDepositNames().size()-1) scrollPos.increment();
+            if(scrollPos.intValue() < node.peridotPositions().size()-1) scrollPos.increment();
         }
 
     }
@@ -67,6 +79,10 @@ public class ClientCrystalNetwork {
     public static void setLastLookingAt(BlockPos pos) {
         if(!pos.equals(lastLookingAt.get())) clearScrollPos();
         lastLookingAt.setValue(pos);
+    }
+
+    public static Optional<Frequency> getFrequencyAt(BlockPos pos) {
+        return Optional.ofNullable(frequencies.get(pos));
     }
 
 }

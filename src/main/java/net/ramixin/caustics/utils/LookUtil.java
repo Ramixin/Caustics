@@ -1,4 +1,4 @@
-package net.ramixin.caustics;
+package net.ramixin.caustics.utils;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public interface ModUtils {
+public interface LookUtil {
 
     float lookThreshold = 3f;
     float ambiguityThreshold = 1f;
@@ -60,7 +60,7 @@ public interface ModUtils {
         for(int i = 0; i < vectors.length; i++)
             for(int j = i + 1; j < vectors.length; j++) {
                 double angle = Math.toDegrees(Math.acos(Math.clamp(vectors[i].dot(vectors[j]), -1.0, 1.0)));
-                if (angle <= ambiguityThreshold) {
+                if(angle <= ambiguityThreshold) {
                     ambiguities.add(i);
                     ambiguities.add(j);
                 }
@@ -72,7 +72,7 @@ public interface ModUtils {
         for(int j = 0; j < vectors.length; j++) {
             if(i == j) continue;
             double angle = Math.toDegrees(Math.acos(Math.clamp(vectors[i].dot(vectors[j]), -1.0, 1.0)));
-            if (angle <= ambiguityThreshold) return true;
+            if(angle <= ambiguityThreshold) return true;
         }
         return false;
     }

@@ -37,7 +37,7 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add(ModItems.ALIDADE, "Alidade");
         translationBuilder.add(ModBlocks.MIRROR, "Mirror");
 
-        translationBuilder.add("caustics.network_frequency.tooltip", "Network Frequency:");
+        translationBuilder.add("caustics.network_frequency.tooltip", "Tuned Frequency:");
         translationBuilder.add("caustics.node.frequencies", "Node Networks:");
         translationBuilder.add("caustics.node.deposit", "Target Deposit:");
     }

@@ -30,7 +30,7 @@ public abstract class BuddingModBlock extends AmethystBlock {
 
     @Override
     protected void randomTick(final @NonNull BlockState state, final @NonNull ServerLevel level, final @NonNull BlockPos pos, final RandomSource random) {
-        if (random.nextInt(GROWTH_CHANCE) != 0) return;
+        if(random.nextInt(GROWTH_CHANCE) != 0) return;
         Direction growDirection = DIRECTIONS[random.nextInt(DIRECTIONS.length)];
         BlockPos growPos = pos.relative(growDirection);
         BlockState relativeState = level.getBlockState(growPos);
@@ -42,7 +42,7 @@ public abstract class BuddingModBlock extends AmethystBlock {
         else
             nextStage = group.nextStage(relativeState.getBlock());
 
-        if (nextStage.isEmpty()) return;
+        if(nextStage.isEmpty()) return;
         BlockState targetState = nextStage.get().defaultBlockState()
                 .setValue(AmethystClusterBlock.FACING, growDirection)
                 .setValue(AmethystClusterBlock.WATERLOGGED, relativeState.getFluidState().is(Fluids.WATER));

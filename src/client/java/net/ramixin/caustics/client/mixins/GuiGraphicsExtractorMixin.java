@@ -24,7 +24,7 @@ public class GuiGraphicsExtractorMixin implements GuiGraphicsExtractorDuck {
     public void caustics$enableTooltipBatching() {
         Runnable original = this.deferredTooltip;
         this.deferredTooltip = () -> {
-            if (original != null) original.run();
+            if(original != null) original.run();
             for (Consumer<GuiGraphicsExtractor> runnable : this.tooltipBatches)
                 runnable.accept((GuiGraphicsExtractor)(Object)this);
         };

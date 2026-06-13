@@ -19,7 +19,7 @@ public class AlidadeItem extends SpyglassItem {
 
     @Override
     public @NonNull InteractionResult use(@NonNull Level level, @NonNull Player player, @NonNull InteractionHand hand) {
-        if (!(level instanceof ServerLevel serverLevel))
+        if(!(level instanceof ServerLevel serverLevel))
             return InteractionResult.PASS;
         if(player.isShiftKeyDown()) {
 

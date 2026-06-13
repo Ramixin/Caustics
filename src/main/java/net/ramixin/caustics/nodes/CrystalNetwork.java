@@ -10,7 +10,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.CodecUtils;
+import net.ramixin.caustics.ModGameRules;
+import net.ramixin.caustics.items.components.Frequency;
 import net.ramixin.caustics.networking.clientbound.NetworkSyncPayload;
+import net.ramixin.caustics.nodes.routing.RoutingManager;
 import net.ramixin.caustics.nodes.steppers.NodeBuilder;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
@@ -22,8 +26,10 @@ public class CrystalNetwork extends SavedData {
 
     private static final Codec<CrystalNetwork> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             CrystalNode.CODEC.listOf().fieldOf("nodes").forGetter(CrystalNetwork::getNodes),
-            BlockPos.CODEC.listOf().listOf().fieldOf("builders").forGetter(CrystalNetwork::getBuildersAsList)
+            BlockPos.CODEC.listOf().listOf().fieldOf("builders").forGetter(CrystalNetwork::getBuildersAsList),
+            Codec.unboundedMap(CodecUtils.STRINGABLE_BLOCK_POS_CODEC, Frequency.CODEC).fieldOf("frequencies").forGetter(CrystalNetwork::getFrequencies)
     ).apply(instance, CrystalNetwork::new));
+
     @SuppressWarnings("DataFlowIssue") // doesn't want null datafixer
     private static final SavedDataType<CrystalNetwork> TYPE = new SavedDataType<>(
             Caustics.id("crystal_network"),
@@ -42,15 +48,19 @@ public class CrystalNetwork extends SavedData {
     private final Map<BlockPos, CrystalNode> peridotToNode = new HashMap<>();
 
     private final List<CrystalNode> nodes = new ArrayList<>();
-    private final List<CrystalNode> routerNodes = new ArrayList<>();
-    private final List<CrystalNode> jammerNodes = new ArrayList<>();
+
+    private final Map<BlockPos, Frequency> frequencies = new HashMap<>();
 
     private final Mutable<Function<UUID, Optional<ServerPlayer>>> playerGetter = new MutableObject<>();
     private final Set<UUID> syncingPlayers = new HashSet<>();
+    private boolean syncDirty = false;
+
+    private final RoutingManager routingManager = new RoutingManager();
+    private boolean routingDirty = true;
 
     private CrystalNetwork() {}
 
-    private CrystalNetwork(List<CrystalNode> nodes, List<List<BlockPos>> builders) {
+    private CrystalNetwork(List<CrystalNode> nodes, List<List<BlockPos>> builders, Map<BlockPos, Frequency> frequencies) {
         int delay = 0;
         for(CrystalNode node : nodes) {
             registerNode(node);
@@ -63,6 +73,7 @@ public class CrystalNetwork extends SavedData {
             builder.pause(delay++);
             newBuilders.put(builder, positions);
         }
+        this.frequencies.putAll(frequencies);
     }
 
     public static CrystalNetwork get(ServerLevel level) {
@@ -72,7 +83,6 @@ public class CrystalNetwork extends SavedData {
     public void tick(ServerLevel level) {
         if(playerGetter.get() == null)
             playerGetter.setValue(playerGetter(level));
-        boolean syncDirty = false;
         for(CrystalNode node : nodes) {
             node.tick(level);
             if(node.consumeSyncingDirty())
@@ -81,8 +91,16 @@ public class CrystalNetwork extends SavedData {
         tickRebuildBuilders(level);
         tickNewBuilders(level);
 
-        if(syncDirty)
+        if(routingDirty) {
+            int maxSignalDist = level.getGameRules().get(ModGameRules.SIGNAL_RANGE);
+            routingManager.rebuildTables(sapphireToNode.keySet(), topazToNode.keySet(), tourmalineToNode.keySet(), maxSignalDist);
+            routingDirty = false;
+        }
+
+        if(syncDirty) {
             syncAll();
+            syncDirty = false;
+        }
     }
 
     private Function<UUID, Optional<ServerPlayer>> playerGetter(ServerLevel level) {
@@ -113,7 +131,6 @@ public class CrystalNetwork extends SavedData {
 
             NodeData newData = maybeData.get();
             if(!newData.equals(oldNode.data())) {
-                Caustics.LOGGER.debug("Rebuilding node with data: {}", newData);
                 unregisterNode(oldNode);
                 CrystalNode newNode = oldNode.withData(newData);
                 registerNode(newNode);
@@ -148,29 +165,29 @@ public class CrystalNetwork extends SavedData {
     private void registerNode(CrystalNode node) {
         nodes.add(node);
 
-        if(!node.data().topazClusters().isEmpty()) {
-            for(BlockPos pos : node.data().topazClusters()) topazToNode.put(pos, node);
-            routerNodes.add(node);
-        }
-        if(!node.data().tourmalineClusters().isEmpty()) {
-            for(BlockPos pos : node.data().tourmalineClusters()) tourmalineToNode.put(pos, node);
-            jammerNodes.add(node);
-        }
-
+        for(BlockPos pos : node.data().topazClusters()) topazToNode.put(pos, node);
+        for(BlockPos pos : node.data().tourmalineClusters()) tourmalineToNode.put(pos, node);
         for(BlockPos pos : node.data().sapphireClusters()) sapphireToNode.put(pos, node);
         for(BlockPos pos : node.data().sunstoneClusters()) sunstoneToNode.put(pos, node);
         for(BlockPos pos : node.data().peridotClusters()) peridotToNode.put(pos, node);
+        routingDirty = true;
     }
 
     private void unregisterNode(CrystalNode node) {
         nodes.remove(node);
-        routerNodes.remove(node);
-        jammerNodes.remove(node);
-        node.data().sapphireClusters().forEach(sapphireToNode::remove);
-        node.data().sunstoneClusters().forEach(sunstoneToNode::remove);
-        node.data().tourmalineClusters().forEach(tourmalineToNode::remove);
-        node.data().topazClusters().forEach(topazToNode::remove);
-        node.data().peridotClusters().forEach(peridotToNode::remove);
+        unregisterAllFrequencies(node.data().sapphireClusters(), sapphireToNode);
+        unregisterAllFrequencies(node.data().sunstoneClusters(), sunstoneToNode);
+        unregisterAllFrequencies(node.data().tourmalineClusters(), tourmalineToNode);
+        unregisterAllFrequencies(node.data().topazClusters(), topazToNode);
+        unregisterAllFrequencies(node.data().peridotClusters(), peridotToNode);
+        routingDirty = true;
+    }
+
+    private void unregisterAllFrequencies(Set<BlockPos> positions, Map<BlockPos, CrystalNode> map) {
+        for(BlockPos pos : positions) {
+            frequencies.remove(pos);
+            map.remove(pos);
+        }
     }
 
     public void generateNodeAt(BlockPos pos) {
@@ -188,6 +205,10 @@ public class CrystalNetwork extends SavedData {
         else nodes.forEach(System.out::println);
     }
 
+    public void printRouting() {
+        System.out.println(routingManager);
+    }
+
     public void nuke() {
         nodes.clear();
         rebuildBuilders.clear();
@@ -203,6 +224,19 @@ public class CrystalNetwork extends SavedData {
 
     private List<CrystalNode> getNodes() {
         return nodes;
+    }
+
+    private Map<BlockPos, Frequency> getFrequencies() {
+        return frequencies;
+    }
+
+    public Optional<Frequency> getFrequencyAt(BlockPos pos) {
+        return Optional.ofNullable(frequencies.get(pos));
+    }
+
+    public void setFrequencyAt(BlockPos pos, Frequency freq) {
+        frequencies.put(pos, freq);
+        syncDirty = true;
     }
 
     public Optional<CrystalNode> getNodeAt(BlockPos pos) {
@@ -248,13 +282,17 @@ public class CrystalNetwork extends SavedData {
         ServerPlayNetworking.send(player.get(), payload);
     }
 
+    public void requestedSync(UUID uuid) {
+        updateSyncer(uuid, getSyncPayload());
+    }
+
     private NetworkSyncPayload getSyncPayload() {
         List<NodeSyncData> data = new ArrayList<>();
         for(CrystalNode node : nodes) {
             Optional<NodeSyncData> maybeData = node.createSyncData();
             maybeData.ifPresent(data::add);
         }
-        return new NetworkSyncPayload(data);
+        return new NetworkSyncPayload(data, frequencies);
     }
 
     public void stopSyncing(UUID uuid) {

@@ -28,12 +28,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.ModUtils;
 import net.ramixin.caustics.client.CausticsClient;
 import net.ramixin.caustics.client.LookManager;
 import net.ramixin.caustics.client.ducks.GuiGraphicsExtractorDuck;
 import net.ramixin.caustics.items.ModItems;
-import net.ramixin.caustics.items.components.NetworkFrequency;
+import net.ramixin.caustics.items.components.Frequency;
+import net.ramixin.caustics.utils.LookUtil;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -88,7 +88,7 @@ public class NodesRenderPipeline {
         LookManager lookManager = CausticsClient.LOOK_MANAGER;
         BlockPos[] positions = lookManager.getPositions();
         double[] angles = lookManager.getAngles();
-        Optional<Integer> closest = ModUtils.calculateClosestLooking(angles);
+        Optional<Integer> closest = LookUtil.calculateClosestLooking(angles);
         Set<Integer> ambiguities = lookManager.getAmbiguityIndices();
         for(int i = 0; i < positions.length; i++) {
             BlockPos pos = positions[i];
@@ -104,9 +104,12 @@ public class NodesRenderPipeline {
         Optional<ClientCrystalNode> maybeClosestNode = ClientCrystalNetwork.getTargetableNodeAt(closestPos);
         if(maybeClosestNode.isEmpty()) return;
         ClientCrystalNode closestNode = maybeClosestNode.get();
+        List<BlockPos> peridotPositions = closestNode.peridotPositions();
         int scrollPos = ClientCrystalNetwork.getScrollPos();
-        Optional<String> closestDepositName = closestNode.getDeposit(scrollPos);
-        HUD_RENDER_STATE = new HudRenderState(null, closestNode.frequencies().stream().map(NetworkFrequency::asFriendlyString).toList(), closestDepositName);
+        if(scrollPos < 0 || scrollPos >= peridotPositions.size()) return;
+        Optional<String> maybeDepositFreq = ClientCrystalNetwork.getFrequencyAt(peridotPositions.get(scrollPos)).map(Frequency::name);
+        List<String> nodeNetworks = ClientCrystalNetwork.getNodeFrequencies(closestNode).stream().map(Frequency::name).toList();
+        HUD_RENDER_STATE = new HudRenderState(null, nodeNetworks, maybeDepositFreq);
     }
 
     private void renderAndDrawNodes(LevelRenderContext ctx) {

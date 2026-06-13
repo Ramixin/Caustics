@@ -14,10 +14,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.ramixin.caustics.items.components.Frequency;
 import net.ramixin.caustics.items.components.ModDataComponents;
-import net.ramixin.caustics.items.components.NetworkFrequency;
 import net.ramixin.caustics.nodes.CrystalNetwork;
-import net.ramixin.caustics.nodes.CrystalNode;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
@@ -53,10 +52,7 @@ public class TuningForkItem extends Item {
             stack.remove(ModDataComponents.NETWORK_FREQUENCY);
             return InteractionResult.SUCCESS;
         }
-        Optional<CrystalNode> maybeNode = CrystalNetwork.get(serverLevel).getNodeAt(pos);
-        if(maybeNode.isEmpty()) return InteractionResult.PASS;
-        CrystalNode node = maybeNode.get();
-        Optional<NetworkFrequency> freq = node.networkFrequencyAt(pos);
+        Optional<Frequency> freq = CrystalNetwork.get(serverLevel).getFrequencyAt(pos);
         if(freq.isEmpty()) return InteractionResult.PASS;
 
         stack.set(ModDataComponents.NETWORK_FREQUENCY, freq.get());
@@ -66,12 +62,9 @@ public class TuningForkItem extends Item {
     }
 
     private static InteractionResult setFrequency(BlockPos pos, ServerLevel serverLevel, ItemStack stack) {
-        NetworkFrequency freq = stack.get(ModDataComponents.NETWORK_FREQUENCY);
+        Frequency freq = stack.get(ModDataComponents.NETWORK_FREQUENCY);
         if(freq == null) return InteractionResult.PASS;
-        Optional<CrystalNode> maybeNode = CrystalNetwork.get(serverLevel).getNodeAt(pos);
-        if(maybeNode.isEmpty()) return InteractionResult.PASS;
-        CrystalNode node = maybeNode.get();
-        node.setFrequency(pos, stack.get(ModDataComponents.NETWORK_FREQUENCY));
+        CrystalNetwork.get(serverLevel).setFrequencyAt(pos, freq);
         return InteractionResult.CONSUME;
     }
 }

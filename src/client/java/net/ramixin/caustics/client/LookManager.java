@@ -3,8 +3,8 @@ package net.ramixin.caustics.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
-import net.ramixin.caustics.ModUtils;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
+import net.ramixin.caustics.utils.LookUtil;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 
@@ -29,7 +29,7 @@ public class LookManager {
         if(vectors == null) {
             BlockPos[] positions = getPositions();
             if(Minecraft.getInstance().player == null) throw new IllegalStateException("Player is null");
-            vectors = ModUtils.calculateUnitVectors(Minecraft.getInstance().player, positions);
+            vectors = LookUtil.calculateUnitVectors(Minecraft.getInstance().player, positions);
         }
         return vectors;
     }
@@ -38,7 +38,7 @@ public class LookManager {
         if(angles == null) {
             Vec3[] vectors = getVectors();
             if(Minecraft.getInstance().player == null) throw new IllegalStateException("Player is null");
-            angles = ModUtils.calculateDisplacementAngles(Minecraft.getInstance().player, vectors);
+            angles = LookUtil.calculateDisplacementAngles(Minecraft.getInstance().player, vectors);
         }
         return angles;
     }
@@ -47,7 +47,7 @@ public class LookManager {
         if(indices.get() == null) {
             Vec3[] vectors = getVectors();
             if(Minecraft.getInstance().player == null) throw new IllegalStateException("Player is null");
-            indices.setValue(ModUtils.ambiguousPositions(vectors));
+            indices.setValue(LookUtil.ambiguousPositions(vectors));
         }
         return indices.get();
     }

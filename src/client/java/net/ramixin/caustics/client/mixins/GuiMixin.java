@@ -36,7 +36,7 @@ public class GuiMixin {
 
     @WrapOperation(method = "extractSpyglassOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V"))
     private void changeScopingTextureIfUsingAlidade(GuiGraphicsExtractor instance, RenderPipeline renderPipeline, Identifier texture, int x, int y, float u, float v, int width, int height, int textureWidth, int textureHeight, Operation<Void> original) {
-        if (usingAlidade)
+        if(usingAlidade)
             texture = CausticsClient.ALIDADE_GUI_TEXTURE;
         original.call(instance, renderPipeline, texture, x, y, u, v, width, height, textureWidth, textureHeight);
     }
