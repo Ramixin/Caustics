@@ -9,9 +9,10 @@ import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.ModGameRules;
 import net.ramixin.caustics.ModTags;
 import net.ramixin.caustics.blocks.ModBlocks;
-import net.ramixin.caustics.nodes.CrystalNetwork;
 import net.ramixin.caustics.nodes.CrystalNode;
 import net.ramixin.caustics.nodes.NodeData;
+import net.ramixin.caustics.nodes.core.CrystalNetwork;
+import net.ramixin.caustics.nodes.core.NodeWorker;
 
 import java.util.*;
 
@@ -87,13 +88,15 @@ public class NodeBuilder {
         return (!posQueue.isEmpty() || !started) && (stepsLeft > 0 || stepsLeft == -1);
     }
 
-    public Optional<NodeData> build(ServerLevel level) {
+    public Optional<NodeData> build(ServerLevel level, NodeWorker worker) {
         if(populateClusters(level)) return Optional.empty();
         if(data.sapphireClusters().isEmpty() && data.topazClusters().isEmpty() && data.tourmalineClusters().isEmpty()) return Optional.empty();
 
         potentialStarts.removeAll(data.sapphireClusters());
+        potentialStarts.removeAll(data.topazClusters());
+        potentialStarts.removeAll(data.tourmalineClusters());
         if(!potentialStarts.isEmpty()) {
-            CrystalNetwork.get(level).addBuilder(new NodeBuilder(potentialStarts), potentialStarts);
+            worker.addNewBuilder(new NodeBuilder(potentialStarts), potentialStarts);
         }
 
 
@@ -121,8 +124,8 @@ public class NodeBuilder {
             else if(state.is(ModBlocks.SUNSTONE_GROUP.cluster()))
                 data.sunstoneClusters().add(pos);
             else if(state.is(ModBlocks.TOURMALINE_GROUP.cluster())) {
+                if(checkOverlap(network, pos)) return true;
                 data.tourmalineClusters().add(pos);
-                checkOverlap(network, pos);
             } else if(state.is(ModBlocks.SAPPHIRE_GROUP.cluster())) {
                 if(checkOverlap(network, pos)) return true;
                 data.sapphireClusters().add(pos);

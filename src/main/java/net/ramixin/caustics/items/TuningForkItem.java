@@ -16,7 +16,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.ramixin.caustics.items.components.Frequency;
 import net.ramixin.caustics.items.components.ModDataComponents;
-import net.ramixin.caustics.nodes.CrystalNetwork;
+import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
@@ -41,30 +41,30 @@ public class TuningForkItem extends Item {
         BlockPos pos = blockHitResult.getBlockPos();
         BlockState state = level.getBlockState(pos);
         if(player.isShiftKeyDown())
-            return ObtainFrequency(pos, serverLevel, stack, state);
+            return obtainFrequency(pos, serverLevel, stack, state);
         else
             return setFrequency(pos, serverLevel, stack);
     }
 
-    private static InteractionResult ObtainFrequency(BlockPos pos, ServerLevel serverLevel, ItemStack stack, BlockState state) {
+    private static InteractionResult obtainFrequency(BlockPos pos, ServerLevel serverLevel, ItemStack stack, BlockState state) {
         if(state.isAir()) {
             stack.remove(DataComponents.ENCHANTMENT_GLINT_OVERRIDE);
-            stack.remove(ModDataComponents.NETWORK_FREQUENCY);
+            stack.remove(ModDataComponents.FREQUENCY);
             return InteractionResult.SUCCESS;
         }
-        Optional<Frequency> freq = CrystalNetwork.get(serverLevel).getFrequencyAt(pos);
+        Optional<Frequency> freq = CrystalNetwork.get(serverLevel).getRegistry().getFrequencyAt(pos);
         if(freq.isEmpty()) return InteractionResult.PASS;
 
-        stack.set(ModDataComponents.NETWORK_FREQUENCY, freq.get());
+        stack.set(ModDataComponents.FREQUENCY, freq.get());
         stack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
 
         return InteractionResult.SUCCESS;
     }
 
     private static InteractionResult setFrequency(BlockPos pos, ServerLevel serverLevel, ItemStack stack) {
-        Frequency freq = stack.get(ModDataComponents.NETWORK_FREQUENCY);
+        Frequency freq = stack.get(ModDataComponents.FREQUENCY);
         if(freq == null) return InteractionResult.PASS;
-        CrystalNetwork.get(serverLevel).setFrequencyAt(pos, freq);
+        CrystalNetwork.get(serverLevel).getRegistry().register(pos, freq);
         return InteractionResult.CONSUME;
     }
 }

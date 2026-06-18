@@ -8,8 +8,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpyglassItem;
 import net.minecraft.world.level.Level;
-import net.ramixin.caustics.nodes.CrystalNetwork;
+import net.ramixin.caustics.items.components.Frequency;
+import net.ramixin.caustics.items.components.ModDataComponents;
+import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import org.jspecify.annotations.NonNull;
+
+import java.util.Optional;
 
 public class AlidadeItem extends SpyglassItem {
 
@@ -21,11 +25,13 @@ public class AlidadeItem extends SpyglassItem {
     public @NonNull InteractionResult use(@NonNull Level level, @NonNull Player player, @NonNull InteractionHand hand) {
         if(!(level instanceof ServerLevel serverLevel))
             return InteractionResult.PASS;
+        CrystalNetwork network = CrystalNetwork.get(serverLevel);
         if(player.isShiftKeyDown()) {
-
+            Optional<Frequency> maybeFreq = network.getRegistry().getFrequencyAt(player.blockPosition());
+            maybeFreq.ifPresent(frequency -> player.getUseItem().set(ModDataComponents.FREQUENCY, frequency));
             return InteractionResult.PASS;
         }
-        CrystalNetwork network = CrystalNetwork.get(serverLevel);
+
         network.startSyncing(player.getUUID());
         return super.use(level, player, hand);
     }

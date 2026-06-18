@@ -12,10 +12,11 @@ import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.items.ModItems;
 import net.ramixin.caustics.items.components.ModDataComponents;
 import net.ramixin.caustics.menus.ModMenus;
-import net.ramixin.caustics.networking.clientbound.NetworkSyncPayload;
-import net.ramixin.caustics.networking.clientbound.SignalRangeChangedPayload;
+import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
+import net.ramixin.caustics.networking.clientbound.NodeSyncPayload;
+import net.ramixin.caustics.networking.clientbound.SignalRangeSyncPayload;
 import net.ramixin.caustics.networking.serverbound.RequestSyncPayload;
-import net.ramixin.caustics.nodes.CrystalNetwork;
+import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,16 +42,16 @@ public class Caustics implements ModInitializer {
 
         ServerTickEvents.END_LEVEL_TICK.register(level -> CrystalNetwork.get(level).tick(level));
 
-        ServerPlayerEvents.JOIN.register(player -> ServerPlayNetworking.send(player, new SignalRangeChangedPayload(player.level().getGameRules().get(ModGameRules.SIGNAL_RANGE))));
+        ServerPlayerEvents.JOIN.register(player -> CrystalNetwork.get(player.level()).joinSync(player));
 
-        PayloadTypeRegistry.clientboundPlay().register(NetworkSyncPayload.TYPE, NetworkSyncPayload.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(SignalRangeChangedPayload.TYPE, SignalRangeChangedPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(NodeSyncPayload.TYPE, NodeSyncPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(SignalRangeSyncPayload.TYPE, SignalRangeSyncPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(FrequencySyncPayload.TYPE, FrequencySyncPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(RequestSyncPayload.TYPE, RequestSyncPayload.CODEC);
 
-        ServerPlayNetworking.registerGlobalReceiver(RequestSyncPayload.TYPE, (_, ctx) -> {
-            CrystalNetwork network = CrystalNetwork.get(ctx.player().level());
-            network.requestedSync(ctx.player().getUUID());
-        });
+        ServerPlayNetworking.registerGlobalReceiver(RequestSyncPayload.TYPE, (_, ctx) ->
+                CrystalNetwork.get(ctx.player().level()).resync(ctx.player())
+        );
     }
 
     public static Identifier id(String path) {

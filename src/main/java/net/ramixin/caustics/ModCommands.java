@@ -1,6 +1,7 @@
 package net.ramixin.caustics;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 import net.minecraft.commands.CommandBuildContext;
@@ -10,8 +11,8 @@ import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.ramixin.caustics.items.components.Frequency;
-import net.ramixin.caustics.nodes.CrystalNetwork;
 import net.ramixin.caustics.nodes.CrystalNode;
+import net.ramixin.caustics.nodes.core.CrystalNetwork;
 
 import java.util.Optional;
 
@@ -26,7 +27,7 @@ public class ModCommands {
         caustics.addChild(printNodes());
         caustics.addChild(nuke());
         caustics.addChild(testVisibility());
-        caustics.addChild(getFrequency());
+        caustics.addChild(createFrequency());
         caustics.addChild(depositPos());
         caustics.addChild(printRouting());
 
@@ -67,18 +68,60 @@ public class ModCommands {
                 })).build();
     }
 
+
+
+    private static CommandNode<CommandSourceStack> createFrequency() {
+        CommandNode<CommandSourceStack> frequency = Commands.literal("frequency").build();
+
+        frequency.addChild(getFrequency());
+        frequency.addChild(setFrequency());
+
+        return frequency;
+    }
+
     private static CommandNode<CommandSourceStack> getFrequency() {
-        return Commands.literal("getfrequency").then(Commands.argument("pos", BlockPosArgument.blockPos())
+        return Commands.literal("get").then(Commands.argument("pos", BlockPosArgument.blockPos())
                 .executes(ctx -> {
                     BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
                     CrystalNetwork network = CrystalNetwork.get(ctx.getSource().getLevel());
-                    Optional<Frequency> freq = network.getFrequencyAt(pos);
+                    Optional<Frequency> freq = network.getRegistry().getFrequencyAt(pos);
                     if(freq.isEmpty())
                         ctx.getSource().sendFailure(Component.literal("No tuned frequency at " + pos));
                     else
                         ctx.getSource().sendSuccess(() -> Component.literal("Frequency at " + pos + " is " + freq.get()), false);
                     return 0;
-        })).build();
+                })).build();
+    }
+
+    private static CommandNode<CommandSourceStack> setFrequency() {
+        return Commands.literal("set").then(Commands.argument("pos", BlockPosArgument.blockPos()).then(Commands.argument("frequency", StringArgumentType.greedyString())
+                .executes(ctx -> {
+                    BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
+                    if(!ctx.getSource().getLevel().getBlockState(pos).is(ModTags.Blocks.TUNABLE_CLUSTER)) {
+                        ctx.getSource().sendFailure(Component.literal("No tunable cluster at " + pos));
+                        return 1;
+                    }
+                    String freqStr = StringArgumentType.getString(ctx, "frequency");
+                    CrystalNetwork network = CrystalNetwork.get(ctx.getSource().getLevel());
+                    Frequency frequency = Frequency.fromName(freqStr);
+                    network.getRegistry().register(pos, frequency);
+                    Optional<String> maybeName = network.getFrequencyName(frequency);
+                    if(maybeName.isEmpty())
+                        network.setFrequencyName(frequency, freqStr);
+                    else {
+                        String name = maybeName.get();
+                        if(!name.equals(freqStr)) {
+                            ctx.getSource().sendFailure(Component.literal("Frequency name conflict: " + name + " != " + freqStr));
+                            return 1;
+                        }
+                        network.setFrequencyName(frequency, freqStr);
+                    }
+
+
+                    ctx.getSource().sendSuccess(() -> Component.literal("Frequency at " + pos + " set to " + freqStr), false);
+                    return 0;
+                })
+        )).build();
     }
 
     public static CommandNode<CommandSourceStack> depositPos() {

@@ -24,7 +24,7 @@ import java.util.function.Function;
 public class ModBlocks {
 
     public static final CrystalBlockGroup SAPPHIRE_GROUP = registerGroup("sapphire", BuddingSapphireBlock::new, NetworkClusterBlock::new);
-    public static final CrystalBlockGroup CINNABAR_GROUP = registerGroup("cinnabar", BuddingCinnabarBlock::new);
+    public static final CrystalBlockGroup BERYL_GROUP = registerGroup("beryl", BuddingBerylBlock::new);
     public static final CrystalBlockGroup PERIDOT_GROUP = registerGroup("peridot", BuddingPeridotBlock::new);
     public static final CrystalBlockGroup TOPAZ_GROUP = registerGroup("topaz", BuddingTopazBlock::new, NetworkClusterBlock::new);
     public static final CrystalBlockGroup SUNSTONE_GROUP = registerGroup("sunstone", BuddingSunstoneBlock::new);
@@ -40,7 +40,7 @@ public class ModBlocks {
             registerGroupTabEntries(SUNSTONE_GROUP,event);
             registerGroupTabEntries(TOPAZ_GROUP,event);
             registerGroupTabEntries(PERIDOT_GROUP,event);
-            registerGroupTabEntries(CINNABAR_GROUP,event);
+            registerGroupTabEntries(BERYL_GROUP,event);
             registerGroupTabEntries(SAPPHIRE_GROUP,event);
         });
 

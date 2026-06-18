@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.gamerules.GameRule;
 import net.minecraft.world.level.gamerules.GameRuleCategory;
-import net.ramixin.caustics.networking.clientbound.SignalRangeChangedPayload;
+import net.ramixin.caustics.networking.clientbound.SignalRangeSyncPayload;
 
 public class ModGameRules {
 
@@ -16,7 +16,7 @@ public class ModGameRules {
 
     public static void onInitialize() {
         GameRuleEvents.changeCallback(SIGNAL_RANGE).register((value, server) -> {
-            SignalRangeChangedPayload payload = new SignalRangeChangedPayload(value);
+            SignalRangeSyncPayload payload = new SignalRangeSyncPayload(value);
             for(ServerPlayer player : server.getPlayerList().getPlayers()) {
                 ServerPlayNetworking.send(player, payload);
             }

@@ -18,7 +18,7 @@ import java.util.function.Function;
 public class ModItems {
 
     public static final Item SAPPHIRE_SHARD = register("sapphire_shard", Item::new, new Item.Properties());
-    public static final Item CINNABAR_SHARD = register("cinnabar_shard", Item::new, new Item.Properties());
+    public static final Item BERYL_SHARD = register("beryl_shard", Item::new, new Item.Properties());
     public static final Item PERIDOT_SHARD = register("peridot_shard", Item::new, new Item.Properties());
     public static final Item TOPAZ_SHARD = register("topaz_shard", Item::new, new Item.Properties());
     public static final Item SUNSTONE_SHARD = register("sunstone_shard", Item::new, new Item.Properties());
@@ -32,7 +32,7 @@ public class ModItems {
     public static void onInitialize() {
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.INGREDIENTS).register(event ->
                 event.insertAfter(Items.AMETHYST_SHARD,
-                    SAPPHIRE_SHARD, CINNABAR_SHARD, PERIDOT_SHARD, TOPAZ_SHARD, SUNSTONE_SHARD, SELENITE_SHARD, TOURMALINE_SHARD));
+                    SAPPHIRE_SHARD, BERYL_SHARD, PERIDOT_SHARD, TOPAZ_SHARD, SUNSTONE_SHARD, SELENITE_SHARD, TOURMALINE_SHARD));
 
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(event -> {
             event.insertAfter(Items.SPYGLASS, ALIDADE);
@@ -40,7 +40,7 @@ public class ModItems {
         }
         );
 
-        ItemComponentTooltipProviderRegistry.addLast(ModDataComponents.NETWORK_FREQUENCY);
+        ItemComponentTooltipProviderRegistry.addLast(ModDataComponents.FREQUENCY);
     }
 
     private static <T extends Item> T register(String name, Function<Item.Properties, T> constructor, Item.Properties properties) {

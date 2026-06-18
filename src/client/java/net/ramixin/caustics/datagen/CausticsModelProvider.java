@@ -30,7 +30,7 @@ public class CausticsModelProvider extends FabricModelProvider {
     @Override
     public void generateBlockStateModels(@NonNull BlockModelGenerators blockModelGenerators) {
         generateGroupBlocks(ModBlocks.SAPPHIRE_GROUP, blockModelGenerators);
-        generateGroupBlocks(ModBlocks.CINNABAR_GROUP, blockModelGenerators);
+        generateGroupBlocks(ModBlocks.BERYL_GROUP, blockModelGenerators);
         generateGroupBlocks(ModBlocks.PERIDOT_GROUP, blockModelGenerators);
         generateGroupBlocks(ModBlocks.TOPAZ_GROUP, blockModelGenerators);
         generateGroupBlocks(ModBlocks.SUNSTONE_GROUP, blockModelGenerators);
@@ -42,7 +42,7 @@ public class CausticsModelProvider extends FabricModelProvider {
     public void generateItemModels(@NonNull ItemModelGenerators generators) {
 
         generators.generateFlatItem(ModItems.SAPPHIRE_SHARD, ModelTemplates.FLAT_ITEM);
-        generators.generateFlatItem(ModItems.CINNABAR_SHARD, ModelTemplates.FLAT_ITEM);
+        generators.generateFlatItem(ModItems.BERYL_SHARD, ModelTemplates.FLAT_ITEM);
         generators.generateFlatItem(ModItems.PERIDOT_SHARD, ModelTemplates.FLAT_ITEM);
         generators.generateFlatItem(ModItems.TOPAZ_SHARD, ModelTemplates.FLAT_ITEM);
         generators.generateFlatItem(ModItems.SUNSTONE_SHARD, ModelTemplates.FLAT_ITEM);
@@ -53,7 +53,7 @@ public class CausticsModelProvider extends FabricModelProvider {
         generators.generateSpyglass(ModItems.TUNING_FORK);
 
         generateGroupItems(ModBlocks.SAPPHIRE_GROUP, generators);
-        generateGroupItems(ModBlocks.CINNABAR_GROUP, generators);
+        generateGroupItems(ModBlocks.BERYL_GROUP, generators);
         generateGroupItems(ModBlocks.PERIDOT_GROUP, generators);
         generateGroupItems(ModBlocks.TOPAZ_GROUP, generators);
         generateGroupItems(ModBlocks.SUNSTONE_GROUP, generators);

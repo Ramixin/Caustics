@@ -1,14 +1,22 @@
 package net.ramixin.caustics.nodes.routing;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 
 import java.util.*;
 
 public class RoutingTable {
 
-    private final Map<BlockPos, Route> routes = new HashMap<>();
+    private final Map<BlockPos, Route> routes;
 
-    protected RoutingTable(BlockPos pos, Set<BlockPos> travels, Set<BlockPos> routers, Set<BlockPos> jammers, int maxSignalDist) {
+    public static final StreamCodec<FriendlyByteBuf, RoutingTable> STREAM_CODEC = StreamCodec.ofMember(RoutingTable::write, RoutingTable::new);
+
+    private RoutingTable(FriendlyByteBuf buf) {
+        routes = buf.readMap(BlockPos.STREAM_CODEC, Route.STREAM_CODEC);
+    }
+
+    public RoutingTable(BlockPos pos, Set<BlockPos> travels, Set<BlockPos> routers, Set<BlockPos> jammers, int maxSignalDist) {
         Set<BlockPos> locs = new HashSet<>(travels);
         locs.addAll(routers);
         Map<BlockPos, BlockPos> searchTree = new HashMap<>();
@@ -27,12 +35,13 @@ public class RoutingTable {
                     queue.add(loc);
             }
         }
-
+        Map<BlockPos, Route> routes = new HashMap<>();
         for(BlockPos reached : searchTree.keySet()) {
             if(reached.equals(pos)) continue;
             if(!travels.contains(reached)) continue;
             routes.put(reached, new Route(reached, searchTree));
         }
+        this.routes = routes;
     }
 
     private static boolean canConnect(BlockPos pos, BlockPos end, Set<BlockPos> jammers, int maxDist) {
@@ -88,6 +97,10 @@ public class RoutingTable {
 
     public int size() {
         return routes.size();
+    }
+
+    private void write(FriendlyByteBuf buf) {
+        buf.writeMap(routes, BlockPos.STREAM_CODEC, Route.STREAM_CODEC);
     }
 
     @Override

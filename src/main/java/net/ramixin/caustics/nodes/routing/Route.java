@@ -1,11 +1,20 @@
 package net.ramixin.caustics.nodes.routing;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 
 import java.util.*;
 
 public class Route {
+    
+    public static final StreamCodec<FriendlyByteBuf, Route> STREAM_CODEC = StreamCodec.ofMember(Route::write, Route::new);
+
     private final List<BlockPos> path;
+
+    private Route(FriendlyByteBuf friendlyByteBuf) {
+        this(new ArrayList<>(friendlyByteBuf.readList(BlockPos.STREAM_CODEC)));
+    }
 
     protected Route(BlockPos pos, Map<BlockPos, BlockPos> searchTree) {
         List<BlockPos> path = new ArrayList<>();
@@ -25,6 +34,10 @@ public class Route {
 
     public Route() {
         this(new ArrayList<>());
+    }
+
+    private void write(FriendlyByteBuf buf) {
+        buf.writeCollection(path, BlockPos.STREAM_CODEC);
     }
 
     public Route extend(BlockPos pos) {

@@ -9,7 +9,7 @@ import java.util.function.UnaryOperator;
 
 public class ModDataComponents {
 
-    public static final DataComponentType<Frequency> NETWORK_FREQUENCY = register("network_frequency", (builder) -> builder.persistent(Frequency.CODEC).networkSynchronized(Frequency.STREAM_CODEC));
+    public static final DataComponentType<Frequency> FREQUENCY = register("frequency", (builder) -> builder.persistent(Frequency.CODEC).networkSynchronized(Frequency.STREAM_CODEC));
 
     public static void onInitialize() {
 

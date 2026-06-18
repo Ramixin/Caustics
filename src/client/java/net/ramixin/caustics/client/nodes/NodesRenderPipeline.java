@@ -38,7 +38,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -100,16 +99,31 @@ public class NodesRenderPipeline {
         if(closest.isEmpty()) return;
         int closestIndex = closest.get();
         BlockPos closestPos = positions[closestIndex];
-        ClientCrystalNetwork.setLastLookingAt(closestPos);
-        Optional<ClientCrystalNode> maybeClosestNode = ClientCrystalNetwork.getTargetableNodeAt(closestPos);
+        ClientCrystalNetwork.getInstance().setLastLookingAt(closestPos);
+        Optional<ClientCrystalNode> maybeClosestNode = ClientCrystalNetwork.getInstance().getTargetableNodeAt(closestPos);
         if(maybeClosestNode.isEmpty()) return;
         ClientCrystalNode closestNode = maybeClosestNode.get();
-        List<BlockPos> peridotPositions = closestNode.peridotPositions();
-        int scrollPos = ClientCrystalNetwork.getScrollPos();
-        if(scrollPos < 0 || scrollPos >= peridotPositions.size()) return;
-        Optional<String> maybeDepositFreq = ClientCrystalNetwork.getFrequencyAt(peridotPositions.get(scrollPos)).map(Frequency::name);
-        List<String> nodeNetworks = ClientCrystalNetwork.getNodeFrequencies(closestNode).stream().map(Frequency::name).toList();
-        HUD_RENDER_STATE = new HudRenderState(null, nodeNetworks, maybeDepositFreq);
+        int scrollPos = ClientCrystalNetwork.getInstance().getScrollPos();
+
+        String nodeName = extractNodeName(closestPos).getString();
+        Optional<String> depositName = closestNode.peridotPositions().isEmpty() ? Optional.empty() : Optional.of(extractDepositName(closestNode, scrollPos).getString());
+        HUD_RENDER_STATE = new HudRenderState(nodeName, depositName);
+    }
+
+    private static Component extractNodeName(BlockPos pos) {
+        Optional<Frequency> maybeFreq = ClientCrystalNetwork.getInstance().getFrequencyAt(pos);
+        if(maybeFreq.isEmpty()) return Component.translatable("caustics.node.unknown_travel");
+        Optional<String> maybeNodeName = ClientCrystalNetwork.getInstance().getFrequencyName(maybeFreq.get());
+        return maybeNodeName.map(Component::literal).orElseGet(() -> Component.translatable("caustics.node.unnamed_travel"));
+    }
+
+    private static Component extractDepositName(ClientCrystalNode node, int scrollPos) {
+        if(scrollPos >= node.peridotPositions().size() || scrollPos < 0) return Component.translatable("caustics.node.scroll_oob");
+        BlockPos pos = node.peridotPositions().get(scrollPos);
+        Optional<Frequency> maybeFreq = ClientCrystalNetwork.getInstance().getFrequencyAt(pos);
+        if(maybeFreq.isEmpty()) return Component.translatable("caustics.node.unknown_deposit");
+        Optional<String> maybeDepositName = ClientCrystalNetwork.getInstance().getFrequencyName(maybeFreq.get());
+        return maybeDepositName.map(Component::literal).orElseGet(() -> Component.translatable("caustics.node.unnamed_deposit"));
     }
 
     private void renderAndDrawNodes(LevelRenderContext ctx) {
@@ -123,9 +137,7 @@ public class NodesRenderPipeline {
         if(HUD_RENDER_STATE == null) return;
         GuiGraphicsExtractorDuck duck = GuiGraphicsExtractorDuck.get(evilGraphics);
         duck.caustics$enableTooltipBatching();
-
-        String name = HUD_RENDER_STATE.nodeName() == null ? "Unnamed Crystal Node" : HUD_RENDER_STATE.nodeName();
-        easyTooltip(duck, List.of(Component.literal(name)), -5, 20);
+        easyTooltip(duck, List.of(Component.literal(HUD_RENDER_STATE.nodeName())), -5, 20);
 
         if(HUD_RENDER_STATE.maybeDepositName().isPresent()) {
             String depositName = HUD_RENDER_STATE.maybeDepositName().get();
@@ -134,16 +146,6 @@ public class NodesRenderPipeline {
                     Component.literal(depositName)
             );
             easyTooltip(duck, text, -5,40);
-        }
-
-        if(!HUD_RENDER_STATE.frequencies().isEmpty()) {
-            List<Component> text = new ArrayList<>();
-            text.add(Component.translatable("caustics.node.frequencies"));
-            text.add(Component.literal(""));
-            for(String freq : HUD_RENDER_STATE.frequencies()) {
-                text.add(Component.literal(freq));
-            }
-            easyTooltip(duck, text, -5,80);
         }
 
         int mouseX = (int) Minecraft.getInstance().mouseHandler.xpos();
@@ -278,5 +280,5 @@ public class NodesRenderPipeline {
 
     private record NodeRenderState(int x, int y, int z, boolean lookingAt, boolean ambiguous) { }
 
-    private record HudRenderState(@Nullable String nodeName, List<String> frequencies, Optional<String> maybeDepositName) { }
+    private record HudRenderState(String nodeName, Optional<String> maybeDepositName) { }
 }

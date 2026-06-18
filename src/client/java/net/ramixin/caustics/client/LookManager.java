@@ -21,7 +21,7 @@ public class LookManager {
 
     public BlockPos[] getPositions() {
         if(positions == null)
-            positions = ClientCrystalNetwork.getTargetablePositions();
+            positions = ClientCrystalNetwork.getInstance().getTargetablePositions();
         return positions;
     }
 

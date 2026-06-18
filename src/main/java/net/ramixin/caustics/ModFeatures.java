@@ -14,7 +14,7 @@ public class ModFeatures {
     public interface Placed {
 
         ResourceKey<PlacedFeature> SAPPHIRE_GEODE = getKey("sapphire");
-        ResourceKey<PlacedFeature> CINNABAR_GEODE = getKey("cinnabar");
+        ResourceKey<PlacedFeature> BERYL_GEODE = getKey("beryl");
         ResourceKey<PlacedFeature> PERIDOT_GEODE = getKey("peridot");
         ResourceKey<PlacedFeature> TOPAZ_GEODE = getKey("topaz");
         ResourceKey<PlacedFeature> SUNSTONE_GEODE = getKey("sunstone");
@@ -35,7 +35,7 @@ public class ModFeatures {
                 BiomeSelectors.foundInOverworld(),
                 (_, modContext) -> {
                     modContext.getGenerationSettings().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, Placed.SAPPHIRE_GEODE);
-                    modContext.getGenerationSettings().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, Placed.CINNABAR_GEODE);
+                    modContext.getGenerationSettings().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, Placed.BERYL_GEODE);
                     modContext.getGenerationSettings().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, Placed.PERIDOT_GEODE);
                     modContext.getGenerationSettings().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, Placed.TOPAZ_GEODE);
                     modContext.getGenerationSettings().addFeature(GenerationStep.Decoration.UNDERGROUND_ORES, Placed.SUNSTONE_GEODE);

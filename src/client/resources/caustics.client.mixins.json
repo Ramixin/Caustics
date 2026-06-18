@@ -4,17 +4,16 @@
   "package": "net.ramixin.caustics.client.mixins",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "AbstractClientPlayerMixin",
+    "GuiGraphicsExtractorMixin",
+    "GuiMixin",
+    "ItemTooltipContext$2Mixin",
+    "MinecraftMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "overwrites": {
     "requireAnnotations": true
-  },
-  "mixins": [
-    "AbstractClientPlayerMixin",
-    "GuiGraphicsExtractorMixin",
-    "GuiMixin",
-    "MinecraftMixin"
-  ]
+  }
 }

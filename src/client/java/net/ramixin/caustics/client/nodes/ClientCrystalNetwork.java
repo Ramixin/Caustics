@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.ramixin.caustics.client.CausticsClient;
 import net.ramixin.caustics.items.components.Frequency;
+import net.ramixin.caustics.nodes.Network;
 import net.ramixin.caustics.nodes.NodeSyncData;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -11,42 +12,46 @@ import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.util.*;
 
-public class ClientCrystalNetwork {
+public class ClientCrystalNetwork implements Network {
 
-    private static final List<ClientCrystalNode> nodes = new ArrayList<>();
-    private static final HashMap<BlockPos, ClientCrystalNode> sapphireToNode = new HashMap<>();
+    private static final ClientCrystalNetwork INSTANCE = new ClientCrystalNetwork();
 
-    private static final MutableInt scrollPos = new MutableInt();
-    private static final Mutable<BlockPos> lastLookingAt = new MutableObject<>();
+    private final List<ClientCrystalNode> nodes = new ArrayList<>();
+    private final HashMap<BlockPos, ClientCrystalNode> sapphireToNode = new HashMap<>();
 
-    private static final Map<BlockPos, Frequency> frequencies = new HashMap<>();
+    private final MutableInt scrollPos = new MutableInt();
+    private final Mutable<BlockPos> lastLookingAt = new MutableObject<>();
 
-    public static void onSync(List<NodeSyncData> syncData, Map<BlockPos, Frequency> freqs) {
+    private final Map<BlockPos, Frequency> frequencies = new HashMap<>();
+    private final Map<Frequency, String> frequencyNames = new HashMap<>();
+
+    public static ClientCrystalNetwork getInstance() {
+        return INSTANCE;
+    }
+
+    public void onNodeSync(List<NodeSyncData> syncData) {
         nodes.clear();
         sapphireToNode.clear();
-        frequencies.clear();
 
         for(NodeSyncData data : syncData) {
             nodes.add(ClientCrystalNode.fromSyncData(data));
             for(BlockPos pos : data.sapphirePositions()) sapphireToNode.put(pos, ClientCrystalNode.fromSyncData(data));
         }
-        frequencies.putAll(freqs);
     }
 
-    public static Optional<ClientCrystalNode> getTargetableNodeAt(BlockPos pos) {
+    public void onFrequencySync(Map<BlockPos, Frequency> frequencies, Map<Frequency, String> frequencyNames) {
+        this.frequencies.clear();
+        this.frequencyNames.clear();
+
+        this.frequencies.putAll(frequencies);
+        this.frequencyNames.putAll(frequencyNames);
+    }
+
+    public Optional<ClientCrystalNode> getTargetableNodeAt(BlockPos pos) {
         return Optional.ofNullable(sapphireToNode.get(pos));
     }
 
-    public static List<Frequency> getNodeFrequencies(ClientCrystalNode node) {
-        List<Frequency> freqs = new ArrayList<>();
-        for(BlockPos pos : node.sunstonePositions()) {
-            Frequency freq = frequencies.get(pos);
-            if(freq != null) freqs.add(freq);
-        }
-        return freqs;
-    }
-
-    public static BlockPos[] getTargetablePositions() {
+    public BlockPos[] getTargetablePositions() {
         List<BlockPos> visiblePositions = new ArrayList<>();
         for(BlockPos pos : sapphireToNode.keySet()) {
             if(Minecraft.getInstance().player == null) throw new IllegalStateException("Player is null");
@@ -56,11 +61,11 @@ public class ClientCrystalNetwork {
         return visiblePositions.toArray(BlockPos[]::new);
     }
 
-    public static void clearScrollPos() {
+    public void clearScrollPos() {
         scrollPos.setValue(0);
     }
 
-    public static void deltaScrollPos(double dy) {
+    public void deltaScrollPos(double dy) {
         if(dy < 0) {
             if(scrollPos.intValue() > 0) scrollPos.decrement();
         } else {
@@ -72,17 +77,21 @@ public class ClientCrystalNetwork {
 
     }
 
-    public static int getScrollPos() {
+    public int getScrollPos() {
         return scrollPos.intValue();
     }
 
-    public static void setLastLookingAt(BlockPos pos) {
+    public void setLastLookingAt(BlockPos pos) {
         if(!pos.equals(lastLookingAt.get())) clearScrollPos();
         lastLookingAt.setValue(pos);
     }
 
-    public static Optional<Frequency> getFrequencyAt(BlockPos pos) {
+    public Optional<Frequency> getFrequencyAt(BlockPos pos) {
         return Optional.ofNullable(frequencies.get(pos));
     }
 
+    @Override
+    public Optional<String> getFrequencyName(Frequency frequency) {
+        return Optional.ofNullable(frequencyNames.get(frequency));
+    }
 }

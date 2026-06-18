@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.ramixin.caustics.nodes.core.Tracker;
 import net.ramixin.caustics.nodes.steppers.DepositChecker;
 import net.ramixin.caustics.nodes.steppers.VisibilityChecker;
 import org.jspecify.annotations.NonNull;
@@ -19,7 +20,6 @@ public final class CrystalNode {
     private final NodeData data;
     private final Map<BlockPos, VisibilityChecker> visibilityCheckers;
     private final Map<BlockPos, DepositChecker> depositCheckers;
-    private boolean syncingDirty = false;
     private int delay = 0;
 
     public CrystalNode(NodeData data) {
@@ -58,13 +58,7 @@ public final class CrystalNode {
                 visibilityCheckers.put(pos, oldCheckers.get(pos));
     }
 
-    public boolean consumeSyncingDirty() {
-        boolean val = syncingDirty;
-        syncingDirty = false;
-        return val;
-    }
-
-    public void tick(ServerLevel level) {
+    public void tick(ServerLevel level, Tracker tracker) {
         if(delay > 0) {
             delay--;
             return;
@@ -76,14 +70,10 @@ public final class CrystalNode {
         }
 
         for(VisibilityChecker checker : visibilityCheckers.values()) {
-            checker.tick(level);
-            if(checker.consumeSyncingDirty())
-                syncingDirty = true;
+            checker.tick(level, tracker);
         }
         for(DepositChecker checker : depositCheckers.values()) {
-            checker.tick(level);
-            if(checker.consumeSyncingDirty())
-                syncingDirty = true;
+            checker.tick(level, tracker);
         }
 
     }

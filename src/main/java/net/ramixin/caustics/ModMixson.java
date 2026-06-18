@@ -20,7 +20,7 @@ public class ModMixson {
     public static void onInitialize() {
 
         registerGeode("sapphire");
-        registerGeode("cinnabar");
+        registerGeode("beryl");
         registerGeode("peridot");
         registerGeode("topaz");
         registerGeode("sunstone");

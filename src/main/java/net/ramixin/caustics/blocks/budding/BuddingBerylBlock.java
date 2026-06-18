@@ -5,12 +5,12 @@ import net.minecraft.world.level.block.AmethystBlock;
 import net.ramixin.caustics.blocks.ModBlocks;
 import org.jspecify.annotations.NonNull;
 
-public class BuddingCinnabarBlock extends BuddingModBlock {
+public class BuddingBerylBlock extends BuddingModBlock {
 
-    public static final MapCodec<BuddingCinnabarBlock> CODEC = simpleCodec(BuddingCinnabarBlock::new);
+    public static final MapCodec<BuddingBerylBlock> CODEC = simpleCodec(BuddingBerylBlock::new);
 
-    public BuddingCinnabarBlock(Properties properties) {
-        super(properties, () -> ModBlocks.CINNABAR_GROUP);
+    public BuddingBerylBlock(Properties properties) {
+        super(properties, () -> ModBlocks.BERYL_GROUP);
     }
 
     @Override

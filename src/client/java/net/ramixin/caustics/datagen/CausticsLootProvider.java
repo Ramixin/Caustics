@@ -37,7 +37,7 @@ public class CausticsLootProvider extends FabricBlockLootSubProvider {
     @Override
     public void generate() {
         generateGroup(ModBlocks.SAPPHIRE_GROUP, ModItems.SAPPHIRE_SHARD);
-        generateGroup(ModBlocks.CINNABAR_GROUP, ModItems.CINNABAR_SHARD);
+        generateGroup(ModBlocks.BERYL_GROUP, ModItems.BERYL_SHARD);
         generateGroup(ModBlocks.PERIDOT_GROUP, ModItems.PERIDOT_SHARD);
         generateGroup(ModBlocks.TOPAZ_GROUP, ModItems.TOPAZ_SHARD);
         generateGroup(ModBlocks.SUNSTONE_GROUP, ModItems.SUNSTONE_SHARD);

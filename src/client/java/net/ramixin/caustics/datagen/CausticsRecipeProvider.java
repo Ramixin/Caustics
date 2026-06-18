@@ -31,7 +31,7 @@ public class CausticsRecipeProvider extends FabricRecipeProvider {
             public void buildRecipes() {
 
                 twoByTwoPacker(RecipeCategory.DECORATIONS, ModBlocks.SAPPHIRE_GROUP.block(), ModItems.SAPPHIRE_SHARD);
-                twoByTwoPacker(RecipeCategory.DECORATIONS, ModBlocks.CINNABAR_GROUP.block(), ModItems.CINNABAR_SHARD);
+                twoByTwoPacker(RecipeCategory.DECORATIONS, ModBlocks.BERYL_GROUP.block(), ModItems.BERYL_SHARD);
                 twoByTwoPacker(RecipeCategory.DECORATIONS, ModBlocks.PERIDOT_GROUP.block(), ModItems.PERIDOT_SHARD);
                 twoByTwoPacker(RecipeCategory.DECORATIONS, ModBlocks.TOPAZ_GROUP.block(), ModItems.TOPAZ_SHARD);
                 twoByTwoPacker(RecipeCategory.DECORATIONS, ModBlocks.SUNSTONE_GROUP.block(), ModItems.SUNSTONE_SHARD);
@@ -61,9 +61,9 @@ public class CausticsRecipeProvider extends FabricRecipeProvider {
                         .pattern(" C ")
                         .pattern(" G ")
                         .pattern(" G ")
-                        .define('C', ModItems.CINNABAR_SHARD)
+                        .define('C', ModItems.BERYL_SHARD)
                         .define('G', Items.GOLD_INGOT)
-                        .unlockedBy("has_cinnabar", has(ModItems.CINNABAR_SHARD))
+                        .unlockedBy("has_beryl", has(ModItems.BERYL_SHARD))
                         .save(output, getKey("alidade"));
 
             }

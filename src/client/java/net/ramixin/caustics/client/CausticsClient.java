@@ -10,8 +10,9 @@ import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.NodesRenderPipeline;
-import net.ramixin.caustics.networking.clientbound.NetworkSyncPayload;
-import net.ramixin.caustics.networking.clientbound.SignalRangeChangedPayload;
+import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
+import net.ramixin.caustics.networking.clientbound.NodeSyncPayload;
+import net.ramixin.caustics.networking.clientbound.SignalRangeSyncPayload;
 import net.ramixin.caustics.utils.LookUtil;
 
 import java.util.Optional;
@@ -28,20 +29,21 @@ public class CausticsClient implements ClientModInitializer {
     public void onInitializeClient() {
         NodesRenderPipeline.getInstance().onInitialize();
 
-        ClientPlayNetworking.registerGlobalReceiver(NetworkSyncPayload.TYPE, (payload, _) -> ClientCrystalNetwork.onSync(payload.nodeData(), payload.frequencies()));
-        ClientPlayNetworking.registerGlobalReceiver(SignalRangeChangedPayload.TYPE, (payload, _) -> {
+        ClientPlayNetworking.registerGlobalReceiver(NodeSyncPayload.TYPE, (payload, _) -> ClientCrystalNetwork.getInstance().onNodeSync(payload.nodeData()));
+        ClientPlayNetworking.registerGlobalReceiver(SignalRangeSyncPayload.TYPE, (payload, _) -> {
             int val = payload.newValue();
             Caustics.LOGGER.info("Signal range changed to {} on client", val);
             MAX_SIGNAL_RANGE = val * val;
         });
+        ClientPlayNetworking.registerGlobalReceiver(FrequencySyncPayload.TYPE, (payload, _) -> ClientCrystalNetwork.getInstance().onFrequencySync(payload.frequencies(), payload.frequencyNames()));
 
         ClientHotbarScrollEvents.ALLOW.register((inventory, _, _, _, dy) -> {
-            Optional<BlockPos> lookingAt = LookUtil.getLookingAt(inventory.player, ClientCrystalNetwork.getTargetablePositions());
+            Optional<BlockPos> lookingAt = LookUtil.getLookingAt(inventory.player, ClientCrystalNetwork.getInstance().getTargetablePositions());
             if(lookingAt.isEmpty()) {
-                ClientCrystalNetwork.clearScrollPos();
+                ClientCrystalNetwork.getInstance().clearScrollPos();
                 return true;
             }
-            ClientCrystalNetwork.deltaScrollPos(-dy);
+            ClientCrystalNetwork.getInstance().deltaScrollPos(-dy);
             return false;
         });
 

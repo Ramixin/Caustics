@@ -4,7 +4,11 @@
   "package": "net.ramixin.caustics.mixins",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "ItemTooltipContextMixin",
     "PlayerMixin"
+  ],
+  "server": [
+    "ItemTooltipContext$2Mixin"
   ],
   "injectors": {
     "defaultRequire": 1

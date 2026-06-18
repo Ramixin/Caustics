@@ -11,6 +11,7 @@ import net.ramixin.caustics.ModGameRules;
 import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.blocks.mirror.MirrorBlock;
 import net.ramixin.caustics.blocks.mirror.MirrorStance;
+import net.ramixin.caustics.nodes.core.Tracker;
 
 import java.util.Optional;
 import java.util.Stack;
@@ -25,17 +26,10 @@ public abstract class AbstractChecker<T> {
     private boolean mustOrient = true;
     private T cachedVal = defaultValue();
     private final Stack<BlockPos> visited = new Stack<>();
-    private boolean syncingDirty = false;
 
     public AbstractChecker(BlockPos pos) {
         this.startPos = pos;
         this.curPos = pos;
-    }
-
-    public boolean consumeSyncingDirty() {
-        boolean val = syncingDirty;
-        syncingDirty = false;
-        return val;
     }
 
     protected abstract T defaultValue();
@@ -46,11 +40,11 @@ public abstract class AbstractChecker<T> {
 
     protected abstract boolean validClusterBlock(BlockState state);
 
-    public void tick(ServerLevel level) {
+    public void tick(ServerLevel level, Tracker tracker) {
         if(mustOrient) {
             BlockState state = level.getBlockState(curPos);
             if(!validClusterBlock(state)) {
-                verdict(defaultValue());
+                verdict(defaultValue(), tracker);
                 return;
             }
             curDir = state.getValue(AmethystClusterBlock.FACING);
@@ -68,35 +62,35 @@ public abstract class AbstractChecker<T> {
         for(int i = 0; i < steps; i++) {
             if(stepsLeft == 0) {
                 Caustics.LOGGER.error("checker ran out of steps");
-                verdict(defaultValue());
+                verdict(defaultValue(), tracker);
                 return;
             }
 
-            boolean proceed = step(level);
+            boolean proceed = step(level, tracker);
             stepsLeft--;
             if(!proceed)
                 return;
         }
     }
 
-    public boolean step(ServerLevel level) {
+    public boolean step(ServerLevel level, Tracker tracker) {
         curPos = curPos.relative(curDir);
         visited.push(curPos);
         BlockState nextState = level.getBlockState(curPos);
         if(nextState.is(ModBlocks.MIRROR)) {
             Optional<Direction> maybeDir = applyMirror(nextState);
             if(maybeDir.isEmpty()) {
-                verdict(hitBlockValue(level, curPos));
+                verdict(hitBlockValue(level, curPos), tracker);
                 return false;
             }
             curDir = maybeDir.get();
         }
         else if(!nextState.is(BlockTags.AIR)) {
-            verdict(hitBlockValue(level, curPos));
+            verdict(hitBlockValue(level, curPos), tracker);
             return false;
         }
         if(level.isOutsideBuildHeight(curPos)) {
-            verdict(leftBuildHeightValue());
+            verdict(leftBuildHeightValue(), tracker);
             return false;
         }
         return true;
@@ -106,13 +100,14 @@ public abstract class AbstractChecker<T> {
         return cachedVal;
     }
 
-    protected void verdict(T val) {
+    protected void verdict(T val, Tracker tracker) {
+        if(!val.equals(cachedVal))
+            tracker.push(Tracker.Item.NODE_SYNC);
         cachedVal = val;
         mustOrient = true;
         curPos = startPos;
         pauseTicks = 40;
         stepsLeft = -1;
-        syncingDirty = true;
     }
 
     protected Optional<BlockPos> backtrack() {

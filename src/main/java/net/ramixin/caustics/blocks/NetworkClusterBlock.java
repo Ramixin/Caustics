@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AmethystClusterBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.ramixin.caustics.nodes.CrystalNetwork;
+import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import org.jspecify.annotations.NonNull;
 
 public class NetworkClusterBlock extends AmethystClusterBlock {
