@@ -12,7 +12,7 @@ import java.util.Map;
 
 public record RoutingSyncPayload(Map<BlockPos, RoutingTable> routingTables) implements CustomPacketPayload {
 
-    public static final Type<RoutingSyncPayload> TYPE = new Type<>(Caustics.id("frequency_sync"));
+    public static final Type<RoutingSyncPayload> TYPE = new Type<>(Caustics.id("routing_sync"));
     public static final StreamCodec<RegistryFriendlyByteBuf, RoutingSyncPayload> CODEC = StreamCodec.ofMember(
             RoutingSyncPayload::write,
             RoutingSyncPayload::new

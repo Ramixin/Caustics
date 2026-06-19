@@ -107,10 +107,8 @@ public class NodeBuilder {
         CrystalNetwork network = CrystalNetwork.get(level);
         for(BlockPos pos : clusterBlocks) {
             BlockState state = level.getBlockState(pos);
-            if(!state.is(ModTags.Blocks.CLUSTER)) {
-                Caustics.LOGGER.error("Found non-cluster block in cluster block list: {} @ {}", state.getBlock(), pos);
+            if(!state.is(ModTags.Blocks.CLUSTER))
                 continue;
-            }
             Direction facing = state.getValue(AmethystClusterBlock.FACING);
             if(!crystalBlocks.contains(pos.relative(facing.getOpposite()))) continue;
 

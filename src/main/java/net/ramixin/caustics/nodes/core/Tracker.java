@@ -6,30 +6,30 @@ import java.util.Set;
 
 public class Tracker {
 
-    private final Set<Item> items = new HashSet<>();
-    private final Set<Item> lazyItems = new HashSet<>();
+    private final Set<Task> tasks = new HashSet<>();
+    private final Set<Task> lazyTasks = new HashSet<>();
 
     protected Tracker() {}
 
     protected void begin() {
-        if(!items.isEmpty()) throw new IllegalStateException("Tracker has incomplete items: " + items);
-        items.addAll(lazyItems);
-        lazyItems.clear();
+        if(!tasks.isEmpty()) throw new IllegalStateException("Tracker has incomplete tasks: " + tasks);
+        tasks.addAll(lazyTasks);
+        lazyTasks.clear();
     }
 
-    public void push(Item... item) {
-        Collections.addAll(items, item);
+    public void push(Task... task) {
+        Collections.addAll(tasks, task);
     }
 
-    protected void lazyPush(Item item) {
-        lazyItems.add(item);
+    protected void lazyPush(Task task) {
+        lazyTasks.add(task);
     }
 
-    protected boolean consume(Item item) {
-        return items.remove(item);
+    protected boolean consume(Task task) {
+        return tasks.remove(task);
     }
 
-    public enum Item {
+    public enum Task {
         NODE_SYNC,
         FREQUENCY_SYNC,
         ROUTING_SYNC,

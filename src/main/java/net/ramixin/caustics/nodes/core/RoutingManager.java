@@ -21,11 +21,11 @@ public class RoutingManager {
         int tempSignal = level.getGameRules().get(ModGameRules.SIGNAL_RANGE);
         if(tempSignal != signalRange) {
             signalRange = tempSignal;
-            tracker.push(Tracker.Item.ROUTING_SYNC);
+            tracker.push(Tracker.Task.ROUTING_SYNC);
         }
 
-        if(tracker.consume(Tracker.Item.REBUILD_ROUTING)) {
-            tracker.push(Tracker.Item.ROUTING_SYNC);
+        if(tracker.consume(Tracker.Task.REBUILD_ROUTING)) {
+            tracker.push(Tracker.Task.ROUTING_SYNC);
             NodeIndex index = network.getIndex();
             Set<BlockPos> travels = index.getPositionsOfType(NodeIndex.Type.SAPPHIRE);
             Set<BlockPos> routers = index.getPositionsOfType(NodeIndex.Type.TOPAZ);

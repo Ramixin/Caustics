@@ -8,7 +8,7 @@ import org.jspecify.annotations.NonNull;
 
 public record SignalRangeSyncPayload(int newValue) implements CustomPacketPayload {
 
-    public static final Type<SignalRangeSyncPayload> TYPE = new Type<>(Caustics.id("request_sync"));
+    public static final Type<SignalRangeSyncPayload> TYPE = new Type<>(Caustics.id("signal_range_sync"));
     public static final StreamCodec<RegistryFriendlyByteBuf, SignalRangeSyncPayload> CODEC = StreamCodec.ofMember(SignalRangeSyncPayload::write, SignalRangeSyncPayload::new);
 
     private SignalRangeSyncPayload(RegistryFriendlyByteBuf buf) {

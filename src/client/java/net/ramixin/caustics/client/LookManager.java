@@ -1,9 +1,11 @@
 package net.ramixin.caustics.client;
 
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
+import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.utils.LookUtil;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
@@ -14,15 +16,28 @@ import java.util.Set;
 public class LookManager {
 
     private BlockPos[] positions;
+    private Route[] routes;
     private Vec3[] vectors;
     private double[] angles;
     private final Mutable<Set<Integer>> indices = new MutableObject<>();
     private final Mutable<Set<BlockPos>> ambiguities = new MutableObject<>();
 
     public BlockPos[] getPositions() {
-        if(positions == null)
-            positions = ClientCrystalNetwork.getInstance().getTargetablePositions();
+        if(positions == null) {
+            Pair<BlockPos[], Route[]> positionsAndRoutes = ClientCrystalNetwork.getInstance().getTargetablePositions();
+            positions = positionsAndRoutes.getFirst();
+            routes = positionsAndRoutes.getSecond();
+        }
         return positions;
+    }
+
+    public Route[] getRoutes() {
+        if(routes == null) {
+            Pair<BlockPos[], Route[]> positionsAndRoutes = ClientCrystalNetwork.getInstance().getTargetablePositions();
+            positions = positionsAndRoutes.getFirst();
+            routes = positionsAndRoutes.getSecond();
+        }
+        return routes;
     }
 
     public Vec3[] getVectors() {

@@ -12,6 +12,7 @@ import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.NodesRenderPipeline;
 import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
 import net.ramixin.caustics.networking.clientbound.NodeSyncPayload;
+import net.ramixin.caustics.networking.clientbound.RoutingSyncPayload;
 import net.ramixin.caustics.networking.clientbound.SignalRangeSyncPayload;
 import net.ramixin.caustics.utils.LookUtil;
 
@@ -36,9 +37,10 @@ public class CausticsClient implements ClientModInitializer {
             MAX_SIGNAL_RANGE = val * val;
         });
         ClientPlayNetworking.registerGlobalReceiver(FrequencySyncPayload.TYPE, (payload, _) -> ClientCrystalNetwork.getInstance().onFrequencySync(payload.frequencies(), payload.frequencyNames()));
+        ClientPlayNetworking.registerGlobalReceiver(RoutingSyncPayload.TYPE, (payload, _) -> ClientCrystalNetwork.getInstance().onRoutingSync(payload.routingTables()));
 
         ClientHotbarScrollEvents.ALLOW.register((inventory, _, _, _, dy) -> {
-            Optional<BlockPos> lookingAt = LookUtil.getLookingAt(inventory.player, ClientCrystalNetwork.getInstance().getTargetablePositions());
+            Optional<BlockPos> lookingAt = LookUtil.getLookingAt(inventory.player, LOOK_MANAGER.getPositions());
             if(lookingAt.isEmpty()) {
                 ClientCrystalNetwork.getInstance().clearScrollPos();
                 return true;

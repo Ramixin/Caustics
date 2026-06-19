@@ -10,14 +10,12 @@ import net.ramixin.caustics.networking.clientbound.RoutingSyncPayload;
 import net.ramixin.caustics.networking.clientbound.SignalRangeSyncPayload;
 import net.ramixin.caustics.nodes.PlayerAccess;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class NetworkSynchronizer {
 
     private final Set<UUID> realtimePlayers = new HashSet<>();
+    private final Queue<UUID> readyPlayers = new LinkedList<>();
     private final PlayerAccess access = new PlayerAccess();
 
     protected NetworkSynchronizer() {}
@@ -26,22 +24,28 @@ public class NetworkSynchronizer {
         access.attach(level);
         Tracker tracker = network.getTracker();
 
-        if(tracker.consume(Tracker.Item.NODE_SYNC))
+        while(!readyPlayers.isEmpty()) {
+            UUID uuid = readyPlayers.poll();
+            initRealtime(uuid, network);
+        }
+
+        if(tracker.consume(Tracker.Task.NODE_SYNC))
             syncNodes(network);
 
-        if(tracker.consume(Tracker.Item.FREQUENCY_SYNC))
+        if(tracker.consume(Tracker.Task.FREQUENCY_SYNC))
             syncFrequencies(network);
 
-        if(tracker.consume(Tracker.Item.ROUTING_SYNC))
+        if(tracker.consume(Tracker.Task.ROUTING_SYNC))
             syncRouting(network);
     }
 
     protected void addRealtime(UUID player) {
-        realtimePlayers.add(player);
+        readyPlayers.add(player);
     }
 
     protected void removeRealtime(UUID player) {
         realtimePlayers.remove(player);
+        readyPlayers.remove(player);
     }
 
     protected void joinSync(ServerPlayer player, CrystalNetwork network) {
@@ -55,6 +59,17 @@ public class NetworkSynchronizer {
         ServerPlayNetworking.send(player, nodePayload);
         FrequencySyncPayload freqPayload = network.getRegistry().createSyncPayload();
         ServerPlayNetworking.send(player, freqPayload);
+        RoutingSyncPayload routingPayload = network.getManager().createSyncPayload(player);
+        ServerPlayNetworking.send(player, routingPayload);
+    }
+
+    private void initRealtime(UUID uuid, CrystalNetwork network) {
+        Optional<ServerPlayer> maybePlayer = access.fromUUID(uuid);
+        if(maybePlayer.isEmpty()) return;
+        ServerPlayer player = maybePlayer.get();
+        realtimePlayers.add(uuid);
+        NodeSyncPayload nodePayload = network.getWorker().createSyncPayload();
+        ServerPlayNetworking.send(player, nodePayload);
         RoutingSyncPayload routingPayload = network.getManager().createSyncPayload(player);
         ServerPlayNetworking.send(player, routingPayload);
     }

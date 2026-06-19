@@ -27,8 +27,11 @@ public class NodeWorker {
     private NodeWorker(List<CrystalNode> nodes, List<List<BlockPos>> builders) {
         int delay = 0;
         for(CrystalNode node : nodes) {
-            nodes.add(node);
-            NodeBuilder builder = new NodeBuilder(node.data().sapphireClusters());
+            this.nodes.add(node);
+            Set<BlockPos> positions = new HashSet<>(node.data().sapphireClusters());
+            positions.addAll(node.data().topazClusters());
+            positions.addAll(node.data().tourmalineClusters());
+            NodeBuilder builder = new NodeBuilder(positions);
             builder.pause(delay++);
             rebuildBuilders.put(builder, node);
         }
@@ -96,13 +99,13 @@ public class NodeWorker {
     private void register(CrystalNode node, CrystalNetwork network) {
         nodes.add(node);
         network.getIndex().indexNode(node);
-        network.getTracker().push(Tracker.Item.NODE_SYNC, Tracker.Item.REBUILD_ROUTING, Tracker.Item.DIRTY);
+        network.getTracker().push(Tracker.Task.NODE_SYNC, Tracker.Task.REBUILD_ROUTING, Tracker.Task.DIRTY);
     }
 
     private void unregister(CrystalNode node, CrystalNetwork network) {
         nodes.remove(node);
         network.getIndex().unindexNode(node);
-        network.getTracker().push(Tracker.Item.NODE_SYNC, Tracker.Item.REBUILD_ROUTING, Tracker.Item.DIRTY);
+        network.getTracker().push(Tracker.Task.NODE_SYNC, Tracker.Task.REBUILD_ROUTING, Tracker.Task.DIRTY);
     }
 
     private void scheduleRebuild(CrystalNode node) {
@@ -150,9 +153,10 @@ public class NodeWorker {
     }
 
     protected void printNodes() {
-        for(CrystalNode node : nodes) {
+        if(nodes.isEmpty())
+            Caustics.LOGGER.info("No nodes");
+        else for(CrystalNode node : nodes)
             Caustics.LOGGER.info(node.toString());
-        }
     }
 
 }

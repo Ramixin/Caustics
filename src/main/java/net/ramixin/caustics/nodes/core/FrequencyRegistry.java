@@ -32,7 +32,7 @@ public class FrequencyRegistry {
 
     protected void tick(CrystalNetwork network) {
         if(pushTracker) {
-            network.getTracker().push(Tracker.Item.FREQUENCY_SYNC, Tracker.Item.DIRTY);
+            network.getTracker().push(Tracker.Task.FREQUENCY_SYNC, Tracker.Task.DIRTY);
             pushTracker = false;
         }
     }

@@ -1,11 +1,15 @@
 package net.ramixin.caustics.client.nodes;
 
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.ramixin.caustics.client.CausticsClient;
 import net.ramixin.caustics.items.components.Frequency;
 import net.ramixin.caustics.nodes.Network;
 import net.ramixin.caustics.nodes.NodeSyncData;
+import net.ramixin.caustics.nodes.routing.Route;
+import net.ramixin.caustics.nodes.routing.RoutingTable;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.mutable.MutableObject;
@@ -24,6 +28,8 @@ public class ClientCrystalNetwork implements Network {
 
     private final Map<BlockPos, Frequency> frequencies = new HashMap<>();
     private final Map<Frequency, String> frequencyNames = new HashMap<>();
+
+    private final Map<BlockPos, RoutingTable> routingTables = new HashMap<>();
 
     public static ClientCrystalNetwork getInstance() {
         return INSTANCE;
@@ -51,14 +57,37 @@ public class ClientCrystalNetwork implements Network {
         return Optional.ofNullable(sapphireToNode.get(pos));
     }
 
-    public BlockPos[] getTargetablePositions() {
+    public Pair<BlockPos[], Route[]> getTargetablePositions() {
         List<BlockPos> visiblePositions = new ArrayList<>();
-        for(BlockPos pos : sapphireToNode.keySet()) {
-            if(Minecraft.getInstance().player == null) throw new IllegalStateException("Player is null");
-            if(pos.distToCenterSqr(Minecraft.getInstance().player.position()) < CausticsClient.MAX_SIGNAL_RANGE)
+        List<Route> routes = new ArrayList<>();
+        LocalPlayer player = Minecraft.getInstance().player;
+        if(player == null) throw new IllegalStateException("Player is null");
+
+        for(BlockPos pos : sapphireToNode.keySet())
+            if(pos.distToCenterSqr(player.position()) < CausticsClient.MAX_SIGNAL_RANGE) {
                 visiblePositions.add(pos);
+                routes.add(new Route(List.of(pos)));
+            }
+
+        for(BlockPos pos : routingTables.keySet()) {
+            if(pos.distToCenterSqr(player.position()) >= CausticsClient.MAX_SIGNAL_RANGE)
+                continue;
+            RoutingTable table = routingTables.get(pos);
+            for(BlockPos nodePos : table.keySet()) {
+                int index = visiblePositions.indexOf(nodePos);
+                if(index == -1) {
+                    visiblePositions.add(nodePos);
+                    routes.add(table.getRoute(nodePos));
+                    continue;
+                }
+                if(table.getRoute(nodePos).length() < routes.get(index).length()) {
+                    visiblePositions.set(index, nodePos);
+                    routes.set(index, table.getRoute(nodePos));
+                }
+            }
         }
-        return visiblePositions.toArray(BlockPos[]::new);
+
+        return new Pair<>(visiblePositions.toArray(BlockPos[]::new), routes.toArray(Route[]::new));
     }
 
     public void clearScrollPos() {
@@ -93,5 +122,10 @@ public class ClientCrystalNetwork implements Network {
     @Override
     public Optional<String> getFrequencyName(Frequency frequency) {
         return Optional.ofNullable(frequencyNames.get(frequency));
+    }
+
+    public void onRoutingSync(Map<BlockPos, RoutingTable> routingTables) {
+        this.routingTables.clear();
+        this.routingTables.putAll(routingTables);
     }
 }

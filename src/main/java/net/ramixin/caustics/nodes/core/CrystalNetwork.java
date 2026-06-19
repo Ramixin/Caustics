@@ -49,7 +49,7 @@ public class CrystalNetwork extends SavedData implements Network {
         this.worker = worker;
         this.index = new NodeIndex(worker);
         this.registry = registry;
-        tracker.push(Tracker.Item.REBUILD_ROUTING);
+        tracker.lazyPush(Tracker.Task.REBUILD_ROUTING);
     }
 
     public static CrystalNetwork get(ServerLevel level) {
@@ -64,7 +64,7 @@ public class CrystalNetwork extends SavedData implements Network {
         manager.tick(level, this);
         synchronizer.tick(level, this);
 
-        if(tracker.consume(Tracker.Item.DIRTY))
+        if(tracker.consume(Tracker.Task.DIRTY))
             setDirty();
     }
 

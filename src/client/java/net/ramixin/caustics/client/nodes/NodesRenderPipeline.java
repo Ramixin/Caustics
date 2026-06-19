@@ -18,8 +18,6 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -30,9 +28,10 @@ import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.CausticsClient;
 import net.ramixin.caustics.client.LookManager;
-import net.ramixin.caustics.client.ducks.GuiGraphicsExtractorDuck;
+import net.ramixin.caustics.client.TooltipRenderer;
 import net.ramixin.caustics.items.ModItems;
 import net.ramixin.caustics.items.components.Frequency;
+import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.utils.LookUtil;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -72,18 +71,25 @@ public class NodesRenderPipeline {
     }
 
     public void onInitialize() {
-        LevelRenderEvents.END_EXTRACTION.register(this::extractNodes);
+        LevelRenderEvents.END_EXTRACTION.register(this::extract);
         LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register(this::renderAndDrawNodes);
         HudElementRegistry.addLast(Caustics.id("alidade_node_info"), NodesRenderPipeline::renderHud);
     }
 
-    private void extractNodes(LevelExtractionContext ctx) {
+    private void extract(LevelExtractionContext ctx) {
         RENDER_STATES.clear();
         HUD_RENDER_STATE = null;
+
+        Optional<Integer> closest = extractNodes();
+        closest.ifPresent(this::extractHud);
+    }
+
+    private Optional<Integer> extractNodes() {
+
         Player player = Minecraft.getInstance().player;
-        if(player == null) return;
-        if(!player.getMainHandItem().is(ModItems.ALIDADE)) return;
-        if(!player.isUsingItem()) return;
+        if(player == null) return Optional.empty();
+        if(!player.getMainHandItem().is(ModItems.ALIDADE)) return Optional.empty();
+        if(!player.isUsingItem()) return Optional.empty();
         LookManager lookManager = CausticsClient.LOOK_MANAGER;
         BlockPos[] positions = lookManager.getPositions();
         double[] angles = lookManager.getAngles();
@@ -96,18 +102,33 @@ public class NodesRenderPipeline {
 
             RENDER_STATES.add(new NodeRenderState(pos.getX(), pos.getY(), pos.getZ(), lookingAt, ambiguous));
         }
-        if(closest.isEmpty()) return;
-        int closestIndex = closest.get();
-        BlockPos closestPos = positions[closestIndex];
+        return closest;
+    }
+
+    private void extractHud(int closestIndex) {
+        LookManager lookManager = CausticsClient.LOOK_MANAGER;
+
+        BlockPos closestPos = lookManager.getPositions()[closestIndex];
+        Route route = lookManager.getRoutes()[closestIndex];
+
         ClientCrystalNetwork.getInstance().setLastLookingAt(closestPos);
         Optional<ClientCrystalNode> maybeClosestNode = ClientCrystalNetwork.getInstance().getTargetableNodeAt(closestPos);
         if(maybeClosestNode.isEmpty()) return;
         ClientCrystalNode closestNode = maybeClosestNode.get();
         int scrollPos = ClientCrystalNetwork.getInstance().getScrollPos();
+        Component nodeName = extractNodeName(closestPos);
+        Optional<Component> depositName = closestNode.peridotPositions().isEmpty() ? Optional.empty() : Optional.of(extractDepositName(closestNode, scrollPos));
+        List<Component> routeStrings = extractRoute(route);
+        HUD_RENDER_STATE = new HudRenderState(nodeName, depositName, routeStrings);
+    }
 
-        String nodeName = extractNodeName(closestPos).getString();
-        Optional<String> depositName = closestNode.peridotPositions().isEmpty() ? Optional.empty() : Optional.of(extractDepositName(closestNode, scrollPos).getString());
-        HUD_RENDER_STATE = new HudRenderState(nodeName, depositName);
+    private List<Component> extractRoute(Route route) {
+        List<Component> routeStrings = new ArrayList<>();
+        List<BlockPos> path = route.immutablePath();
+        for(int i = 0; i < path.size() - 1; i++) {
+            routeStrings.add(extractNodeName(path.get(i)));
+        }
+        return routeStrings;
     }
 
     private static Component extractNodeName(BlockPos pos) {
@@ -135,27 +156,27 @@ public class NodesRenderPipeline {
 
     private static void renderHud(@NonNull GuiGraphicsExtractor evilGraphics, @NonNull DeltaTracker deltaTracker) {
         if(HUD_RENDER_STATE == null) return;
-        GuiGraphicsExtractorDuck duck = GuiGraphicsExtractorDuck.get(evilGraphics);
-        duck.caustics$enableTooltipBatching();
-        easyTooltip(duck, List.of(Component.literal(HUD_RENDER_STATE.nodeName())), -5, 20);
-
-        if(HUD_RENDER_STATE.maybeDepositName().isPresent()) {
-            String depositName = HUD_RENDER_STATE.maybeDepositName().get();
-            List<Component> text = List.of(
-                    Component.translatable("caustics.node.deposit"),
-                    Component.literal(depositName)
-            );
-            easyTooltip(duck, text, -5,40);
-        }
-
         int mouseX = (int) Minecraft.getInstance().mouseHandler.xpos();
         int mouseY = (int) Minecraft.getInstance().mouseHandler.ypos();
-        evilGraphics.extractDeferredElements(mouseX, mouseY, 0);
-    }
+        TooltipRenderer renderer = new TooltipRenderer(evilGraphics, Minecraft.getInstance().font);
 
-    private static void easyTooltip(GuiGraphicsExtractorDuck duck, List<Component> tooltip, int x, int y) {
-        List<ClientTooltipComponent> components = tooltip.stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).toList();
-        duck.caustics$addTooltipToBatch(graphics -> graphics.tooltip(Minecraft.getInstance().font, components, x, y, DefaultTooltipPositioner.INSTANCE, null));
+        renderer.render(List.of(Component.translatable("caustics.node.name")), -5, 20);
+        renderer.render(List.of(HUD_RENDER_STATE.nodeName()), -5, 1);
+
+        if(HUD_RENDER_STATE.maybeDepositName().isPresent()) {
+            renderer.render(List.of(Component.translatable("caustics.node.deposit")), -5, 10);
+            renderer.render(List.of(HUD_RENDER_STATE.maybeDepositName().get()), -5, 1);
+
+        }
+
+        if(HUD_RENDER_STATE.route().isEmpty())
+            renderer.render(List.of(Component.translatable("caustics.node.route_direct")), -5, 10);
+        else {
+            renderer.render(List.of(Component.translatable("caustics.node.route_start")), -5, 10);
+            renderer.render(HUD_RENDER_STATE.route(), -5, 1);
+        }
+
+        evilGraphics.extractDeferredElements(mouseX, mouseY, 0);
     }
 
     private void renderNode(LevelRenderContext ctx, NodeRenderState state) {
@@ -280,5 +301,5 @@ public class NodesRenderPipeline {
 
     private record NodeRenderState(int x, int y, int z, boolean lookingAt, boolean ambiguous) { }
 
-    private record HudRenderState(String nodeName, Optional<String> maybeDepositName) { }
+    private record HudRenderState(Component nodeName, Optional<Component> maybeDepositName, List<Component> route) { }
 }

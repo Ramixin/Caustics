@@ -40,14 +40,12 @@ public class Route {
         buf.writeCollection(path, BlockPos.STREAM_CODEC);
     }
 
-    public Route extend(BlockPos pos) {
-        List<BlockPos> newPath = new ArrayList<>(path);
-        newPath.add(pos);
-        return new Route(newPath);
-    }
-
     public List<BlockPos> immutablePath() {
         return List.copyOf(path);
+    }
+
+    public int length() {
+        return path.size();
     }
 
     @Override

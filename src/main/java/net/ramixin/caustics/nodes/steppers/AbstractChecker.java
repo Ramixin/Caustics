@@ -102,7 +102,7 @@ public abstract class AbstractChecker<T> {
 
     protected void verdict(T val, Tracker tracker) {
         if(!val.equals(cachedVal))
-            tracker.push(Tracker.Item.NODE_SYNC);
+            tracker.push(Tracker.Task.NODE_SYNC);
         cachedVal = val;
         mustOrient = true;
         curPos = startPos;

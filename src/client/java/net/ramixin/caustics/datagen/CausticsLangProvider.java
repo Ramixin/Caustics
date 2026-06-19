@@ -47,6 +47,9 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add("caustics.node.unnamed_deposit", "Unnamed Deposit");
         translationBuilder.add("caustics.node.frequencies", "Node Networks:");
         translationBuilder.add("caustics.node.deposit", "Target Deposit:");
+        translationBuilder.add("caustics.node.route_start", "Route:");
+        translationBuilder.add("caustics.node.route_direct", "Direct Connection");
+        translationBuilder.add("caustics.node.name", "Identified Node:");
     }
 
     private static void generateGroupTranslations(String name, CrystalBlockGroup group, TranslationBuilder translationBuilder) {

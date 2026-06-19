@@ -95,6 +95,10 @@ public class RoutingTable {
         return routes.get(pos);
     }
 
+    public Set<BlockPos> keySet() {
+        return routes.keySet();
+    }
+
     public int size() {
         return routes.size();
     }
