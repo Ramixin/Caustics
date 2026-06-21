@@ -1,10 +1,10 @@
 package net.ramixin.caustics.client;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.Caustics;
@@ -50,14 +50,12 @@ public class CausticsClient implements ClientModInitializer {
         });
 
         LevelRenderEvents.END_MAIN.register(_ -> LOOK_MANAGER.wipe());
+        ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> ClientCrystalNetwork.getInstance().nuke());
     }
 
-    public static void onAlidadeAttack(LocalPlayer player) {
-//        BlockPos[] positions = ClientCrystalNetwork.getNodes().stream().flatMap(node -> node.positions().stream()).toArray(BlockPos[]::new);
-//        Vec3[] vectors = ModUtils.calculateUnitVectors(player, positions);
-//        double[] angles = ModUtils.calculateDisplacementAngles(player, vectors);
-//        Optional<Integer> closest = ModUtils.closestLooking(angles);
-//        if(closest.isEmpty()) return;
-//        boolean isAmbiguous = ModUtils.isAmbiguous(vectors, closest.get());
+    public static void onAlidadeAttack() {
+        Optional<Integer> closest = LookUtil.calculateClosestLooking(LOOK_MANAGER.getAngles());
+        if(closest.isEmpty()) return;
+        ClientCrystalNetwork.getInstance().selectNode(LOOK_MANAGER.getPositions()[closest.get()]);
     }
 }

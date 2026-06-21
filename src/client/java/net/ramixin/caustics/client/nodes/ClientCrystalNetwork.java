@@ -20,7 +20,6 @@ public class ClientCrystalNetwork implements Network {
 
     private static final ClientCrystalNetwork INSTANCE = new ClientCrystalNetwork();
 
-    private final List<ClientCrystalNode> nodes = new ArrayList<>();
     private final HashMap<BlockPos, ClientCrystalNode> sapphireToNode = new HashMap<>();
 
     private final MutableInt scrollPos = new MutableInt();
@@ -31,17 +30,19 @@ public class ClientCrystalNetwork implements Network {
 
     private final Map<BlockPos, RoutingTable> routingTables = new HashMap<>();
 
+    private final Mutable<BlockPos> selectedNode = new MutableObject<>();
+    private final MutableInt selectedScrollPos = new MutableInt();
+
     public static ClientCrystalNetwork getInstance() {
         return INSTANCE;
     }
 
     public void onNodeSync(List<NodeSyncData> syncData) {
-        nodes.clear();
         sapphireToNode.clear();
 
         for(NodeSyncData data : syncData) {
-            nodes.add(ClientCrystalNode.fromSyncData(data));
-            for(BlockPos pos : data.sapphirePositions()) sapphireToNode.put(pos, ClientCrystalNode.fromSyncData(data));
+            ClientCrystalNode node = ClientCrystalNode.fromSyncData(data);
+            for(BlockPos pos : data.sapphirePositions()) sapphireToNode.put(pos, node);
         }
     }
 
@@ -127,5 +128,33 @@ public class ClientCrystalNetwork implements Network {
     public void onRoutingSync(Map<BlockPos, RoutingTable> routingTables) {
         this.routingTables.clear();
         this.routingTables.putAll(routingTables);
+    }
+
+    public void selectNode(BlockPos pos) {
+        selectedNode.setValue(pos);
+        selectedScrollPos.setValue(scrollPos.intValue());
+    }
+
+    public Optional<BlockPos> getSelectedNode() {
+        BlockPos pos = selectedNode.get();
+        if(pos == null) return Optional.empty();
+        ClientCrystalNode node = sapphireToNode.get(pos);
+        if(node == null) {
+            selectedNode.setValue(null);
+            return Optional.empty();
+        }
+        return Optional.of(pos);
+    }
+
+    public int getSelectedScrollPos() {
+        return selectedScrollPos.intValue();
+    }
+
+    public void nuke() {
+        frequencies.clear();
+        frequencyNames.clear();
+        routingTables.clear();
+        sapphireToNode.clear();
+        selectedNode.setValue(null);
     }
 }

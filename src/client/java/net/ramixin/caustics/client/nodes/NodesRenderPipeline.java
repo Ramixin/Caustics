@@ -56,7 +56,8 @@ public class NodesRenderPipeline {
     );
 
     private static final List<NodeRenderState> RENDER_STATES = new ArrayList<>();
-    private static HudRenderState HUD_RENDER_STATE = null;
+    private static HudRenderState LOOKING_RENDER_STATE = null;
+    private static HudRenderState SELECTED_RENDER_STATE = null;
     private static final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(RenderType.SMALL_BUFFER_SIZE);
     private static final Vector4f COLOR_MODULATOR = new Vector4f(1f, 1f, 1f, 1f);
     private static final Vector3f MODEL_OFFSET = new Vector3f();
@@ -78,18 +79,20 @@ public class NodesRenderPipeline {
 
     private void extract(LevelExtractionContext ctx) {
         RENDER_STATES.clear();
-        HUD_RENDER_STATE = null;
+        LOOKING_RENDER_STATE = null;
+        SELECTED_RENDER_STATE = null;
+
+        Player player = Minecraft.getInstance().player;
+        if(player == null) return;
+        if(!player.getMainHandItem().is(ModItems.ALIDADE)) return;
+        if(!player.isUsingItem()) return;
 
         Optional<Integer> closest = extractNodes();
-        closest.ifPresent(this::extractHud);
+        extractHudLooking(closest);
+        extractHudSelected(ClientCrystalNetwork.getInstance().getSelectedNode());
     }
 
     private Optional<Integer> extractNodes() {
-
-        Player player = Minecraft.getInstance().player;
-        if(player == null) return Optional.empty();
-        if(!player.getMainHandItem().is(ModItems.ALIDADE)) return Optional.empty();
-        if(!player.isUsingItem()) return Optional.empty();
         LookManager lookManager = CausticsClient.LOOK_MANAGER;
         BlockPos[] positions = lookManager.getPositions();
         double[] angles = lookManager.getAngles();
@@ -105,21 +108,41 @@ public class NodesRenderPipeline {
         return closest;
     }
 
-    private void extractHud(int closestIndex) {
-        LookManager lookManager = CausticsClient.LOOK_MANAGER;
+    private void extractHudLooking(Optional<Integer> maybeClosest) {
+        if(maybeClosest.isEmpty()) return;
+        int closestIndex = maybeClosest.get();
 
+        LookManager lookManager = CausticsClient.LOOK_MANAGER;
         BlockPos closestPos = lookManager.getPositions()[closestIndex];
         Route route = lookManager.getRoutes()[closestIndex];
-
         ClientCrystalNetwork.getInstance().setLastLookingAt(closestPos);
-        Optional<ClientCrystalNode> maybeClosestNode = ClientCrystalNetwork.getInstance().getTargetableNodeAt(closestPos);
-        if(maybeClosestNode.isEmpty()) return;
+
+        LOOKING_RENDER_STATE = extractHud(closestPos, ClientCrystalNetwork.getInstance().getScrollPos(), route);
+    }
+
+    private void extractHudSelected(Optional<BlockPos> selectedNode) {
+        if(selectedNode.isEmpty()) return;
+        BlockPos pos = selectedNode.get();
+        int scrollPos = ClientCrystalNetwork.getInstance().getSelectedScrollPos();
+        int i = -1;
+        BlockPos[] positions = CausticsClient.LOOK_MANAGER.getPositions();
+        for(int j = 0; j < positions.length; j++) {
+            if(!positions[j].equals(pos)) continue;
+            i = j;
+            break;
+        }
+        if(i == -1) return;
+        SELECTED_RENDER_STATE = extractHud(pos, scrollPos, CausticsClient.LOOK_MANAGER.getRoutes()[i]);
+    }
+
+    private HudRenderState extractHud(BlockPos pos, int scrollPos, Route route) {
+        Optional<ClientCrystalNode> maybeClosestNode = ClientCrystalNetwork.getInstance().getTargetableNodeAt(pos);
+        if(maybeClosestNode.isEmpty()) return null;
         ClientCrystalNode closestNode = maybeClosestNode.get();
-        int scrollPos = ClientCrystalNetwork.getInstance().getScrollPos();
-        Component nodeName = extractNodeName(closestPos);
+        Component nodeName = extractNodeName(pos);
         Optional<Component> depositName = closestNode.peridotPositions().isEmpty() ? Optional.empty() : Optional.of(extractDepositName(closestNode, scrollPos));
         List<Component> routeStrings = extractRoute(route);
-        HUD_RENDER_STATE = new HudRenderState(nodeName, depositName, routeStrings);
+        return new HudRenderState(nodeName, depositName, routeStrings);
     }
 
     private List<Component> extractRoute(Route route) {
@@ -155,28 +178,48 @@ public class NodesRenderPipeline {
     }
 
     private static void renderHud(@NonNull GuiGraphicsExtractor evilGraphics, @NonNull DeltaTracker deltaTracker) {
-        if(HUD_RENDER_STATE == null) return;
+        if(LOOKING_RENDER_STATE == null && SELECTED_RENDER_STATE == null) return;
         int mouseX = (int) Minecraft.getInstance().mouseHandler.xpos();
         int mouseY = (int) Minecraft.getInstance().mouseHandler.ypos();
         TooltipRenderer renderer = new TooltipRenderer(evilGraphics, Minecraft.getInstance().font);
 
-        renderer.render(List.of(Component.translatable("caustics.node.name")), -5, 20);
-        renderer.render(List.of(HUD_RENDER_STATE.nodeName()), -5, 1);
-
-        if(HUD_RENDER_STATE.maybeDepositName().isPresent()) {
-            renderer.render(List.of(Component.translatable("caustics.node.deposit")), -5, 10);
-            renderer.render(List.of(HUD_RENDER_STATE.maybeDepositName().get()), -5, 1);
-
+        if(SELECTED_RENDER_STATE != null) {
+            renderer.rightAlign(351);
+            renderer.render(List.of(Component.translatable("caustics.node.selected")), 22);
+            renderHudInternal(SELECTED_RENDER_STATE, renderer);
         }
 
-        if(HUD_RENDER_STATE.route().isEmpty())
-            renderer.render(List.of(Component.translatable("caustics.node.route_direct")), -5, 10);
-        else {
-            renderer.render(List.of(Component.translatable("caustics.node.route_start")), -5, 10);
-            renderer.render(HUD_RENDER_STATE.route(), -5, 1);
+        renderer.resetHeight();
+
+        if(LOOKING_RENDER_STATE != null) {
+            renderer.leftAlign(105);
+            renderer.render(List.of(Component.translatable("caustics.node.name")), 22);
+            renderHudInternal(LOOKING_RENDER_STATE, renderer);
         }
+
+
+
+
+
 
         evilGraphics.extractDeferredElements(mouseX, mouseY, 0);
+    }
+
+    private static void renderHudInternal(HudRenderState state, TooltipRenderer renderer) {
+        renderer.render(List.of(state.nodeName()), 1);
+
+        if(state.maybeDepositName().isPresent()) {
+            renderer.render(List.of(Component.translatable("caustics.node.deposit")), 10);
+            renderer.render(List.of(state.maybeDepositName().get()), 1);
+
+        }
+
+        if(state.route().isEmpty())
+            renderer.render(List.of(Component.translatable("caustics.node.route_direct")), 10);
+        else {
+            renderer.render(List.of(Component.translatable("caustics.node.route_start")), 10);
+            renderer.render(state.route(), 1);
+        }
     }
 
     private void renderNode(LevelRenderContext ctx, NodeRenderState state) {

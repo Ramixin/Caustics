@@ -50,6 +50,7 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add("caustics.node.route_start", "Route:");
         translationBuilder.add("caustics.node.route_direct", "Direct Connection");
         translationBuilder.add("caustics.node.name", "Identified Node:");
+        translationBuilder.add("caustics.node.selected", "Selected Node:");
     }
 
     private static void generateGroupTranslations(String name, CrystalBlockGroup group, TranslationBuilder translationBuilder) {

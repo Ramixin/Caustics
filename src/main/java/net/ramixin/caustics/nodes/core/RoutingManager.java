@@ -30,16 +30,16 @@ public class RoutingManager {
             Set<BlockPos> travels = index.getPositionsOfType(NodeIndex.Type.SAPPHIRE);
             Set<BlockPos> routers = index.getPositionsOfType(NodeIndex.Type.TOPAZ);
             Set<BlockPos> jammers = index.getPositionsOfType(NodeIndex.Type.TOURMALINE);
-            rebuildTables(travels, routers, jammers, signalRange);
+            rebuildTables(network, travels, routers, jammers, signalRange);
         }
     }
 
     protected RoutingManager() {}
 
-    public void rebuildTables(Set<BlockPos> travels, Set<BlockPos> routers, Set<BlockPos> jammers, int maxSignalDist) {
+    public void rebuildTables(CrystalNetwork network, Set<BlockPos> travels, Set<BlockPos> routers, Set<BlockPos> jammers, int maxSignalDist) {
         routingTables.clear();
         for(BlockPos router : routers) {
-            RoutingTable routingTable = new RoutingTable(router, travels, routers, jammers, maxSignalDist);
+            RoutingTable routingTable = new RoutingTable(router, travels, routers, jammers, maxSignalDist, network);
             if(routingTable.size() > 0)
                 routingTables.put(router, routingTable);
         }

@@ -13,7 +13,9 @@ import net.ramixin.caustics.nodes.CrystalNode;
 import net.ramixin.caustics.nodes.Network;
 import net.ramixin.caustics.nodes.steppers.NodeBuilder;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public class CrystalNetwork extends SavedData implements Network {
@@ -95,6 +97,21 @@ public class CrystalNetwork extends SavedData implements Network {
 
     public Optional<CrystalNode> getNodeForBuilder(NodeBuilder builder) {
         return this.worker.getNodeForBuilder(builder);
+    }
+
+    public Set<Frequency> getNetworks(BlockPos pos) {
+        Optional<CrystalNode> maybeNode = index.getNodeAt(pos);
+        if(maybeNode.isEmpty()) return Set.of();
+        CrystalNode node = maybeNode.get();
+        Set<BlockPos> sunstones = node.data().sunstoneClusters();
+
+        Set<Frequency> networks = new HashSet<>();
+        for(BlockPos sunstone : sunstones) {
+            Optional<Frequency> maybeFreq = registry.getFrequencyAt(sunstone);
+            if(maybeFreq.isEmpty()) continue;
+            networks.add(maybeFreq.get());
+        }
+        return networks;
     }
 
     public void joinSync(ServerPlayer player) {

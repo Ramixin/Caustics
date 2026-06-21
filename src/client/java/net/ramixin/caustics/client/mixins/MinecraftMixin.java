@@ -16,7 +16,6 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(Minecraft.class)
 public class MinecraftMixin {
 
-
     @Shadow
     @Final
     public Options options;
@@ -33,7 +32,7 @@ public class MinecraftMixin {
         }
         if(alidadeAttacking) return true; //orig can only be true
         alidadeAttacking = true;
-        CausticsClient.onAlidadeAttack(instance);
+        CausticsClient.onAlidadeAttack();
         return true;
     }
 

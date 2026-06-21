@@ -15,6 +15,7 @@ import net.ramixin.caustics.nodes.CrystalNode;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
 
 import java.util.Optional;
+import java.util.Set;
 
 public class ModCommands {
 
@@ -24,18 +25,17 @@ public class ModCommands {
         RootCommandNode<CommandSourceStack> root = dispatcher.getRoot();
         CommandNode<CommandSourceStack> caustics = Commands.literal("caustics").build();
 
-        caustics.addChild(printNodes());
+        caustics.addChild(createPrint());
         caustics.addChild(nuke());
         caustics.addChild(testVisibility());
         caustics.addChild(createFrequency());
         caustics.addChild(depositPos());
-        caustics.addChild(printRouting());
 
         root.addChild(caustics);
     }
 
     private static CommandNode<CommandSourceStack> printNodes() {
-        return Commands.literal("printnodes").executes(ctx -> {
+        return Commands.literal("nodes").executes(ctx -> {
             CrystalNetwork.get(ctx.getSource().getLevel()).printNodes();
             return 0;
         }).build();
@@ -148,11 +148,31 @@ public class ModCommands {
         })).build();
     }
 
+    public static CommandNode<CommandSourceStack> createPrint() {
+        CommandNode<CommandSourceStack> print = Commands.literal("print").build();
+
+        print.addChild(printNodes());
+        print.addChild(printNetworksAt());
+        print.addChild(printRouting());
+
+        return print;
+    }
+
     public static CommandNode<CommandSourceStack> printRouting() {
-        return Commands.literal("printrouting").executes(ctx -> {
+        return Commands.literal("routing").executes(ctx -> {
             CrystalNetwork.get(ctx.getSource().getLevel()).printRouting();
             return 0;
         }).build();
+    }
+
+    public static CommandNode<CommandSourceStack> printNetworksAt() {
+        return Commands.literal("networksat").then(Commands.argument("pos", BlockPosArgument.blockPos())
+                .executes(ctx -> {
+                    BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
+                    Set<Frequency> networks = CrystalNetwork.get(ctx.getSource().getLevel()).getNetworks(pos);
+                    System.out.println(networks);
+                    return 0;
+        })).build();
     }
 
 }

@@ -3,6 +3,8 @@ package net.ramixin.caustics.nodes.routing;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.ramixin.caustics.items.components.Frequency;
+import net.ramixin.caustics.nodes.core.CrystalNetwork;
 
 import java.util.*;
 
@@ -16,7 +18,7 @@ public class RoutingTable {
         routes = buf.readMap(BlockPos.STREAM_CODEC, Route.STREAM_CODEC);
     }
 
-    public RoutingTable(BlockPos pos, Set<BlockPos> travels, Set<BlockPos> routers, Set<BlockPos> jammers, int maxSignalDist) {
+    public RoutingTable(BlockPos pos, Set<BlockPos> travels, Set<BlockPos> routers, Set<BlockPos> jammers, int maxSignalDist, CrystalNetwork network) {
         Set<BlockPos> locs = new HashSet<>(travels);
         locs.addAll(routers);
         Map<BlockPos, BlockPos> searchTree = new HashMap<>();
@@ -27,9 +29,12 @@ public class RoutingTable {
         int maxDist = maxSignalDist * maxSignalDist;
         while(!queue.isEmpty()) {
             BlockPos current = queue.poll();
+            Set<Frequency> currentNetworks = network.getNetworks(current);
             for(BlockPos loc : locs) {
                 if(searchTree.containsKey(loc)) continue;
                 if(!canConnect(current, loc, jammers, maxDist)) continue;
+                Set<Frequency> locNetworks = network.getNetworks(loc);
+                if(!currentNetworks.isEmpty() && !locNetworks.isEmpty() && Collections.disjoint(currentNetworks, locNetworks)) continue;
                 searchTree.put(loc, current);
                 if(routers.contains(loc))
                     queue.add(loc);
