@@ -109,8 +109,17 @@ public final class CrystalNode {
         List<BlockPos> topazes = new ArrayList<>();
         for(BlockPos pos : data.topazClusters())
             if(visibleClusterAt(pos)) topazes.add(pos);
-        if(sapphires.isEmpty() && topazes.isEmpty()) return Optional.empty();
-        List<BlockPos> peridots = new ArrayList<>(data.peridotClusters());
+
+        List<BlockPos> tourmalines = new ArrayList<>();
+        for(BlockPos pos : data.tourmalineClusters())
+            if(visibleClusterAt(pos)) tourmalines.add(pos);
+
+
+        if(sapphires.isEmpty() && topazes.isEmpty() && tourmalines.isEmpty()) return Optional.empty();
+        List<BlockPos> peridots = new ArrayList<>();
+        for(BlockPos pos : data.peridotClusters()) {
+            if(getDepositingPosAt(pos).map(Optional::isPresent).orElse(false)) peridots.add(pos);
+        }
         peridots.sort(BlockPos::compareTo);
         return Optional.of(new NodeSyncData(sapphires, topazes, peridots, List.copyOf(data.sunstoneClusters())));
     }
@@ -135,6 +144,4 @@ public final class CrystalNode {
     public int hashCode() {
         return Objects.hash(data);
     }
-
-
 }

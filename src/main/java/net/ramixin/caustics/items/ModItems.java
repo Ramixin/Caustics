@@ -29,6 +29,8 @@ public class ModItems {
 
     public static final Item TUNING_FORK = register("tuning_fork", TuningForkItem::new, new Item.Properties().stacksTo(1));
 
+    public static final Item LEAPER = register("leaper", LeaperItem::new, new Item.Properties().stacksTo(1));
+
     public static void onInitialize() {
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.INGREDIENTS).register(event ->
                 event.insertAfter(Items.AMETHYST_SHARD,

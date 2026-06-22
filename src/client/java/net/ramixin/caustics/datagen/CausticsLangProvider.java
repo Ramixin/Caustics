@@ -36,6 +36,7 @@ public class CausticsLangProvider extends FabricLanguageProvider {
 
         translationBuilder.add(ModItems.ALIDADE, "Alidade");
         translationBuilder.add(ModBlocks.MIRROR, "Mirror");
+        translationBuilder.add(ModItems.LEAPER, "Leaper");
 
         translationBuilder.add("caustics.frequency.tooltip_header", "Tuned Frequency:");
         translationBuilder.add("caustics.frequency.unnamed", "Unnamed Frequency");

@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.resources.Identifier;
+import net.ramixin.caustics.utils.MixsonUtil;
 import net.ramixin.mixson.Mixson;
 import net.ramixin.mixson.enums.ErrorPolicy;
 import net.ramixin.mixson.enums.Lifetime;
@@ -15,8 +16,6 @@ import java.util.function.Consumer;
 
 public class ModMixson {
 
-
-
     public static void onInitialize() {
 
         registerGeode("sapphire");
@@ -26,6 +25,70 @@ public class ModMixson {
         registerGeode("sunstone");
         registerGeode("selenite");
         registerGeode("tourmaline");
+
+        Mixson.registerEvent(
+                Mixson.DEFAULT_PRIORITY,
+                Lifetime.PERSISTENT,
+                ErrorPolicy.THROW,
+                "caustics:create_leaper_recipes",
+                idx -> idx.id().toString().equals("caustics:recipe/mirror"),
+                ctx -> {
+                    Set<Identifier> filteredHandles = MixsonUtil.getViableHandles();
+                    Set<Identifier> filteredDecorations = MixsonUtil.getViableDecorations();
+
+                    int counter = 0;
+                    for(int i = 0; i < 2; i++) {
+                        boolean hasCore = i == 0;
+                        for(Identifier handle : filteredHandles)
+                            for(Identifier decoration : filteredDecorations) {
+                                JsonObject recipe = createRecipe(handle, decoration, hasCore);
+                                Identifier recipeId = MixsonUtil.createId("recipes/", handle, decoration, hasCore);
+                                ctx.createResource(new Index(recipeId), recipe);
+                                counter++;
+                            }
+                    }
+                    Caustics.LOGGER.info("Created {} leaper recipes", counter);
+                }
+        );
+    }
+
+    @SuppressWarnings("ExtractMethodRecommender")
+    private static JsonObject createRecipe(Identifier handle, Identifier decoration, boolean hasCore) {
+        JsonObject recipe = new JsonObject();
+        recipe.addProperty("type", "minecraft:crafting_shaped");
+        recipe.addProperty("category", "equipment");
+        recipe.addProperty("group", "leaper_"+handle);
+        JsonObject key = new JsonObject();
+        key.addProperty("S", "caustics:sapphire_shard");
+        key.addProperty("D", decoration.toString());
+        key.addProperty("H", handle.toString());
+        if(hasCore)
+            key.addProperty("C", "caustics:selenite_shard");
+        recipe.add("key", key);
+
+        JsonArray pattern = new JsonArray();
+        pattern.add(" DS");
+        if(hasCore) {
+            pattern.add("DHD");
+            pattern.add("CD ");
+        } else {
+            pattern.add(" HD");
+        }
+        recipe.add("pattern", pattern);
+
+        JsonObject result = new JsonObject();
+        result.addProperty("count", 1);
+        result.addProperty("id", "caustics:leaper");
+        JsonObject components = new JsonObject();
+        JsonObject leaperMaterial = new JsonObject();
+        leaperMaterial.addProperty("handle", handle.toString());
+        leaperMaterial.addProperty("decoration", decoration.toString());
+        leaperMaterial.addProperty("has_core", hasCore);
+        components.add("caustics:leaper_material", leaperMaterial);
+        result.add("components", components);
+        recipe.add("result", result);
+
+        return recipe;
     }
 
     private static void registerGeode(String crystal) {

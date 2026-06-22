@@ -38,6 +38,7 @@ public class CrystalNetwork extends SavedData implements Network {
     private final FrequencyRegistry registry;
     private final RoutingManager manager = new RoutingManager();
     private final NetworkSynchronizer synchronizer = new NetworkSynchronizer();
+    private final LeaptionHandler handler = new LeaptionHandler();
 
     private final Tracker tracker = new Tracker();
 
@@ -64,6 +65,7 @@ public class CrystalNetwork extends SavedData implements Network {
         worker.tick(level, this);
         registry.tick(this);
         manager.tick(level, this);
+        handler.tick(level, this);
         synchronizer.tick(level, this);
 
         if(tracker.consume(Tracker.Task.DIRTY))
@@ -135,6 +137,7 @@ public class CrystalNetwork extends SavedData implements Network {
         worker.clear();
         registry.clear();
         manager.clear();
+        handler.clear();
         setDirty();
     }
 
@@ -157,5 +160,18 @@ public class CrystalNetwork extends SavedData implements Network {
 
     public Optional<CrystalNode> getNodeAt(BlockPos pos) {
         return index.getNodeAt(pos);
+    }
+
+    public void requestLeaption(ServerPlayer player, BlockPos sapphirePos, BlockPos peridotPos) {
+        Optional<CrystalNode> maybeNode = this.index.getNodeAt(sapphirePos, NodeIndex.Type.SAPPHIRE);
+        if(maybeNode.isEmpty()) return;
+        CrystalNode node = maybeNode.get();
+        Set<BlockPos> peridots = node.data().peridotClusters();
+        if(!peridots.contains(peridotPos)) return;
+        handler.startLeap(player.getUUID(), node, sapphirePos, peridotPos);
+    }
+
+    public Optional<BlockPos> getLeapPos(UUID uuid) {
+        return handler.getLeapPos(uuid);
     }
 }

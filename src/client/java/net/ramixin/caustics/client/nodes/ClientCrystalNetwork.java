@@ -135,6 +135,10 @@ public class ClientCrystalNetwork implements Network {
         selectedScrollPos.setValue(scrollPos.intValue());
     }
 
+    public void deselectNode() {
+        selectedNode.setValue(null);
+    }
+
     public Optional<BlockPos> getSelectedNode() {
         BlockPos pos = selectedNode.get();
         if(pos == null) return Optional.empty();

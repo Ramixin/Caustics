@@ -5,15 +5,21 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.ItemStack;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
+import net.ramixin.caustics.client.nodes.ClientCrystalNode;
 import net.ramixin.caustics.client.nodes.NodesRenderPipeline;
+import net.ramixin.caustics.items.ModItems;
 import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
 import net.ramixin.caustics.networking.clientbound.NodeSyncPayload;
 import net.ramixin.caustics.networking.clientbound.RoutingSyncPayload;
 import net.ramixin.caustics.networking.clientbound.SignalRangeSyncPayload;
+import net.ramixin.caustics.networking.serverbound.RequestLeaptionPayload;
 import net.ramixin.caustics.utils.LookUtil;
 
 import java.util.Optional;
@@ -51,6 +57,28 @@ public class CausticsClient implements ClientModInitializer {
 
         LevelRenderEvents.END_MAIN.register(_ -> LOOK_MANAGER.wipe());
         ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> ClientCrystalNetwork.getInstance().nuke());
+
+        ModMixsonClient.onInitialize();
+
+        UseItemCallback.EVENT.register((player, level, hand) -> {
+            if(!level.isClientSide()) return InteractionResult.PASS;
+            if(player.isUsingItem()) return InteractionResult.PASS;
+            ItemStack stack = player.getItemInHand(hand);
+            if(!stack.is(ModItems.LEAPER)) return InteractionResult.PASS;
+            Optional<BlockPos> selectedPosition = ClientCrystalNetwork.getInstance().getSelectedNode();
+            if(selectedPosition.isEmpty()) return InteractionResult.PASS;
+            BlockPos pos = selectedPosition.get();
+            Optional<ClientCrystalNode> maybeNode = ClientCrystalNetwork.getInstance().getTargetableNodeAt(pos);
+            if(maybeNode.isEmpty()) return InteractionResult.PASS;
+            ClientCrystalNode node = maybeNode.get();
+            int scrollPos = ClientCrystalNetwork.getInstance().getSelectedScrollPos();
+            BlockPos peridotPos = node.peridotPositions().get(scrollPos);
+            ClientPlayNetworking.send(new RequestLeaptionPayload(pos, peridotPos));
+            //ClientCrystalNetwork.getInstance().deselectNode();
+            player.startUsingItem(hand);
+            Caustics.LOGGER.info("started!");
+            return InteractionResult.SUCCESS;
+        });
     }
 
     public static void onAlidadeAttack() {

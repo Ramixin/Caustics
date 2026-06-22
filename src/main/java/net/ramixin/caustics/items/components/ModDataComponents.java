@@ -10,6 +10,7 @@ import java.util.function.UnaryOperator;
 public class ModDataComponents {
 
     public static final DataComponentType<Frequency> FREQUENCY = register("frequency", (builder) -> builder.persistent(Frequency.CODEC).networkSynchronized(Frequency.STREAM_CODEC));
+    public static final DataComponentType<LeaperMaterial> LEAPER_MATERIAL = register("leaper_material", (builder) -> builder.persistent(LeaperMaterial.CODEC).networkSynchronized(LeaperMaterial.STREAM_CODEC));
 
     public static void onInitialize() {
 
