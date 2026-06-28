@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.blocks.ModBlocks;
+import net.ramixin.caustics.entities.ModEntities;
 import net.ramixin.caustics.items.ModItems;
 import net.ramixin.caustics.items.components.ModDataComponents;
 import net.ramixin.caustics.menus.ModMenus;
@@ -36,6 +37,7 @@ public class Caustics implements ModInitializer {
         ModItems.onInitialize();
         ModDataComponents.onInitialize();
         ModBlocks.onInitialize();
+        ModEntities.onInitialize();
         ModFeatures.onInitialize();
         ModMixson.onInitialize();
         ModGameRules.onInitialize();

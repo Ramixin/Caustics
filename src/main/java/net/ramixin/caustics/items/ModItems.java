@@ -43,6 +43,7 @@ public class ModItems {
         );
 
         ItemComponentTooltipProviderRegistry.addLast(ModDataComponents.FREQUENCY);
+        ItemComponentTooltipProviderRegistry.addLast(ModDataComponents.LEAPER_MATERIAL);
     }
 
     private static <T extends Item> T register(String name, Function<Item.Properties, T> constructor, Item.Properties properties) {

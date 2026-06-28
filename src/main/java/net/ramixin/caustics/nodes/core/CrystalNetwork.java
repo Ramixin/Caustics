@@ -163,11 +163,13 @@ public class CrystalNetwork extends SavedData implements Network {
     }
 
     public void requestLeaption(ServerPlayer player, BlockPos sapphirePos, BlockPos peridotPos) {
+        Caustics.LOGGER.info("Requesting leaption from {} to {}", player.getUUID(), sapphirePos);
         Optional<CrystalNode> maybeNode = this.index.getNodeAt(sapphirePos, NodeIndex.Type.SAPPHIRE);
         if(maybeNode.isEmpty()) return;
         CrystalNode node = maybeNode.get();
         Set<BlockPos> peridots = node.data().peridotClusters();
         if(!peridots.contains(peridotPos)) return;
+        Caustics.LOGGER.info("starting leap");
         handler.startLeap(player.getUUID(), node, sapphirePos, peridotPos);
     }
 

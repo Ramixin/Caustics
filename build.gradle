@@ -11,6 +11,9 @@ base {
 }
 
 loom {
+
+    accessWidenerPath = file("src/main/resources/caustics.classtweaker")
+
     splitEnvironmentSourceSets()
 
     mods {

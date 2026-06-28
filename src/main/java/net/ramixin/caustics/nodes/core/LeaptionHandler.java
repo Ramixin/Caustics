@@ -8,6 +8,7 @@ import net.ramixin.caustics.nodes.Leap;
 import net.ramixin.caustics.nodes.PlayerAccess;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,7 +19,13 @@ public class LeaptionHandler {
 
     protected void tick(ServerLevel level, CrystalNetwork network) {
         playerAccess.attach(level);
-        activeLeaps.entrySet().removeIf(entry -> playerAccess.fromUUID(entry.getKey()).map(Player::isUsingItem).orElse(false));
+        final Iterator<UUID> each = activeLeaps.keySet().iterator();
+        while (each.hasNext()) {
+            UUID next = each.next();
+            if(playerAccess.fromUUID(next).map(Player::isUsingItem).orElse(false)) continue;
+            activeLeaps.get(next).cleanup(level);
+            each.remove();
+        }
         for(Leap leap : activeLeaps.values()) {
             leap.tick(level, network);
         }

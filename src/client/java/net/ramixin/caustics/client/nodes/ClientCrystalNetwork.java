@@ -33,6 +33,8 @@ public class ClientCrystalNetwork implements Network {
     private final Mutable<BlockPos> selectedNode = new MutableObject<>();
     private final MutableInt selectedScrollPos = new MutableInt();
 
+    private final Mutable<BlockPos> knownDepositPos = new MutableObject<>();
+
     public static ClientCrystalNetwork getInstance() {
         return INSTANCE;
     }
@@ -152,6 +154,10 @@ public class ClientCrystalNetwork implements Network {
 
     public int getSelectedScrollPos() {
         return selectedScrollPos.intValue();
+    }
+
+    public Optional<BlockPos> getKnownDepositPos() {
+        return Optional.ofNullable(knownDepositPos.get());
     }
 
     public void nuke() {

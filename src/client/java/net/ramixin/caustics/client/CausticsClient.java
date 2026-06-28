@@ -3,6 +3,7 @@ package net.ramixin.caustics.client;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
@@ -31,6 +32,10 @@ public class CausticsClient implements ClientModInitializer {
     public static final LookManager LOOK_MANAGER = new LookManager();
 
     public static int MAX_SIGNAL_RANGE = 256;
+
+    public static final RenderStateDataKey<Double> GHOST_PROGRESS_KEY = RenderStateDataKey.create(() -> "caustics:ghost_progress");
+    public static final RenderStateDataKey<Double> PLAYER_PROGRESS_KEY = RenderStateDataKey.create(() -> "caustics:player_progress");
+    public static final RenderStateDataKey<Double> OPACITY_DEFAULT_KEY = RenderStateDataKey.create(() -> "caustics:opacity_default");
 
     @Override
     public void onInitializeClient() {
@@ -62,9 +67,9 @@ public class CausticsClient implements ClientModInitializer {
 
         UseItemCallback.EVENT.register((player, level, hand) -> {
             if(!level.isClientSide()) return InteractionResult.PASS;
-            if(player.isUsingItem()) return InteractionResult.PASS;
             ItemStack stack = player.getItemInHand(hand);
             if(!stack.is(ModItems.LEAPER)) return InteractionResult.PASS;
+            if(player.getCooldowns().isOnCooldown(stack)) return InteractionResult.PASS;
             Optional<BlockPos> selectedPosition = ClientCrystalNetwork.getInstance().getSelectedNode();
             if(selectedPosition.isEmpty()) return InteractionResult.PASS;
             BlockPos pos = selectedPosition.get();
@@ -75,8 +80,6 @@ public class CausticsClient implements ClientModInitializer {
             BlockPos peridotPos = node.peridotPositions().get(scrollPos);
             ClientPlayNetworking.send(new RequestLeaptionPayload(pos, peridotPos));
             //ClientCrystalNetwork.getInstance().deselectNode();
-            player.startUsingItem(hand);
-            Caustics.LOGGER.info("started!");
             return InteractionResult.SUCCESS;
         });
     }

@@ -41,6 +41,9 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add("caustics.frequency.tooltip_header", "Tuned Frequency:");
         translationBuilder.add("caustics.frequency.unnamed", "Unnamed Frequency");
 
+        translationBuilder.add("caustics.leaper_matieral.tooltip_charge_up", "Charge Up: %s");
+        translationBuilder.add("caustics.leaper_matieral.tooltip_cooldown", "Cooldown: %s");
+
         translationBuilder.add("caustics.node.unknown_travel", "Unknown Node");
         translationBuilder.add("caustics.node.unnamed_travel", "Unnamed Node");
         translationBuilder.add("caustics.node.scroll_oob", "ScrollPos is OOB");

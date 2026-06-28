@@ -4,14 +4,19 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
+import net.minecraft.client.main.GameConfig;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.ramixin.caustics.client.CausticsClient;
+import net.ramixin.caustics.client.entities.ClientLeapGhost;
 import net.ramixin.caustics.items.ModItems;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
 public class MinecraftMixin {
@@ -20,6 +25,9 @@ public class MinecraftMixin {
     @Final
     public Options options;
 
+    @Shadow
+    @Final
+    private PlayerSkinRenderCache playerSkinRenderCache;
     @Unique
     private boolean alidadeAttacking = false;
 
@@ -42,6 +50,11 @@ public class MinecraftMixin {
         if(!this.options.keyUse.isDown()) return false;
         if(!this.options.keyAttack.isDown()) return false;
         return instance.getMainHandItem().is(ModItems.ALIDADE);
+    }
+
+    @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/entity/ClientMannequin;registerOverrides(Lnet/minecraft/client/renderer/PlayerSkinRenderCache;)V"))
+    private void overrideEntityFactoryForLeapGhost(GameConfig gameConfig, CallbackInfo ci) {
+        ClientLeapGhost.overrideFactory(this.playerSkinRenderCache);
     }
 
 }

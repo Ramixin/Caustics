@@ -141,4 +141,8 @@ public abstract class AbstractChecker<T> {
         };
     }
 
+    public void setPauseTicks(int ticks) {
+        pauseTicks = ticks;
+    }
+
 }

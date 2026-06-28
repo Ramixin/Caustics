@@ -5,6 +5,8 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "AbstractClientPlayerMixin",
+    "ClientAvatarStateMixin",
+    "EntityRenderDispatcherMixin",
     "GuiGraphicsExtractorMixin",
     "GuiMixin",
     "ItemTooltipContext$2Mixin",
@@ -15,5 +17,9 @@
   },
   "overwrites": {
     "requireAnnotations": true
-  }
+  },
+  "mixins": [
+    "AvatarRendererMixin",
+    "LivingEntityRendererMixin"
+  ]
 }

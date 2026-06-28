@@ -140,6 +140,17 @@ public final class CrystalNode {
         return Objects.equals(this.data, that.data);
     }
 
+    public void prioritizeUpdates(BlockPos sapphirePos, BlockPos peridotPos) {
+        VisibilityChecker checker = visibilityCheckers.get(sapphirePos);
+        if(checker != null) {
+            checker.setPauseTicks(0);
+        }
+        DepositChecker depositChecker = depositCheckers.get(peridotPos);
+        if(depositChecker != null) {
+            depositChecker.setPauseTicks(0);
+        }
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(data);
