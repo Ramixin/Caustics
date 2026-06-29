@@ -5,11 +5,13 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.networking.clientbound.NodeSyncPayload;
 import net.ramixin.caustics.nodes.CrystalNode;
 import net.ramixin.caustics.nodes.NodeData;
 import net.ramixin.caustics.nodes.NodeSyncData;
 import net.ramixin.caustics.nodes.steppers.NodeBuilder;
+import net.ramixin.caustics.nodes.steppers.VisibilityChecker;
 
 import java.util.*;
 
@@ -23,6 +25,8 @@ public class NodeWorker {
     private final List<CrystalNode> nodes = new ArrayList<>();
     private final Map<NodeBuilder, CrystalNode> rebuildBuilders = new HashMap<>();
     private final Map<NodeBuilder, List<BlockPos>> newBuilders = new HashMap<>();
+
+    private final HashMap<BlockPos, VisibilityChecker> seleniteCheckers = new HashMap<>();
 
     private NodeWorker(List<CrystalNode> nodes, List<List<BlockPos>> builders) {
         int delay = 0;
@@ -42,6 +46,14 @@ public class NodeWorker {
         }
     }
 
+    protected boolean isSeleniteVisible(BlockPos pos) {
+        return seleniteCheckers.computeIfAbsent(pos, VisibilityChecker::new).getValue();
+    }
+
+    protected int getSeleniteLightLevel(BlockPos pos) {
+        return seleniteCheckers.computeIfAbsent(pos, VisibilityChecker::new).skyBrightness();
+    }
+
     protected NodeWorker() { }
 
     protected void tick(ServerLevel level, CrystalNetwork network) {
@@ -49,6 +61,12 @@ public class NodeWorker {
         tickNodes(level, tracker);
         tickRebuildBuilders(level, network);
         tickNewBuilders(level, network);
+
+        Set<BlockPos> scheduledRemovals = new HashSet<>();
+        for(BlockPos pos : seleniteCheckers.keySet())
+            if(!level.getBlockState(pos).is(ModBlocks.SELENITE_GROUP.cluster())) scheduledRemovals.add(pos);
+            else seleniteCheckers.get(pos).tick(level, network.getTracker());
+        seleniteCheckers.keySet().removeAll(scheduledRemovals);
     }
 
     private void tickNodes(ServerLevel level, Tracker tracker) {

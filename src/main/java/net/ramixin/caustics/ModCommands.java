@@ -1,25 +1,39 @@
 package net.ramixin.caustics;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.ResourceArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.ramixin.caustics.items.ModItems;
 import net.ramixin.caustics.items.components.Frequency;
+import net.ramixin.caustics.items.components.LeaperCharge;
+import net.ramixin.caustics.items.components.LeaperMaterial;
+import net.ramixin.caustics.items.components.ModDataComponents;
 import net.ramixin.caustics.nodes.CrystalNode;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
+import net.ramixin.caustics.registries.Handle;
+import net.ramixin.caustics.registries.ModRegistries;
 
 import java.util.Optional;
 import java.util.Set;
 
 public class ModCommands {
 
-    @SuppressWarnings("unused") // selection & buildContext
+    @SuppressWarnings("unused") // selection
     public static void onInitialize(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext, Commands.CommandSelection selection) {
 
         RootCommandNode<CommandSourceStack> root = dispatcher.getRoot();
@@ -30,6 +44,7 @@ public class ModCommands {
         caustics.addChild(testVisibility());
         caustics.addChild(createFrequency());
         caustics.addChild(depositPos());
+        caustics.addChild(giveLeaper(buildContext));
 
         root.addChild(caustics);
     }
@@ -172,7 +187,25 @@ public class ModCommands {
                     Set<Frequency> networks = CrystalNetwork.get(ctx.getSource().getLevel()).getNetworks(pos);
                     System.out.println(networks);
                     return 0;
-        })).build();
+                })).build();
+    }
+
+    public static CommandNode<CommandSourceStack> giveLeaper(CommandBuildContext buildCtx) {
+        return Commands.literal("giveleaper").then(Commands.argument("player", EntityArgument.player()).then(Commands.argument("handle", ResourceArgument.resource(buildCtx, ModRegistries.HANDLE_KEY)).then(Commands.argument("decoration", ResourceArgument.resource(buildCtx, ModRegistries.DECORATION_KEY)).then(Commands.argument("core", BoolArgumentType.bool()).then(Commands.argument("max_charges", IntegerArgumentType.integer(1))
+                .executes(ctx -> {
+                    Player player = EntityArgument.getPlayer(ctx, "player");
+                    Holder.Reference<Handle> handle = ResourceArgument.getResource(ctx, "handle", ModRegistries.HANDLE_KEY);
+                    Holder.Reference<Item> decoration = ResourceArgument.getResource(ctx, "decoration", ModRegistries.DECORATION_KEY);
+                    boolean hasCore = BoolArgumentType.getBool(ctx, "core");
+                    int maxCharges = IntegerArgumentType.getInteger(ctx, "max_charges");
+                    LeaperMaterial material = new LeaperMaterial(handle, decoration, hasCore);
+                    LeaperCharge charge = new LeaperCharge(0, maxCharges);
+                    ItemStack stack = new ItemStack(ModItems.LEAPER);
+                    stack.set(ModDataComponents.LEAPER_MATERIAL, material);
+                    stack.set(ModDataComponents.LEAPER_CHARGE, charge);
+                    player.addItem(stack);
+                    return 0;
+                })))))).build();
     }
 
 }

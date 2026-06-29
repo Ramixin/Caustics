@@ -28,7 +28,7 @@ public class ModBlocks {
     public static final CrystalBlockGroup PERIDOT_GROUP = registerGroup("peridot", BuddingPeridotBlock::new);
     public static final CrystalBlockGroup TOPAZ_GROUP = registerGroup("topaz", BuddingTopazBlock::new, NetworkClusterBlock::new);
     public static final CrystalBlockGroup SUNSTONE_GROUP = registerGroup("sunstone", BuddingSunstoneBlock::new);
-    public static final CrystalBlockGroup SELENITE_GROUP = registerGroup("selenite", BuddingSeleniteBlock::new);
+    public static final CrystalBlockGroup SELENITE_GROUP = registerGroup("selenite", BuddingSeleniteBlock::new, ChargeClusterBlock::new);
     public static final CrystalBlockGroup TOURMALINE_GROUP = registerGroup("tourmaline", BuddingTourmalineBlock::new, NetworkClusterBlock::new);
 
     public static final Block MIRROR = register("mirror", MirrorBlock::new, BlockBehaviour.Properties.of());

@@ -79,12 +79,21 @@ public class ModMixson {
         JsonObject result = new JsonObject();
         result.addProperty("count", 1);
         result.addProperty("id", "caustics:leaper");
+
         JsonObject components = new JsonObject();
         JsonObject leaperMaterial = new JsonObject();
         leaperMaterial.addProperty("handle", handle.toString());
         leaperMaterial.addProperty("decoration", decoration.toString());
         leaperMaterial.addProperty("has_core", hasCore);
         components.add("caustics:leaper_material", leaperMaterial);
+
+        if(hasCore) {
+            JsonObject leaperCharge = new JsonObject();
+            leaperCharge.addProperty("charge", 0);
+            leaperCharge.addProperty("max_charge", 1);
+            components.add("caustics:leaper_charge", leaperCharge);
+        }
+
         result.add("components", components);
         recipe.add("result", result);
 

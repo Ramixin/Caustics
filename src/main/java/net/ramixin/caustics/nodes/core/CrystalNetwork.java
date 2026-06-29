@@ -116,6 +116,14 @@ public class CrystalNetwork extends SavedData implements Network {
         return networks;
     }
 
+    public boolean isSeleniteVisible(BlockPos pos) {
+        return worker.isSeleniteVisible(pos);
+    }
+
+    public int getSeleniteLightLevel(BlockPos pos) {
+        return worker.getSeleniteLightLevel(pos);
+    }
+
     public void joinSync(ServerPlayer player) {
         this.synchronizer.joinSync(player, this);
     }

@@ -73,6 +73,6 @@ public final class Leap {
         if(ghostUUID.get() == null) return;
         Entity entity = level.getEntity(ghostUUID.get());
         if(entity == null) return;
-       entity.remove(Entity.RemovalReason.DISCARDED);
+        entity.remove(Entity.RemovalReason.DISCARDED);
     }
 }

@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.ramixin.caustics.ModTags;
+import net.ramixin.caustics.blocks.ModBlocks;
 
 public class VisibilityChecker extends AbstractChecker<Boolean> {
 
@@ -28,6 +29,6 @@ public class VisibilityChecker extends AbstractChecker<Boolean> {
 
     @Override
     protected boolean validClusterBlock(BlockState state) {
-        return state.is(ModTags.Blocks.NETWORK_CLUSTER);
+        return state.is(ModTags.Blocks.NETWORK_CLUSTER) || state.is(ModBlocks.SELENITE_GROUP.cluster());
     }
 }

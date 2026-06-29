@@ -4,17 +4,26 @@ import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
+import net.minecraft.client.data.models.MultiVariant;
+import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.client.data.models.blockstates.PropertyDispatch;
 import net.minecraft.client.data.models.model.*;
+import net.minecraft.client.renderer.block.dispatch.VariantMutator;
 import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.blocks.ChargeClusterBlock;
 import net.ramixin.caustics.blocks.CrystalBlockGroup;
 import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.items.ModItems;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
+
+import static net.minecraft.client.data.models.BlockModelGenerators.*;
 
 public class CausticsModelProvider extends FabricModelProvider {
 
@@ -23,19 +32,28 @@ public class CausticsModelProvider extends FabricModelProvider {
     private static final ModelTemplate MEDIUM_BUD_TEMPLATE = item("medium_bud");
     private static final ModelTemplate SMALL_BUD_TEMPLATE = item("small_bud");
 
+    private static final PropertyDispatch<VariantMutator> ROTATIONS_COLUMN_WITH_FACING = PropertyDispatch.modify(BlockStateProperties.FACING).select(Direction.DOWN, X_ROT_180).select(Direction.UP, NOP).select(Direction.NORTH, X_ROT_90).select(Direction.SOUTH, X_ROT_90.then(Y_ROT_180)).select(Direction.WEST, X_ROT_90.then(Y_ROT_270)).select(Direction.EAST, X_ROT_90.then(Y_ROT_90));
+
     public CausticsModelProvider(FabricPackOutput output) {
         super(output);
     }
 
     @Override
-    public void generateBlockStateModels(@NonNull BlockModelGenerators blockModelGenerators) {
-        generateGroupBlocks(ModBlocks.SAPPHIRE_GROUP, blockModelGenerators);
-        generateGroupBlocks(ModBlocks.BERYL_GROUP, blockModelGenerators);
-        generateGroupBlocks(ModBlocks.PERIDOT_GROUP, blockModelGenerators);
-        generateGroupBlocks(ModBlocks.TOPAZ_GROUP, blockModelGenerators);
-        generateGroupBlocks(ModBlocks.SUNSTONE_GROUP, blockModelGenerators);
-        generateGroupBlocks(ModBlocks.SELENITE_GROUP, blockModelGenerators);
-        generateGroupBlocks(ModBlocks.TOURMALINE_GROUP, blockModelGenerators);
+    public void generateBlockStateModels(@NonNull BlockModelGenerators generators) {
+        generateGroupBlocks(ModBlocks.SAPPHIRE_GROUP, generators, false);
+        generateGroupBlocks(ModBlocks.BERYL_GROUP, generators, false);
+        generateGroupBlocks(ModBlocks.PERIDOT_GROUP, generators, false);
+        generateGroupBlocks(ModBlocks.TOPAZ_GROUP, generators, false);
+        generateGroupBlocks(ModBlocks.SUNSTONE_GROUP, generators, false);
+        generateGroupBlocks(ModBlocks.SELENITE_GROUP, generators, true);
+        generateGroupBlocks(ModBlocks.TOURMALINE_GROUP, generators, false);
+
+        Block selenite = ModBlocks.SELENITE_GROUP.cluster();
+        TextureMapping chargedTextures = TextureMapping.cross(selenite);
+        TextureMapping dischargedTextures = TextureMapping.cross(TextureMapping.getBlockTexture(selenite, "_discharged"));
+        MultiVariant wallModelOn = plainVariant(ModelTemplates.CROSS.create(selenite, chargedTextures, generators.modelOutput));
+        MultiVariant wallModelOff = plainVariant(ModelTemplates.CROSS.createWithSuffix(selenite, "_discharged", dischargedTextures, generators.modelOutput));
+        generators.blockStateOutput.accept(MultiVariantGenerator.dispatch(selenite).with(createBooleanModelDispatch(ChargeClusterBlock.CHARGED, wallModelOn, wallModelOff)).with(ROTATIONS_COLUMN_WITH_FACING));
     }
 
     @Override
@@ -62,10 +80,11 @@ public class CausticsModelProvider extends FabricModelProvider {
 
     }
 
-    private static void generateGroupBlocks(CrystalBlockGroup group, BlockModelGenerators generators) {
+    private static void generateGroupBlocks(CrystalBlockGroup group, BlockModelGenerators generators, boolean skipCluster) {
         generators.createTrivialCube(group.block());
         generators.createTrivialCube(group.buddingBlock());
-        generators.createAmethystCluster(group.cluster());
+        if(!skipCluster)
+            generators.createAmethystCluster(group.cluster());
         generators.createAmethystCluster(group.largeBud());
         generators.createAmethystCluster(group.mediumBud());
         generators.createAmethystCluster(group.smallBud());

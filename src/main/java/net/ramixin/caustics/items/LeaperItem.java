@@ -12,8 +12,13 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.component.UseCooldown;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.blocks.ChargeClusterBlock;
+import net.ramixin.caustics.blocks.ModBlocks;
+import net.ramixin.caustics.items.components.LeaperCharge;
 import net.ramixin.caustics.items.components.ModDataComponents;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import org.jspecify.annotations.NonNull;
@@ -36,6 +41,30 @@ public class LeaperItem extends Item {
         if(stack.has(ModDataComponents.LEAPER_MATERIAL))
             player.startUsingItem(hand);
         return super.use(level, player, hand);
+    }
+
+    @Override
+    public @NonNull InteractionResult useOn(UseOnContext context) {
+        BlockPos pos = context.getClickedPos();
+        BlockState state = context.getLevel().getBlockState(pos);
+        if(!state.is(ModBlocks.SELENITE_GROUP.cluster())) return InteractionResult.PASS;
+        boolean charged = state.getValue(ChargeClusterBlock.CHARGED);
+        LeaperCharge charge = context.getItemInHand().get(ModDataComponents.LEAPER_CHARGE);
+        if(charge == null) return InteractionResult.PASS;
+
+        LeaperCharge newCharge;
+        BlockState newState;
+        if(charged && charge.percentage() < 1) {
+            newCharge = charge.increment();
+            newState = state.setValue(ChargeClusterBlock.CHARGED, false);
+        } else if(!charged && charge.percentage() > 0) {
+            newCharge = charge.decrement();
+            newState = state.setValue(ChargeClusterBlock.CHARGED, true);
+        } else return InteractionResult.PASS;
+
+        context.getItemInHand().set(ModDataComponents.LEAPER_CHARGE, newCharge);
+        context.getLevel().setBlockAndUpdate(pos, newState);
+        return InteractionResult.SUCCESS;
     }
 
     @Override
@@ -69,6 +98,9 @@ public class LeaperItem extends Item {
         updateCooldownComponent(itemStack);
         player.getCooldowns().addCooldown(itemStack, cooldownTicks);
         entity.stopUsingItem();
+        LeaperCharge charge = itemStack.get(ModDataComponents.LEAPER_CHARGE);
+        if(charge == null || player.isCreative()) return original;
+        itemStack.set(ModDataComponents.LEAPER_CHARGE, charge.decrement());
         return original;
     }
 
@@ -88,5 +120,22 @@ public class LeaperItem extends Item {
         int ticks = getCooldownTicks(stack);
         String group = UUID.randomUUID().toString().toLowerCase();
         stack.set(DataComponents.USE_COOLDOWN, new UseCooldown(ticks, Optional.of(Caustics.id(group))));
+    }
+
+    @Override
+    public int getBarColor(@NonNull ItemStack stack) {
+        return 0xFF_FF_FF_FF;
+    }
+
+    @Override
+    public boolean isBarVisible(ItemStack stack) {
+        return stack.get(ModDataComponents.LEAPER_CHARGE) != null;
+    }
+
+    @Override
+    public int getBarWidth(@NonNull ItemStack stack) {
+        LeaperCharge charge = stack.get(ModDataComponents.LEAPER_CHARGE);
+        if(charge == null) return 1;
+        return 1 + (int) Math.round(charge.percentage() * 12);
     }
 }

@@ -39,11 +39,11 @@ public class ModItems {
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(event -> {
             event.insertAfter(Items.SPYGLASS, ALIDADE);
             event.insertAfter(Items.BRUSH, TUNING_FORK);
-        }
-        );
+        });
 
         ItemComponentTooltipProviderRegistry.addLast(ModDataComponents.FREQUENCY);
         ItemComponentTooltipProviderRegistry.addLast(ModDataComponents.LEAPER_MATERIAL);
+        ItemComponentTooltipProviderRegistry.addLast(ModDataComponents.LEAPER_CHARGE);
     }
 
     private static <T extends Item> T register(String name, Function<Item.Properties, T> constructor, Item.Properties properties) {
