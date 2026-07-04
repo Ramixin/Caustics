@@ -56,7 +56,7 @@ public abstract class AbstractChecker<T> {
             curDir = state.getValue(AmethystClusterBlock.FACING);
             mustOrient = false;
         }
-        if(stepsLeft == -1) {
+        if(stepsLeft <= 0) {
             stepsLeft = level.getGameRules().get(ModGameRules.MAX_STEPS);
         }
         if(pauseTicks > 0) {
@@ -66,7 +66,7 @@ public abstract class AbstractChecker<T> {
 
         int steps = level.getGameRules().get(ModGameRules.STEPS_PER_TICK);
         for(int i = 0; i < steps; i++) {
-            if(stepsLeft == 0) {
+            if(stepsLeft <= 0) {
                 Caustics.LOGGER.error("checker ran out of steps");
                 verdict(defaultValue(), level, tracker);
                 return;

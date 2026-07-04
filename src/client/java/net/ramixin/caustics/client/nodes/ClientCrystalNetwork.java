@@ -20,7 +20,8 @@ public class ClientCrystalNetwork implements Network {
 
     private static final ClientCrystalNetwork INSTANCE = new ClientCrystalNetwork();
 
-    private final HashMap<BlockPos, ClientCrystalNode> sapphireToNode = new HashMap<>();
+    private final HashMap<BlockPos, ClientNode> sapphireToNode = new HashMap<>();
+    private final HashMap<BlockPos, ClientNode> topazToNode = new HashMap<>();
 
     private final MutableInt scrollPos = new MutableInt();
     private final Mutable<BlockPos> lastLookingAt = new MutableObject<>();
@@ -41,10 +42,12 @@ public class ClientCrystalNetwork implements Network {
 
     public void onNodeSync(List<NodeSyncData> syncData) {
         sapphireToNode.clear();
+        topazToNode.clear();
 
         for(NodeSyncData data : syncData) {
-            ClientCrystalNode node = ClientCrystalNode.fromSyncData(data);
+            ClientNode node = ClientNode.fromSyncData(data);
             for(BlockPos pos : data.sapphirePositions()) sapphireToNode.put(pos, node);
+            for(BlockPos pos : data.topazPositions()) topazToNode.put(pos, node);
         }
     }
 
@@ -56,7 +59,7 @@ public class ClientCrystalNetwork implements Network {
         this.frequencyNames.putAll(frequencyNames);
     }
 
-    public Optional<ClientCrystalNode> getTargetableNodeAt(BlockPos pos) {
+    public Optional<ClientNode> getTargetableNodeAt(BlockPos pos) {
         return Optional.ofNullable(sapphireToNode.get(pos));
     }
 
@@ -66,31 +69,48 @@ public class ClientCrystalNetwork implements Network {
         LocalPlayer player = Minecraft.getInstance().player;
         if(player == null) throw new IllegalStateException("Player is null");
 
-        for(BlockPos pos : sapphireToNode.keySet())
+        for(BlockPos pos : sapphireToNode.keySet()) {
+            if(!sapphireToNode.get(pos).visible()) continue;
             if(pos.distToCenterSqr(player.position()) < CausticsClient.MAX_SIGNAL_RANGE) {
                 visiblePositions.add(pos);
-                routes.add(new Route(List.of(pos)));
+                routes.add(new Route(List.of(), pos));
             }
+        }
+
 
         for(BlockPos pos : routingTables.keySet()) {
             if(pos.distToCenterSqr(player.position()) >= CausticsClient.MAX_SIGNAL_RANGE)
                 continue;
             RoutingTable table = routingTables.get(pos);
             for(BlockPos nodePos : table.keySet()) {
+                Route route = table.getRoute(nodePos);
+                if(!isRouteVisible(route)) continue;
                 int index = visiblePositions.indexOf(nodePos);
                 if(index == -1) {
                     visiblePositions.add(nodePos);
-                    routes.add(table.getRoute(nodePos));
+                    routes.add(route);
                     continue;
                 }
-                if(table.getRoute(nodePos).length() < routes.get(index).length()) {
+                if(route.length() < routes.get(index).length()) {
                     visiblePositions.set(index, nodePos);
-                    routes.set(index, table.getRoute(nodePos));
+                    routes.set(index, route);
                 }
             }
         }
 
         return new Pair<>(visiblePositions.toArray(BlockPos[]::new), routes.toArray(Route[]::new));
+    }
+
+    private boolean isRouteVisible(Route route) {
+        for(BlockPos pos : route.immutablePath())
+            if(!isNodeVisible(pos)) return false;
+        return true;
+    }
+
+    private boolean isNodeVisible(BlockPos pos) {
+        if(sapphireToNode.containsKey(pos)) return sapphireToNode.get(pos).visible();
+        else if(topazToNode.containsKey(pos)) return topazToNode.get(pos).visible();
+        return false;
     }
 
     public void clearScrollPos() {
@@ -103,7 +123,7 @@ public class ClientCrystalNetwork implements Network {
         } else {
             BlockPos lookingAt = lastLookingAt.get();
             if(lookingAt == null) return;
-            ClientCrystalNode node = sapphireToNode.get(lookingAt);
+            ClientNode node = sapphireToNode.get(lookingAt);
             if(scrollPos.intValue() < node.peridotPositions().size()-1) scrollPos.increment();
         }
 
@@ -133,6 +153,9 @@ public class ClientCrystalNetwork implements Network {
     }
 
     public void selectNode(BlockPos pos) {
+        ClientNode node = sapphireToNode.get(pos);
+        if(node == null) return;
+        if(node.peridotPositions().isEmpty()) return;
         selectedNode.setValue(pos);
         selectedScrollPos.setValue(scrollPos.intValue());
     }
@@ -144,7 +167,7 @@ public class ClientCrystalNetwork implements Network {
     public Optional<BlockPos> getSelectedNode() {
         BlockPos pos = selectedNode.get();
         if(pos == null) return Optional.empty();
-        ClientCrystalNode node = sapphireToNode.get(pos);
+        ClientNode node = sapphireToNode.get(pos);
         if(node == null) {
             selectedNode.setValue(null);
             return Optional.empty();

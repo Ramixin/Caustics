@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.networking.clientbound.NodeSyncPayload;
-import net.ramixin.caustics.nodes.CrystalNode;
+import net.ramixin.caustics.nodes.Node;
 import net.ramixin.caustics.nodes.NodeData;
 import net.ramixin.caustics.nodes.NodeSyncData;
 import net.ramixin.caustics.nodes.steppers.NodeBuilder;
@@ -18,19 +18,19 @@ import java.util.*;
 public class NodeWorker {
 
     protected static final Codec<NodeWorker> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            CrystalNode.CODEC.listOf().fieldOf("nodes").forGetter(NodeWorker::getNodes),
+            Node.CODEC.listOf().fieldOf("nodes").forGetter(NodeWorker::getNodes),
             BlockPos.CODEC.listOf().listOf().fieldOf("builders").forGetter(NodeWorker::getBuildersAsList)
     ).apply(instance, NodeWorker::new));
 
-    private final List<CrystalNode> nodes = new ArrayList<>();
-    private final Map<NodeBuilder, CrystalNode> rebuildBuilders = new HashMap<>();
+    private final List<Node> nodes = new ArrayList<>();
+    private final Map<NodeBuilder, Node> rebuildBuilders = new HashMap<>();
     private final Map<NodeBuilder, List<BlockPos>> newBuilders = new HashMap<>();
 
     private final HashMap<BlockPos, VisibilityChecker> seleniteCheckers = new HashMap<>();
 
-    private NodeWorker(List<CrystalNode> nodes, List<List<BlockPos>> builders) {
+    private NodeWorker(List<Node> nodes, List<List<BlockPos>> builders) {
         int delay = 0;
-        for(CrystalNode node : nodes) {
+        for(Node node : nodes) {
             this.nodes.add(node);
             Set<BlockPos> positions = new HashSet<>(node.data().sapphireClusters());
             positions.addAll(node.data().topazClusters());
@@ -70,7 +70,7 @@ public class NodeWorker {
     }
 
     private void tickNodes(ServerLevel level, Tracker tracker) {
-        for(CrystalNode node : nodes) {
+        for(Node node : nodes) {
             node.tick(level, tracker);
         }
     }
@@ -80,7 +80,7 @@ public class NodeWorker {
             builder.tick(level);
             if (builder.isBuilding()) continue;
 
-            CrystalNode oldNode = rebuildBuilders.get(builder);
+            Node oldNode = rebuildBuilders.get(builder);
             Optional<NodeData> maybeData = builder.build(level, this);
             rebuildBuilders.remove(builder);
 
@@ -92,7 +92,7 @@ public class NodeWorker {
             NodeData newData = maybeData.get();
             if (!newData.equals(oldNode.data())) {
                 unregister(oldNode, network);
-                CrystalNode newNode = oldNode.withData(newData);
+                Node newNode = oldNode.withData(newData);
                 register(newNode, network);
                 scheduleRebuild(newNode);
             } else
@@ -106,7 +106,7 @@ public class NodeWorker {
             if(builder.isBuilding()) continue;
 
             builder.build(level, this).ifPresent(data -> {
-                CrystalNode newNode = new CrystalNode(data);
+                Node newNode = new Node(data);
                 register(newNode, network);
                 scheduleRebuild(newNode);
             });
@@ -114,19 +114,19 @@ public class NodeWorker {
         }
     }
 
-    private void register(CrystalNode node, CrystalNetwork network) {
+    private void register(Node node, CrystalNetwork network) {
         nodes.add(node);
         network.getIndex().indexNode(node);
         network.getTracker().push(Tracker.Task.NODE_SYNC, Tracker.Task.REBUILD_ROUTING, Tracker.Task.DIRTY);
     }
 
-    private void unregister(CrystalNode node, CrystalNetwork network) {
+    private void unregister(Node node, CrystalNetwork network) {
         nodes.remove(node);
         network.getIndex().unindexNode(node);
         network.getTracker().push(Tracker.Task.NODE_SYNC, Tracker.Task.REBUILD_ROUTING, Tracker.Task.DIRTY);
     }
 
-    private void scheduleRebuild(CrystalNode node) {
+    private void scheduleRebuild(Node node) {
         Set<BlockPos> positions = new HashSet<>(node.data().sapphireClusters());
         positions.addAll(node.data().topazClusters());
         positions.addAll(node.data().tourmalineClusters());
@@ -148,17 +148,17 @@ public class NodeWorker {
         return newBuilders.values().stream().toList();
     }
 
-    public Optional<CrystalNode> getNodeForBuilder(NodeBuilder builder) {
+    public Optional<Node> getNodeForBuilder(NodeBuilder builder) {
         return Optional.ofNullable(rebuildBuilders.get(builder));
     }
 
-    public List<CrystalNode> getNodes() {
+    public List<Node> getNodes() {
         return nodes;
     }
 
     protected NodeSyncPayload createSyncPayload() {
         List<NodeSyncData> data = new ArrayList<>();
-        for(CrystalNode node : nodes) {
+        for(Node node : nodes) {
             Optional<NodeSyncData> maybeData = node.createSyncData();
             maybeData.ifPresent(data::add);
         }
@@ -173,7 +173,7 @@ public class NodeWorker {
     protected void printNodes() {
         if(nodes.isEmpty())
             Caustics.LOGGER.info("No nodes");
-        else for(CrystalNode node : nodes)
+        else for(Node node : nodes)
             Caustics.LOGGER.info(node.toString());
     }
 

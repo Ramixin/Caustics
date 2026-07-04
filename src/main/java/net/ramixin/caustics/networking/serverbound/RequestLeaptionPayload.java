@@ -5,19 +5,20 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.nodes.routing.Route;
 import org.jspecify.annotations.NonNull;
 
-public record RequestLeaptionPayload(BlockPos sapphirePos, BlockPos peridotPos) implements CustomPacketPayload {
+public record RequestLeaptionPayload(Route route, BlockPos peridotPos) implements CustomPacketPayload {
 
     public static final Type<RequestLeaptionPayload> TYPE = new Type<>(Caustics.id("request_leaption"));
     public static final StreamCodec<RegistryFriendlyByteBuf, RequestLeaptionPayload> CODEC = StreamCodec.ofMember(RequestLeaptionPayload::write, RequestLeaptionPayload::new);
 
     private RequestLeaptionPayload(RegistryFriendlyByteBuf buf) {
-        this(buf.readBlockPos(), buf.readBlockPos());
+        this(Route.STREAM_CODEC.decode(buf), buf.readBlockPos());
     }
 
     private void write(RegistryFriendlyByteBuf buf) {
-        buf.writeBlockPos(sapphirePos);
+        Route.STREAM_CODEC.encode(buf, route);
         buf.writeBlockPos(peridotPos);
     }
 

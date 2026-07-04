@@ -62,7 +62,7 @@ public class Caustics implements ModInitializer {
                 CrystalNetwork.get(ctx.player().level()).resync(ctx.player())
         );
         ServerPlayNetworking.registerGlobalReceiver(RequestLeaptionPayload.TYPE, (payload, ctx) ->
-                CrystalNetwork.get(ctx.player().level()).requestLeaption(ctx.player(), payload.sapphirePos(), payload.peridotPos())
+                CrystalNetwork.get(ctx.player().level()).requestLeaption(ctx.player(), payload.route(), payload.peridotPos())
         );
     }
 

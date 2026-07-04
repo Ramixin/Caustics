@@ -3,9 +3,10 @@ package net.ramixin.caustics.nodes.core;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
-import net.ramixin.caustics.nodes.CrystalNode;
+import net.ramixin.caustics.nodes.Node;
 import net.ramixin.caustics.nodes.Leap;
 import net.ramixin.caustics.nodes.PlayerAccess;
+import net.ramixin.caustics.nodes.routing.NodeMappedRoute;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,8 +33,8 @@ public class LeaptionHandler {
 
     }
 
-    protected void startLeap(UUID uuid, CrystalNode node, BlockPos sapphirePos, BlockPos peridotPos) {
-        activeLeaps.put(uuid, new Leap(uuid, node, sapphirePos, peridotPos));
+    protected void startLeap(UUID uuid, Node node, NodeMappedRoute route, BlockPos sapphirePos, BlockPos peridotPos) {
+        activeLeaps.put(uuid, new Leap(uuid, node, route, sapphirePos, peridotPos));
     }
 
     public void clear() {
@@ -44,5 +45,11 @@ public class LeaptionHandler {
         Leap leap = activeLeaps.get(uuid);
         if(leap == null) return Optional.empty();
         return leap.getLeapPos();
+    }
+
+    protected void markLeapCompleted(UUID uuid) {
+        Leap leap = activeLeaps.get(uuid);
+        if(leap == null) return;
+        leap.markCompleted();
     }
 }

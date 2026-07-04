@@ -1,7 +1,8 @@
 package net.ramixin.caustics.nodes.core;
 
 import net.minecraft.core.BlockPos;
-import net.ramixin.caustics.nodes.CrystalNode;
+import net.ramixin.caustics.nodes.Node;
+import net.ramixin.caustics.nodes.NodeData;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,11 +18,11 @@ public class NodeIndex {
     protected NodeIndex() {}
 
     protected NodeIndex(NodeWorker worker) {
-        for(CrystalNode node : worker.getNodes())
+        for(Node node : worker.getNodes())
             indexNode(node);
     }
 
-    protected void indexNode(CrystalNode node) {
+    protected void indexNode(Node node) {
         Type.SAPPHIRE.index(node, this);
         Type.SUNSTONE.index(node, this);
         Type.TOPAZ.index(node, this);
@@ -29,7 +30,7 @@ public class NodeIndex {
         Type.PERIDOT.index(node, this);
     }
 
-    protected void unindexNode(CrystalNode node) {
+    protected void unindexNode(Node node) {
         Type.SAPPHIRE.unindex(node, this);
         Type.SUNSTONE.unindex(node, this);
         Type.TOPAZ.unindex(node, this);
@@ -37,7 +38,7 @@ public class NodeIndex {
         Type.PERIDOT.unindex(node, this);
     }
 
-    protected Optional<CrystalNode> getNodeAt(BlockPos pos, Type type) {
+    protected Optional<Node> getNodeAt(BlockPos pos, Type type) {
         NodeVariant variant = typedMap.get(pos);
         if(variant == null)
             return Optional.empty();
@@ -46,7 +47,7 @@ public class NodeIndex {
         return Optional.of(variant.node());
     }
 
-    protected Optional<CrystalNode> getNodeAt(BlockPos pos) {
+    protected Optional<Node> getNodeAt(BlockPos pos) {
         NodeVariant variant = typedMap.get(pos);
         if(variant == null)
             return Optional.empty();
@@ -64,32 +65,32 @@ public class NodeIndex {
         typedMap.clear();
     }
 
-    protected enum Type {
-        SAPPHIRE(NodeVariant.Sapphire::new, node -> node.data().sapphireClusters()),
-        SUNSTONE(NodeVariant.Sunstone::new, node -> node.data().sunstoneClusters()),
-        TOPAZ(NodeVariant.Topaz::new, node -> node.data().topazClusters()),
-        TOURMALINE(NodeVariant.Tourmaline::new, node -> node.data().tourmalineClusters()),
-        PERIDOT(NodeVariant.Peridot::new, node -> node.data().peridotClusters())
+    public enum Type {
+        SAPPHIRE(NodeVariant.Sapphire::new, NodeData::sapphireClusters),
+        SUNSTONE(NodeVariant.Sunstone::new, NodeData::sunstoneClusters),
+        TOPAZ(NodeVariant.Topaz::new, NodeData::topazClusters),
+        TOURMALINE(NodeVariant.Tourmaline::new, NodeData::tourmalineClusters),
+        PERIDOT(NodeVariant.Peridot::new, NodeData::peridotClusters)
 
         ;
 
-        private final Function<CrystalNode, NodeVariant> variantFactory;
-        private final Function<CrystalNode, Set<BlockPos>> positionsFactory;
+        private final Function<Node, NodeVariant> variantFactory;
+        private final Function<NodeData, Set<BlockPos>> positionsFactory;
 
-        Type(Function<CrystalNode, NodeVariant> variantFactory, Function<CrystalNode, Set<BlockPos>> positionsFactory) {
+        Type(Function<Node, NodeVariant> variantFactory, Function<NodeData, Set<BlockPos>> positionsFactory) {
             this.variantFactory = variantFactory;
             this.positionsFactory = positionsFactory;
         }
 
-        public void index(CrystalNode node, NodeIndex index) {
+        public void index(Node node, NodeIndex index) {
             NodeVariant variant = this.variantFactory.apply(node);
-            Set<BlockPos> positions = this.positionsFactory.apply(node);
+            Set<BlockPos> positions = this.positionsFactory.apply(node.data());
             for(BlockPos pos : positions)
                 index.typedMap.put(pos, variant);
         }
 
-        public void unindex(CrystalNode node, NodeIndex index) {
-            Set<BlockPos> positions = this.positionsFactory.apply(node);
+        public void unindex(Node node, NodeIndex index) {
+            Set<BlockPos> positions = this.positionsFactory.apply(node.data());
             for(BlockPos pos : positions)
                 index.typedMap.remove(pos);
         }
@@ -103,33 +104,33 @@ public class NodeIndex {
             return this.type() == type;
         }
 
-        CrystalNode node();
+        Node node();
         
-        record Sapphire(CrystalNode node) implements NodeVariant {
+        record Sapphire(Node node) implements NodeVariant {
             @Override
             public Type type() {
                 return Type.SAPPHIRE;
             }
         }
-        record Sunstone(CrystalNode node) implements NodeVariant {
+        record Sunstone(Node node) implements NodeVariant {
             @Override
             public Type type() {
                 return Type.SUNSTONE;
             }
         }
-        record Topaz(CrystalNode node) implements NodeVariant {
+        record Topaz(Node node) implements NodeVariant {
             @Override
             public Type type() {
                 return Type.TOPAZ;
             }
         }
-        record Tourmaline(CrystalNode node) implements NodeVariant {
+        record Tourmaline(Node node) implements NodeVariant {
             @Override
             public Type type() {
                 return Type.TOURMALINE;
             }
         }
-        record Peridot(CrystalNode node) implements NodeVariant {
+        record Peridot(Node node) implements NodeVariant {
             @Override
             public Type type() {
                 return Type.PERIDOT;

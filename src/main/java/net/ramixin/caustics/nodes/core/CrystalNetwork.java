@@ -9,8 +9,10 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.items.components.Frequency;
-import net.ramixin.caustics.nodes.CrystalNode;
+import net.ramixin.caustics.nodes.Node;
 import net.ramixin.caustics.nodes.Network;
+import net.ramixin.caustics.nodes.routing.NodeMappedRoute;
+import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.nodes.steppers.NodeBuilder;
 
 import java.util.HashSet;
@@ -97,14 +99,14 @@ public class CrystalNetwork extends SavedData implements Network {
         setDirty();
     }
 
-    public Optional<CrystalNode> getNodeForBuilder(NodeBuilder builder) {
+    public Optional<Node> getNodeForBuilder(NodeBuilder builder) {
         return this.worker.getNodeForBuilder(builder);
     }
 
     public Set<Frequency> getNetworks(BlockPos pos) {
-        Optional<CrystalNode> maybeNode = index.getNodeAt(pos);
+        Optional<Node> maybeNode = index.getNodeAt(pos);
         if(maybeNode.isEmpty()) return Set.of();
-        CrystalNode node = maybeNode.get();
+        Node node = maybeNode.get();
         Set<BlockPos> sunstones = node.data().sunstoneClusters();
 
         Set<Frequency> networks = new HashSet<>();
@@ -166,22 +168,31 @@ public class CrystalNetwork extends SavedData implements Network {
         registry.register(frequency, freqStr);
     }
 
-    public Optional<CrystalNode> getNodeAt(BlockPos pos) {
+    public Optional<Node> getNodeAt(BlockPos pos) {
         return index.getNodeAt(pos);
     }
 
-    public void requestLeaption(ServerPlayer player, BlockPos sapphirePos, BlockPos peridotPos) {
-        Caustics.LOGGER.info("Requesting leaption from {} to {}", player.getUUID(), sapphirePos);
-        Optional<CrystalNode> maybeNode = this.index.getNodeAt(sapphirePos, NodeIndex.Type.SAPPHIRE);
+    public Optional<Node> getNodeAt(BlockPos pos, NodeIndex.Type type) {
+        return index.getNodeAt(pos, type);
+    }
+
+    public void requestLeaption(ServerPlayer player, Route route, BlockPos peridotPos) {
+        BlockPos sapphirePos = route.sapphirePos();
+        Optional<Node> maybeNode = this.index.getNodeAt(sapphirePos, NodeIndex.Type.SAPPHIRE);
         if(maybeNode.isEmpty()) return;
-        CrystalNode node = maybeNode.get();
+        Node node = maybeNode.get();
         Set<BlockPos> peridots = node.data().peridotClusters();
         if(!peridots.contains(peridotPos)) return;
-        Caustics.LOGGER.info("starting leap");
-        handler.startLeap(player.getUUID(), node, sapphirePos, peridotPos);
+        Optional<NodeMappedRoute> maybeNodeMapped = route.nodeMapped(this);
+        if(maybeNodeMapped.isEmpty()) return;
+        handler.startLeap(player.getUUID(), node, maybeNodeMapped.get(), sapphirePos, peridotPos);
     }
 
     public Optional<BlockPos> getLeapPos(UUID uuid) {
         return handler.getLeapPos(uuid);
+    }
+
+    public void markLeapCompleted(UUID uuid) {
+        handler.markLeapCompleted(uuid);
     }
 }

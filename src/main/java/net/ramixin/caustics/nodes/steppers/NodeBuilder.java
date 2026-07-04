@@ -9,7 +9,7 @@ import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.ModGameRules;
 import net.ramixin.caustics.ModTags;
 import net.ramixin.caustics.blocks.ModBlocks;
-import net.ramixin.caustics.nodes.CrystalNode;
+import net.ramixin.caustics.nodes.Node;
 import net.ramixin.caustics.nodes.NodeData;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import net.ramixin.caustics.nodes.core.NodeWorker;
@@ -133,12 +133,12 @@ public class NodeBuilder {
     }
 
     private boolean checkOverlap(CrystalNetwork network, BlockPos pos) {
-        Optional<CrystalNode> maybeNode = network.getNodeAt(pos);
+        Optional<Node> maybeNode = network.getNodeAt(pos);
         if(maybeNode.isEmpty()) return false;
-        CrystalNode node = maybeNode.get();
-        Optional<CrystalNode> maybeOtherNode = network.getNodeForBuilder(this);
+        Node node = maybeNode.get();
+        Optional<Node> maybeOtherNode = network.getNodeForBuilder(this);
         if(maybeOtherNode.isEmpty()) return false;
-        CrystalNode otherNode = maybeOtherNode.get();
+        Node otherNode = maybeOtherNode.get();
         return otherNode != node;
     }
     

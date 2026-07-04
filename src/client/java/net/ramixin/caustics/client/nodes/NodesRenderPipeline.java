@@ -136,9 +136,9 @@ public class NodesRenderPipeline {
     }
 
     private HudRenderState extractHud(BlockPos pos, int scrollPos, Route route) {
-        Optional<ClientCrystalNode> maybeClosestNode = ClientCrystalNetwork.getInstance().getTargetableNodeAt(pos);
+        Optional<ClientNode> maybeClosestNode = ClientCrystalNetwork.getInstance().getTargetableNodeAt(pos);
         if(maybeClosestNode.isEmpty()) return null;
-        ClientCrystalNode closestNode = maybeClosestNode.get();
+        ClientNode closestNode = maybeClosestNode.get();
         Component nodeName = extractNodeName(pos);
         Optional<Component> depositName = closestNode.peridotPositions().isEmpty() ? Optional.empty() : Optional.of(extractDepositName(closestNode, scrollPos));
         List<Component> routeStrings = extractRoute(route);
@@ -161,7 +161,7 @@ public class NodesRenderPipeline {
         return maybeNodeName.map(Component::literal).orElseGet(() -> Component.translatable("caustics.node.unnamed_travel"));
     }
 
-    private static Component extractDepositName(ClientCrystalNode node, int scrollPos) {
+    private static Component extractDepositName(ClientNode node, int scrollPos) {
         if(scrollPos >= node.peridotPositions().size() || scrollPos < 0) return Component.translatable("caustics.node.scroll_oob");
         BlockPos pos = node.peridotPositions().get(scrollPos);
         Optional<Frequency> maybeFreq = ClientCrystalNetwork.getInstance().getFrequencyAt(pos);

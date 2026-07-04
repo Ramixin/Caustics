@@ -23,7 +23,7 @@ import net.ramixin.caustics.items.components.Frequency;
 import net.ramixin.caustics.items.components.LeaperCharge;
 import net.ramixin.caustics.items.components.LeaperMaterial;
 import net.ramixin.caustics.items.components.ModDataComponents;
-import net.ramixin.caustics.nodes.CrystalNode;
+import net.ramixin.caustics.nodes.Node;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import net.ramixin.caustics.registries.Handle;
 import net.ramixin.caustics.registries.ModRegistries;
@@ -68,12 +68,12 @@ public class ModCommands {
                 .executes(ctx -> {
                     BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
                     CrystalNetwork network = CrystalNetwork.get(ctx.getSource().getLevel());
-                    Optional<CrystalNode> maybeNode = network.getNodeAt(pos);
+                    Optional<Node> maybeNode = network.getNodeAt(pos);
                     if(maybeNode.isEmpty()) {
                         ctx.getSource().sendFailure(Component.literal("No node at " + pos));
                         return 1;
                     }
-                    CrystalNode node = maybeNode.get();
+                    Node node = maybeNode.get();
                     boolean visible = node.visibleClusterAt(pos);
                     if(visible)
                         ctx.getSource().sendSuccess(() -> Component.literal("Node at " + pos + " is visible"), false);
@@ -143,12 +143,12 @@ public class ModCommands {
         return Commands.literal("depositpos").then(Commands.argument("pos", BlockPosArgument.blockPos())
                 .executes(ctx -> {
                     BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
-                    Optional<CrystalNode> maybeNode = CrystalNetwork.get(ctx.getSource().getLevel()).getNodeAt(pos);
+                    Optional<Node> maybeNode = CrystalNetwork.get(ctx.getSource().getLevel()).getNodeAt(pos);
                     if(maybeNode.isEmpty()) {
                         ctx.getSource().sendFailure(Component.literal("No node at " + pos));
                         return 1;
                     }
-                    CrystalNode node = maybeNode.get();
+                    Node node = maybeNode.get();
                     Optional<Optional<BlockPos>> maybeMaybeDepositPos = node.getDepositingPosAt(pos);
                     if(maybeMaybeDepositPos.isEmpty()) {
                         ctx.getSource().sendFailure(Component.literal("No peridot cluster at " + pos));

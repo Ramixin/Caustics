@@ -2,10 +2,12 @@ package net.ramixin.caustics.nodes;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.ramixin.caustics.entities.LeapGhost;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
+import net.ramixin.caustics.nodes.routing.NodeMappedRoute;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 
@@ -14,14 +16,17 @@ import java.util.UUID;
 
 public final class Leap {
     private final UUID playerUUID;
-    private final CrystalNode node;
+    private final Node node;
+    private final NodeMappedRoute route;
     private final BlockPos sapphirePos;
     private final BlockPos peridotPos;
+    private boolean completed = false;
     private final Mutable<UUID> ghostUUID = new MutableObject<>();
 
-    public Leap(UUID playerUUID, CrystalNode node, BlockPos sapphirePos, BlockPos peridotPos) {
+    public Leap(UUID playerUUID, Node node, NodeMappedRoute route, BlockPos sapphirePos, BlockPos peridotPos) {
         this.playerUUID = playerUUID;
         this.node = node;
+        this.route = route;
         this.sapphirePos = sapphirePos;
         this.peridotPos = peridotPos;
     }
@@ -49,7 +54,7 @@ public final class Leap {
     }
 
     public boolean noLongerValid(CrystalNetwork network) {
-        Optional<CrystalNode> maybeNetNode = network.getNodeAt(sapphirePos);
+        Optional<Node> maybeNetNode = network.getNodeAt(sapphirePos);
         if(maybeNetNode.isEmpty()) return true;
         if(maybeNetNode.get() != node) return true;
         if(!node.visibleClusterAt(sapphirePos)) return true;
@@ -74,5 +79,15 @@ public final class Leap {
         Entity entity = level.getEntity(ghostUUID.get());
         if(entity == null) return;
         entity.remove(Entity.RemovalReason.DISCARDED);
+        if(!completed) return;
+
+        Player player = level.getPlayerByUUID(playerUUID);
+        if(!(player instanceof ServerPlayer serverPlayer)) return;
+        int lightLost = route.calculateLightLost();
+        serverPlayer.hurtServer(level, level.damageSources().generic(), lightLost / 4f);
+    }
+
+    public void markCompleted() {
+        completed = true;
     }
 }

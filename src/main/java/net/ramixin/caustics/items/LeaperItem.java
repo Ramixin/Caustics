@@ -19,6 +19,7 @@ import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.blocks.ChargeClusterBlock;
 import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.items.components.LeaperCharge;
+import net.ramixin.caustics.items.components.LeaperMaterial;
 import net.ramixin.caustics.items.components.ModDataComponents;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import org.jspecify.annotations.NonNull;
@@ -37,9 +38,20 @@ public class LeaperItem extends Item {
 
     @Override
     public @NonNull InteractionResult use(@NonNull Level level, @NonNull Player player, @NonNull InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-        if(stack.has(ModDataComponents.LEAPER_MATERIAL))
+        block : {
+            ItemStack stack = player.getItemInHand(hand);
+            if(!stack.has(ModDataComponents.LEAPER_MATERIAL)) break block;
+            LeaperMaterial material = stack.get(ModDataComponents.LEAPER_MATERIAL);
+            assert material != null;
+            BlockPos playerPos = player.blockPosition();
+            if(level.getEffectiveSkyBrightness(playerPos) < 10 && !player.isCreative()) {
+                if(!material.hasCore()) break block;
+                LeaperCharge charge = stack.get(ModDataComponents.LEAPER_CHARGE);
+                if(charge == null) break block;
+                if(charge.percentage() == 0) break block;
+            }
             player.startUsingItem(hand);
+        }
         return super.use(level, player, hand);
     }
 
@@ -89,15 +101,18 @@ public class LeaperItem extends Item {
         if(used < chargeUpTicks) return original;
         if(!(level instanceof ServerLevel serverLevel)) return original;
         if(!(entity instanceof ServerPlayer player)) return original;
+
         CrystalNetwork network = CrystalNetwork.get(serverLevel);
         Optional<BlockPos> maybePos = network.getLeapPos(player.getUUID());
         if(maybePos.isEmpty()) return original;
+        network.markLeapCompleted(player.getUUID());
         BlockPos pos = maybePos.get();
         player.teleportTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
         int cooldownTicks = player.isCreative() ? 30 : getCooldownTicks(itemStack);
         updateCooldownComponent(itemStack);
         player.getCooldowns().addCooldown(itemStack, cooldownTicks);
         entity.stopUsingItem();
+
         LeaperCharge charge = itemStack.get(ModDataComponents.LEAPER_CHARGE);
         if(charge == null || player.isCreative()) return original;
         itemStack.set(ModDataComponents.LEAPER_CHARGE, charge.decrement());
