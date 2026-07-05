@@ -29,7 +29,7 @@ public class Route {
         }
         Collections.reverse(path);
         this.path = path;
-        this.sapphirePos = path.getLast();
+        this.sapphirePos = pos;
     }
 
     public Route(List<BlockPos> path, BlockPos sapphirePos) {

@@ -16,10 +16,7 @@ import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.ClientNode;
 import net.ramixin.caustics.client.nodes.NodesRenderPipeline;
 import net.ramixin.caustics.items.ModItems;
-import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
-import net.ramixin.caustics.networking.clientbound.NodeSyncPayload;
-import net.ramixin.caustics.networking.clientbound.RoutingSyncPayload;
-import net.ramixin.caustics.networking.clientbound.SignalRangeSyncPayload;
+import net.ramixin.caustics.networking.clientbound.*;
 import net.ramixin.caustics.networking.serverbound.RequestLeaptionPayload;
 import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.utils.LookUtil;
@@ -85,6 +82,18 @@ public class CausticsClient implements ClientModInitializer {
             //ClientCrystalNetwork.getInstance().deselectNode();
             return InteractionResult.SUCCESS;
         });
+
+        ClientPlayNetworking.registerGlobalReceiver(LeapStatusPayload.TYPE, (payload, ctx) -> {
+            switch(payload.status()) {
+                case FAILURE -> onLeapFailure((LeapStatusPayload.Failure) payload, ctx);
+            }
+            if(payload.status().stopsLeaps())
+                ctx.player().stopUsingItem();
+        });
+    }
+
+    private static void onLeapFailure(LeapStatusPayload.Failure failure, ClientPlayNetworking.Context ctx) {
+        Caustics.LOGGER.error("Leap failed: {}", failure.reason());
     }
 
     public static void onAlidadeAttack() {

@@ -13,10 +13,7 @@ import net.ramixin.caustics.entities.ModEntities;
 import net.ramixin.caustics.items.ModItems;
 import net.ramixin.caustics.items.components.ModDataComponents;
 import net.ramixin.caustics.menus.ModMenus;
-import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
-import net.ramixin.caustics.networking.clientbound.NodeSyncPayload;
-import net.ramixin.caustics.networking.clientbound.RoutingSyncPayload;
-import net.ramixin.caustics.networking.clientbound.SignalRangeSyncPayload;
+import net.ramixin.caustics.networking.clientbound.*;
 import net.ramixin.caustics.networking.serverbound.RequestLeaptionPayload;
 import net.ramixin.caustics.networking.serverbound.RequestSyncPayload;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
@@ -54,6 +51,7 @@ public class Caustics implements ModInitializer {
         PayloadTypeRegistry.clientboundPlay().register(SignalRangeSyncPayload.TYPE, SignalRangeSyncPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(FrequencySyncPayload.TYPE, FrequencySyncPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(RoutingSyncPayload.TYPE, RoutingSyncPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(LeapStatusPayload.TYPE, LeapStatusPayload.CODEC);
 
         PayloadTypeRegistry.serverboundPlay().register(RequestSyncPayload.TYPE, RequestSyncPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(RequestLeaptionPayload.TYPE, RequestLeaptionPayload.CODEC);

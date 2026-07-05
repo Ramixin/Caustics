@@ -9,6 +9,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.items.components.Frequency;
+import net.ramixin.caustics.networking.clientbound.LeapStatusPayload;
 import net.ramixin.caustics.nodes.Node;
 import net.ramixin.caustics.nodes.Network;
 import net.ramixin.caustics.nodes.routing.NodeMappedRoute;
@@ -178,13 +179,24 @@ public class CrystalNetwork extends SavedData implements Network {
 
     public void requestLeaption(ServerPlayer player, Route route, BlockPos peridotPos) {
         BlockPos sapphirePos = route.sapphirePos();
+        Caustics.LOGGER.info("Leaption requested from {} to {} with route {}", player.getUUID(), sapphirePos, route);
         Optional<Node> maybeNode = this.index.getNodeAt(sapphirePos, NodeIndex.Type.SAPPHIRE);
-        if(maybeNode.isEmpty()) return;
+        if(maybeNode.isEmpty()) {
+            LeapStatusPayload.sendFailure(player, "No Sapphire Node found at " + sapphirePos);
+            return;
+        }
+
         Node node = maybeNode.get();
         Set<BlockPos> peridots = node.data().peridotClusters();
-        if(!peridots.contains(peridotPos)) return;
+        if(!peridots.contains(peridotPos)) {
+            LeapStatusPayload.sendFailure(player, "No Peridot Cluster found at " + peridotPos + " in node at " + sapphirePos);
+            return;
+        }
         Optional<NodeMappedRoute> maybeNodeMapped = route.nodeMapped(this);
-        if(maybeNodeMapped.isEmpty()) return;
+        if(maybeNodeMapped.isEmpty()) {
+            LeapStatusPayload.sendFailure(player, "Failed to map route to nodes. route: " + route);
+            return;
+        }
         handler.startLeap(player.getUUID(), node, maybeNodeMapped.get(), sapphirePos, peridotPos);
     }
 

@@ -148,8 +148,8 @@ public class NodesRenderPipeline {
     private List<Component> extractRoute(Route route) {
         List<Component> routeStrings = new ArrayList<>();
         List<BlockPos> path = route.immutablePath();
-        for(int i = 0; i < path.size() - 1; i++) {
-            routeStrings.add(extractNodeName(path.get(i)));
+        for(BlockPos pos : path) {
+            routeStrings.add(extractNodeName(pos));
         }
         return routeStrings;
     }
