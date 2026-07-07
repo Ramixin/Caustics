@@ -5,9 +5,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.ramixin.caustics.client.CausticsClient;
-import net.ramixin.caustics.items.components.Frequency;
+import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
+import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
 import net.ramixin.caustics.nodes.Network;
 import net.ramixin.caustics.nodes.NodeSyncData;
+import net.ramixin.caustics.nodes.core.FrequencyRegistry;
 import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.nodes.routing.RoutingTable;
 import org.apache.commons.lang3.mutable.Mutable;
@@ -16,25 +18,25 @@ import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.util.*;
 
+import static net.ramixin.caustics.utils.RoutingUtil.canConnect;
+
 public class ClientCrystalNetwork implements Network {
 
     private static final ClientCrystalNetwork INSTANCE = new ClientCrystalNetwork();
 
     private final HashMap<BlockPos, ClientNode> sapphireToNode = new HashMap<>();
     private final HashMap<BlockPos, ClientNode> topazToNode = new HashMap<>();
+    private final HashMap<BlockPos, ClientNode> tourmalineToNode = new HashMap<>();
 
     private final MutableInt scrollPos = new MutableInt();
     private final Mutable<BlockPos> lastLookingAt = new MutableObject<>();
 
-    private final Map<BlockPos, Frequency> frequencies = new HashMap<>();
-    private final Map<Frequency, String> frequencyNames = new HashMap<>();
+    private final FrequencyRegistry registry = new FrequencyRegistry();
 
     private final Map<BlockPos, RoutingTable> routingTables = new HashMap<>();
 
     private final Mutable<BlockPos> selectedNode = new MutableObject<>();
     private final MutableInt selectedScrollPos = new MutableInt();
-
-    private final Mutable<BlockPos> knownDepositPos = new MutableObject<>();
 
     public static ClientCrystalNetwork getInstance() {
         return INSTANCE;
@@ -48,18 +50,11 @@ public class ClientCrystalNetwork implements Network {
             ClientNode node = ClientNode.fromSyncData(data);
             for(BlockPos pos : data.sapphirePositions()) sapphireToNode.put(pos, node);
             for(BlockPos pos : data.topazPositions()) topazToNode.put(pos, node);
+            for(BlockPos pos : data.tourmalinePositions()) tourmalineToNode.put(pos, node);
         }
     }
 
-    public void onFrequencySync(Map<BlockPos, Frequency> frequencies, Map<Frequency, String> frequencyNames) {
-        this.frequencies.clear();
-        this.frequencyNames.clear();
-
-        this.frequencies.putAll(frequencies);
-        this.frequencyNames.putAll(frequencyNames);
-    }
-
-    public Optional<ClientNode> getTargetableNodeAt(BlockPos pos) {
+    public Optional<ClientNode> getSapphireNodeAt(BlockPos pos) {
         return Optional.ofNullable(sapphireToNode.get(pos));
     }
 
@@ -69,18 +64,19 @@ public class ClientCrystalNetwork implements Network {
         LocalPlayer player = Minecraft.getInstance().player;
         if(player == null) throw new IllegalStateException("Player is null");
 
+        Set<BlockPos> jammers = tourmalineToNode.keySet();
         for(BlockPos pos : sapphireToNode.keySet()) {
             if(!sapphireToNode.get(pos).visible()) continue;
-            if(pos.distToCenterSqr(player.position()) < CausticsClient.MAX_SIGNAL_RANGE) {
-                visiblePositions.add(pos);
-                routes.add(new Route(List.of(), pos));
-            }
+            if(pos.distToCenterSqr(player.position()) >= CausticsClient.MAX_SIGNAL_RANGE) continue;
+            if(!canConnect(player.blockPosition(), pos, jammers, CausticsClient.MAX_SIGNAL_RANGE)) continue;
+            visiblePositions.add(pos);
+            routes.add(new Route(List.of(), pos));
         }
 
 
         for(BlockPos pos : routingTables.keySet()) {
-            if(pos.distToCenterSqr(player.position()) >= CausticsClient.MAX_SIGNAL_RANGE)
-                continue;
+            if(pos.distToCenterSqr(player.position()) >= CausticsClient.MAX_SIGNAL_RANGE) continue;
+            if(!canConnect(player.blockPosition(), pos, jammers, CausticsClient.MAX_SIGNAL_RANGE)) continue;
             RoutingTable table = routingTables.get(pos);
             for(BlockPos nodePos : table.keySet()) {
                 Route route = table.getRoute(nodePos);
@@ -138,15 +134,6 @@ public class ClientCrystalNetwork implements Network {
         lastLookingAt.setValue(pos);
     }
 
-    public Optional<Frequency> getFrequencyAt(BlockPos pos) {
-        return Optional.ofNullable(frequencies.get(pos));
-    }
-
-    @Override
-    public Optional<String> getFrequencyName(Frequency frequency) {
-        return Optional.ofNullable(frequencyNames.get(frequency));
-    }
-
     public void onRoutingSync(Map<BlockPos, RoutingTable> routingTables) {
         this.routingTables.clear();
         this.routingTables.putAll(routingTables);
@@ -179,15 +166,19 @@ public class ClientCrystalNetwork implements Network {
         return selectedScrollPos.intValue();
     }
 
-    public Optional<BlockPos> getKnownDepositPos() {
-        return Optional.ofNullable(knownDepositPos.get());
-    }
-
     public void nuke() {
-        frequencies.clear();
-        frequencyNames.clear();
+        registry.syncWith(new FrequencySyncPayload(Map.of(), Map.of()));
         routingTables.clear();
         sapphireToNode.clear();
         selectedNode.setValue(null);
+    }
+
+    @Override
+    public FrequencyRegistry frequencyRegistry() {
+        return registry;
+    }
+
+    public void setSelection(SelectionSyncPayload payload) {
+        selectedNode.setValue(payload.sapphirePos());
     }
 }

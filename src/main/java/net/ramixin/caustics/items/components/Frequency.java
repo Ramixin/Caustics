@@ -52,7 +52,7 @@ public record Frequency(UUID uuid) implements TooltipProvider {
     public void addToTooltip(Item.@NonNull TooltipContext context, @NonNull Consumer<Component> consumer, @NonNull TooltipFlag flag, @NonNull DataComponentGetter components) {
         consumer.accept(Component.translatable("caustics.frequency.tooltip_header").withStyle(ChatFormatting.GRAY));
         Network network = ((ItemTooltipContextDuck)context).caustics$getNetwork();
-        MutableComponent name = network.getFrequencyName(this).map(Component::literal).orElseGet(() -> Component.translatable("caustics.frequency.unnamed"));
+        MutableComponent name = network.frequencyRegistry().getFrequencyName(this).map(Component::literal).orElseGet(() -> Component.translatable("caustics.frequency.unnamed"));
         consumer.accept(name.withStyle(ChatFormatting.GRAY));
     }
 

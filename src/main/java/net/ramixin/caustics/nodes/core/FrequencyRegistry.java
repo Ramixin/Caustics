@@ -27,7 +27,7 @@ public class FrequencyRegistry {
         this.frequencyNames.putAll(frequencyNames);
     }
 
-    protected FrequencyRegistry() {
+    public FrequencyRegistry() {
     }
 
     protected void tick(CrystalNetwork network) {
@@ -35,6 +35,13 @@ public class FrequencyRegistry {
             network.getTracker().push(Tracker.Task.FREQUENCY_SYNC, Tracker.Task.DIRTY);
             pushTracker = false;
         }
+    }
+
+    public void syncWith(FrequencySyncPayload payload) {
+        frequencies.clear();
+        frequencyNames.clear();
+        frequencies.putAll(payload.frequencies());
+        frequencyNames.putAll(payload.frequencyNames());
     }
 
     public void register(BlockPos pos, Frequency frequency) {

@@ -51,7 +51,7 @@ public class ModCommands {
 
     private static CommandNode<CommandSourceStack> printNodes() {
         return Commands.literal("nodes").executes(ctx -> {
-            CrystalNetwork.get(ctx.getSource().getLevel()).printNodes();
+            CrystalNetwork.get(ctx.getSource().getLevel()).nodeWorker().printNodes();
             return 0;
         }).build();
     }
@@ -68,7 +68,7 @@ public class ModCommands {
                 .executes(ctx -> {
                     BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
                     CrystalNetwork network = CrystalNetwork.get(ctx.getSource().getLevel());
-                    Optional<Node> maybeNode = network.getNodeAt(pos);
+                    Optional<Node> maybeNode = network.nodeIndex().getNodeAt(pos);
                     if(maybeNode.isEmpty()) {
                         ctx.getSource().sendFailure(Component.literal("No node at " + pos));
                         return 1;
@@ -99,7 +99,7 @@ public class ModCommands {
                 .executes(ctx -> {
                     BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
                     CrystalNetwork network = CrystalNetwork.get(ctx.getSource().getLevel());
-                    Optional<Frequency> freq = network.getRegistry().getFrequencyAt(pos);
+                    Optional<Frequency> freq = network.frequencyRegistry().getFrequencyAt(pos);
                     if(freq.isEmpty())
                         ctx.getSource().sendFailure(Component.literal("No tuned frequency at " + pos));
                     else
@@ -119,17 +119,17 @@ public class ModCommands {
                     String freqStr = StringArgumentType.getString(ctx, "frequency");
                     CrystalNetwork network = CrystalNetwork.get(ctx.getSource().getLevel());
                     Frequency frequency = Frequency.fromName(freqStr);
-                    network.getRegistry().register(pos, frequency);
-                    Optional<String> maybeName = network.getFrequencyName(frequency);
+                    network.frequencyRegistry().register(pos, frequency);
+                    Optional<String> maybeName = network.frequencyRegistry().getFrequencyName(frequency);
                     if(maybeName.isEmpty())
-                        network.setFrequencyName(frequency, freqStr);
+                        network.frequencyRegistry().register(frequency, freqStr);
                     else {
                         String name = maybeName.get();
                         if(!name.equals(freqStr)) {
                             ctx.getSource().sendFailure(Component.literal("Frequency name conflict: " + name + " != " + freqStr));
                             return 1;
                         }
-                        network.setFrequencyName(frequency, freqStr);
+                        network.frequencyRegistry().register(frequency, freqStr);
                     }
 
 
@@ -143,7 +143,7 @@ public class ModCommands {
         return Commands.literal("depositpos").then(Commands.argument("pos", BlockPosArgument.blockPos())
                 .executes(ctx -> {
                     BlockPos pos = BlockPosArgument.getLoadedBlockPos(ctx, "pos");
-                    Optional<Node> maybeNode = CrystalNetwork.get(ctx.getSource().getLevel()).getNodeAt(pos);
+                    Optional<Node> maybeNode = CrystalNetwork.get(ctx.getSource().getLevel()).nodeIndex().getNodeAt(pos);
                     if(maybeNode.isEmpty()) {
                         ctx.getSource().sendFailure(Component.literal("No node at " + pos));
                         return 1;
@@ -175,7 +175,7 @@ public class ModCommands {
 
     public static CommandNode<CommandSourceStack> printRouting() {
         return Commands.literal("routing").executes(ctx -> {
-            CrystalNetwork.get(ctx.getSource().getLevel()).printRouting();
+            CrystalNetwork.get(ctx.getSource().getLevel()).routingManager().printRouting();
             return 0;
         }).build();
     }

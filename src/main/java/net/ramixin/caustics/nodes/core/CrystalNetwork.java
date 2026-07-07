@@ -4,28 +4,22 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.items.components.Frequency;
-import net.ramixin.caustics.networking.clientbound.LeapStatusPayload;
-import net.ramixin.caustics.nodes.Node;
 import net.ramixin.caustics.nodes.Network;
-import net.ramixin.caustics.nodes.routing.NodeMappedRoute;
-import net.ramixin.caustics.nodes.routing.Route;
-import net.ramixin.caustics.nodes.steppers.NodeBuilder;
+import net.ramixin.caustics.nodes.Node;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 public class CrystalNetwork extends SavedData implements Network {
 
     private static final Codec<CrystalNetwork> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            NodeWorker.CODEC.fieldOf("worker").forGetter(CrystalNetwork::getWorker),
-            FrequencyRegistry.CODEC.fieldOf("registry").forGetter(CrystalNetwork::getRegistry)
+            NodeWorker.CODEC.fieldOf("worker").forGetter(CrystalNetwork::nodeWorker),
+            FrequencyRegistry.CODEC.fieldOf("registry").forGetter(CrystalNetwork::frequencyRegistry)
     ).apply(instance, CrystalNetwork::new));
 
     @SuppressWarnings("DataFlowIssue") // doesn't want null datafixer
@@ -75,33 +69,37 @@ public class CrystalNetwork extends SavedData implements Network {
             setDirty();
     }
 
-    protected NodeIndex getIndex() {
+    public NodeIndex nodeIndex() {
         return index;
     }
 
-    protected NodeWorker getWorker() {
+    public NodeWorker nodeWorker() {
         return worker;
+    }
+
+    public FrequencyRegistry frequencyRegistry() {
+        return registry;
+    }
+
+    public RoutingManager routingManager() {
+        return manager;
+    }
+
+    public NetworkSynchronizer synchronizer() {
+        return synchronizer;
+    }
+
+    public LeaptionHandler leaptionHandler() {
+        return handler;
     }
 
     protected Tracker getTracker() {
         return tracker;
     }
 
-    public FrequencyRegistry getRegistry() {
-        return registry;
-    }
-
-    protected RoutingManager getManager() {
-        return manager;
-    }
-
     public void generateNodeAt(BlockPos pos) {
         this.worker.generateNodeAt(pos);
         setDirty();
-    }
-
-    public Optional<Node> getNodeForBuilder(NodeBuilder builder) {
-        return this.worker.getNodeForBuilder(builder);
     }
 
     public Set<Frequency> getNetworks(BlockPos pos) {
@@ -119,30 +117,6 @@ public class CrystalNetwork extends SavedData implements Network {
         return networks;
     }
 
-    public boolean isSeleniteVisible(BlockPos pos) {
-        return worker.isSeleniteVisible(pos);
-    }
-
-    public int getSeleniteLightLevel(BlockPos pos) {
-        return worker.getSeleniteLightLevel(pos);
-    }
-
-    public void joinSync(ServerPlayer player) {
-        this.synchronizer.joinSync(player, this);
-    }
-
-    public void resync(ServerPlayer player) {
-        this.synchronizer.resync(player, this);
-    }
-
-    public void startSyncing(UUID uuid) {
-        this.synchronizer.addRealtime(uuid);
-    }
-
-    public void stopSyncing(UUID uuid) {
-        this.synchronizer.removeRealtime(uuid);
-    }
-
     public void nuke() {
         index.clear();
         worker.clear();
@@ -150,61 +124,5 @@ public class CrystalNetwork extends SavedData implements Network {
         manager.clear();
         handler.clear();
         setDirty();
-    }
-
-    public void printNodes() {
-        worker.printNodes();
-    }
-
-    public void printRouting() {
-        Caustics.LOGGER.info(manager.toString());
-    }
-
-    @Override
-    public Optional<String> getFrequencyName(Frequency frequency) {
-        return this.registry.getFrequencyName(frequency);
-    }
-
-    public void setFrequencyName(Frequency frequency, String freqStr) {
-        registry.register(frequency, freqStr);
-    }
-
-    public Optional<Node> getNodeAt(BlockPos pos) {
-        return index.getNodeAt(pos);
-    }
-
-    public Optional<Node> getNodeAt(BlockPos pos, NodeIndex.Type type) {
-        return index.getNodeAt(pos, type);
-    }
-
-    public void requestLeaption(ServerPlayer player, Route route, BlockPos peridotPos) {
-        BlockPos sapphirePos = route.sapphirePos();
-        Caustics.LOGGER.info("Leaption requested from {} to {} with route {}", player.getUUID(), sapphirePos, route);
-        Optional<Node> maybeNode = this.index.getNodeAt(sapphirePos, NodeIndex.Type.SAPPHIRE);
-        if(maybeNode.isEmpty()) {
-            LeapStatusPayload.sendFailure(player, "No Sapphire Node found at " + sapphirePos);
-            return;
-        }
-
-        Node node = maybeNode.get();
-        Set<BlockPos> peridots = node.data().peridotClusters();
-        if(!peridots.contains(peridotPos)) {
-            LeapStatusPayload.sendFailure(player, "No Peridot Cluster found at " + peridotPos + " in node at " + sapphirePos);
-            return;
-        }
-        Optional<NodeMappedRoute> maybeNodeMapped = route.nodeMapped(this);
-        if(maybeNodeMapped.isEmpty()) {
-            LeapStatusPayload.sendFailure(player, "Failed to map route to nodes. route: " + route);
-            return;
-        }
-        handler.startLeap(player.getUUID(), node, maybeNodeMapped.get(), sapphirePos, peridotPos);
-    }
-
-    public Optional<BlockPos> getLeapPos(UUID uuid) {
-        return handler.getLeapPos(uuid);
-    }
-
-    public void markLeapCompleted(UUID uuid) {
-        handler.markLeapCompleted(uuid);
     }
 }

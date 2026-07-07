@@ -52,7 +52,7 @@ public class TuningForkItem extends Item {
             stack.remove(ModDataComponents.FREQUENCY);
             return InteractionResult.SUCCESS;
         }
-        Optional<Frequency> freq = CrystalNetwork.get(serverLevel).getRegistry().getFrequencyAt(pos);
+        Optional<Frequency> freq = CrystalNetwork.get(serverLevel).frequencyRegistry().getFrequencyAt(pos);
         if(freq.isEmpty()) return InteractionResult.PASS;
 
         stack.set(ModDataComponents.FREQUENCY, freq.get());
@@ -64,7 +64,7 @@ public class TuningForkItem extends Item {
     private static InteractionResult setFrequency(BlockPos pos, ServerLevel serverLevel, ItemStack stack) {
         Frequency freq = stack.get(ModDataComponents.FREQUENCY);
         if(freq == null) return InteractionResult.PASS;
-        CrystalNetwork.get(serverLevel).getRegistry().register(pos, freq);
+        CrystalNetwork.get(serverLevel).frequencyRegistry().register(pos, freq);
         return InteractionResult.CONSUME;
     }
 }

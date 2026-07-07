@@ -1,4 +1,4 @@
-package net.ramixin.caustics.nodes;
+package net.ramixin.caustics.nodes.leaption;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.ramixin.caustics.entities.LeapGhost;
+import net.ramixin.caustics.nodes.Node;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import net.ramixin.caustics.nodes.routing.NodeMappedRoute;
 import org.apache.commons.lang3.mutable.Mutable;
@@ -54,7 +55,7 @@ public final class Leap {
     }
 
     public boolean noLongerValid(CrystalNetwork network) {
-        Optional<Node> maybeNetNode = network.getNodeAt(sapphirePos);
+        Optional<Node> maybeNetNode = network.nodeIndex().getNodeAt(sapphirePos);
         if(maybeNetNode.isEmpty()) return true;
         if(maybeNetNode.get() != node) return true;
         if(!node.visibleClusterAt(sapphirePos)) return true;

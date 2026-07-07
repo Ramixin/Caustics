@@ -1,11 +1,9 @@
 package net.ramixin.caustics.nodes;
 
-import net.ramixin.caustics.items.components.Frequency;
-
-import java.util.Optional;
+import net.ramixin.caustics.nodes.core.FrequencyRegistry;
 
 public interface Network {
 
-    Optional<String> getFrequencyName(Frequency frequency);
+    FrequencyRegistry frequencyRegistry();
 
 }

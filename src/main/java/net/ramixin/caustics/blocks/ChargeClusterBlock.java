@@ -28,8 +28,8 @@ public class ChargeClusterBlock extends AmethystClusterBlock {
     protected void randomTick(@NonNull BlockState state, @NonNull ServerLevel level, @NonNull BlockPos pos, @NonNull RandomSource random) {
         super.randomTick(state, level, pos, random);
         CrystalNetwork network = CrystalNetwork.get(level);
-        if(!network.isSeleniteVisible(pos)) return;
-        if(network.getSeleniteLightLevel(pos) < 10) return;
+        if(!network.nodeWorker().isSeleniteVisible(pos)) return;
+        if(network.nodeWorker().getSeleniteLightLevel(pos) < 10) return;
         if(random.nextInt(5) != 2) return;
         level.setBlockAndUpdate(pos, state.setValue(CHARGED, true));
     }

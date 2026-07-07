@@ -37,12 +37,12 @@ public class AlidadeItem extends SpyglassItem {
             if(!(hitResult instanceof BlockHitResult blockHitResult)) return InteractionResult.PASS;
             BlockPos pos = blockHitResult.getBlockPos();
             if(!level.getBlockState(pos).is(ModBlocks.SUNSTONE_GROUP.cluster())) return InteractionResult.PASS;
-            Optional<Frequency> maybeFreq = network.getRegistry().getFrequencyAt(pos);
+            Optional<Frequency> maybeFreq = network.frequencyRegistry().getFrequencyAt(pos);
             maybeFreq.ifPresent(frequency -> player.getItemInHand(hand).set(ModDataComponents.FREQUENCY, frequency));
             return InteractionResult.PASS;
         }
 
-        network.startSyncing(player.getUUID());
+        network.synchronizer().addRealtime(player.getUUID());
         return super.use(level, player, hand);
     }
 
@@ -52,7 +52,7 @@ public class AlidadeItem extends SpyglassItem {
         if(!(level instanceof ServerLevel serverLevel)) return original;
         if(!(entity instanceof Player player)) return original;
         CrystalNetwork network = CrystalNetwork.get(serverLevel);
-        network.stopSyncing(player.getUUID());
+        network.synchronizer().removeRealtime(player.getUUID());
         return original;
     }
 }

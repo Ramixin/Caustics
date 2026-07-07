@@ -133,10 +133,10 @@ public class NodeBuilder {
     }
 
     private boolean checkOverlap(CrystalNetwork network, BlockPos pos) {
-        Optional<Node> maybeNode = network.getNodeAt(pos);
+        Optional<Node> maybeNode = network.nodeIndex().getNodeAt(pos);
         if(maybeNode.isEmpty()) return false;
         Node node = maybeNode.get();
-        Optional<Node> maybeOtherNode = network.getNodeForBuilder(this);
+        Optional<Node> maybeOtherNode = network.nodeWorker().getNodeForBuilder(this);
         if(maybeOtherNode.isEmpty()) return false;
         Node otherNode = maybeOtherNode.get();
         return otherNode != node;

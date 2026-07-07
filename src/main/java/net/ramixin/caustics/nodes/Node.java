@@ -156,7 +156,7 @@ public final class Node {
             if(getDepositingPosAt(pos).map(Optional::isPresent).orElse(false)) peridots.add(pos);
         }
         peridots.sort(BlockPos::compareTo);
-        return Optional.of(new NodeSyncData(sapphires, topazes, peridots, List.copyOf(data.sunstoneClusters()), cachedVisible));
+        return Optional.of(new NodeSyncData(sapphires, topazes, peridots, List.copyOf(data.sunstoneClusters()), tourmalines, cachedVisible));
     }
 
     @Override

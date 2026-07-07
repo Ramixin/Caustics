@@ -7,7 +7,9 @@
   "authors": [
     "Ramixin"
   ],
-  "contact": {},
+  "contact": {
+    "sources": "https://github.com/Ramixin/Caustics"
+  },
   "license": "MIT",
   "icon": "assets/caustics/icon.png",
   "accessWidener": "caustics.classtweaker",

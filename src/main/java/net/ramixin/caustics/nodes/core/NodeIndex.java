@@ -38,7 +38,7 @@ public class NodeIndex {
         Type.PERIDOT.unindex(node, this);
     }
 
-    protected Optional<Node> getNodeAt(BlockPos pos, Type type) {
+    public Optional<Node> getNodeAt(BlockPos pos, Type type) {
         NodeVariant variant = typedMap.get(pos);
         if(variant == null)
             return Optional.empty();
@@ -47,7 +47,7 @@ public class NodeIndex {
         return Optional.of(variant.node());
     }
 
-    protected Optional<Node> getNodeAt(BlockPos pos) {
+    public Optional<Node> getNodeAt(BlockPos pos) {
         NodeVariant variant = typedMap.get(pos);
         if(variant == null)
             return Optional.empty();

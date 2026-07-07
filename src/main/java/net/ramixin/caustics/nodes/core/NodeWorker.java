@@ -46,11 +46,11 @@ public class NodeWorker {
         }
     }
 
-    protected boolean isSeleniteVisible(BlockPos pos) {
+    public boolean isSeleniteVisible(BlockPos pos) {
         return seleniteCheckers.computeIfAbsent(pos, VisibilityChecker::new).getValue();
     }
 
-    protected int getSeleniteLightLevel(BlockPos pos) {
+    public int getSeleniteLightLevel(BlockPos pos) {
         return seleniteCheckers.computeIfAbsent(pos, VisibilityChecker::new).skyBrightness();
     }
 
@@ -116,13 +116,13 @@ public class NodeWorker {
 
     private void register(Node node, CrystalNetwork network) {
         nodes.add(node);
-        network.getIndex().indexNode(node);
+        network.nodeIndex().indexNode(node);
         network.getTracker().push(Tracker.Task.NODE_SYNC, Tracker.Task.REBUILD_ROUTING, Tracker.Task.DIRTY);
     }
 
     private void unregister(Node node, CrystalNetwork network) {
         nodes.remove(node);
-        network.getIndex().unindexNode(node);
+        network.nodeIndex().unindexNode(node);
         network.getTracker().push(Tracker.Task.NODE_SYNC, Tracker.Task.REBUILD_ROUTING, Tracker.Task.DIRTY);
     }
 
@@ -170,7 +170,7 @@ public class NodeWorker {
         newBuilders.clear();
     }
 
-    protected void printNodes() {
+    public void printNodes() {
         if(nodes.isEmpty())
             Caustics.LOGGER.info("No nodes");
         else for(Node node : nodes)

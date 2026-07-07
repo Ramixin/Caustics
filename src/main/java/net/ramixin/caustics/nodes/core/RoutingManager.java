@@ -3,13 +3,15 @@ package net.ramixin.caustics.nodes.core;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.ModGameRules;
 import net.ramixin.caustics.networking.clientbound.RoutingSyncPayload;
+import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.nodes.routing.RoutingTable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static net.ramixin.caustics.utils.RoutingUtil.canConnect;
 
 public class RoutingManager {
 
@@ -26,7 +28,7 @@ public class RoutingManager {
 
         if(tracker.consume(Tracker.Task.REBUILD_ROUTING)) {
             tracker.push(Tracker.Task.ROUTING_SYNC);
-            NodeIndex index = network.getIndex();
+            NodeIndex index = network.nodeIndex();
             Set<BlockPos> travels = index.getPositionsOfType(NodeIndex.Type.SAPPHIRE);
             Set<BlockPos> routers = index.getPositionsOfType(NodeIndex.Type.TOPAZ);
             Set<BlockPos> jammers = index.getPositionsOfType(NodeIndex.Type.TOURMALINE);
@@ -59,15 +61,29 @@ public class RoutingManager {
         return new RoutingSyncPayload(getTrackedTables(player.blockPosition()));
     }
 
+    public Optional<Route> findRoute(CrystalNetwork network, BlockPos from, BlockPos to) {
+        Set<BlockPos> jammers = network.nodeIndex().getPositionsOfType(NodeIndex.Type.TOURMALINE);
+        int maxDist = signalRange * signalRange;
+        if(canConnect(from, to, jammers, maxDist)) return Optional.of(new Route(List.of(), to));
+        Route curRoute = null;
+        for(BlockPos routerPos : routingTables.keySet()) {
+            RoutingTable table = routingTables.get(routerPos);
+            if(!table.hasRoute(to)) continue;
+            if(!canConnect(from, routerPos, jammers, maxDist)) continue;
+            if(curRoute == null || table.getRoute(to).length() < curRoute.length())
+                curRoute = table.getRoute(to);
+        }
+        return Optional.ofNullable(curRoute);
+    }
+
     protected void clear() {
         routingTables.clear();
     }
 
-    @Override
-    public String toString() {
+    public void printRouting() {
         int routeCount = 0;
         for(RoutingTable table : routingTables.values())
             routeCount += table.size();
-        return String.format("%s tables\n%s routes\n%s", routingTables.size(), routeCount, routingTables);
+        Caustics.LOGGER.info("{} tables\n{} routes\n{}", routingTables.size(), routeCount, routingTables);
     }
 }

@@ -13,11 +13,11 @@ import org.spongepowered.asm.mixin.Shadow;
 public abstract class ItemTooltipContext$2Mixin implements Item.TooltipContext, ItemTooltipContextDuck {
 
     @Shadow
-    private Level level;
+    private Level val$level;
 
     @Override
     public Network caustics$getNetwork() {
-        if(!(level instanceof ServerLevel serverLevel)) throw new UnsupportedOperationException("level is not a server level");
+        if(!(val$level instanceof ServerLevel serverLevel)) throw new UnsupportedOperationException("level is not a server level");
         return CrystalNetwork.get(serverLevel);
     }
 }

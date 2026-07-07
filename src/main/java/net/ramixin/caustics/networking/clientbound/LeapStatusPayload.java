@@ -96,23 +96,17 @@ public sealed interface LeapStatusPayload extends CustomPacketPayload {
     }
 
     enum Status {
-        SUCCESS(Success::new, false),
-        INTERRUPT(Interrupt::new, true),
-        STARTED(Started::new, false),
-        FAILURE(Failure::new, true)
+        SUCCESS(Success::new),
+        INTERRUPT(Interrupt::new),
+        STARTED(Started::new),
+        FAILURE(Failure::new)
 
         ;
 
         private final Function<RegistryFriendlyByteBuf, LeapStatusPayload> constructor;
-        private final boolean stopsLeaps;
 
-        Status(Function<RegistryFriendlyByteBuf, LeapStatusPayload> constructor, boolean stopsLeaps) {
+        Status(Function<RegistryFriendlyByteBuf, LeapStatusPayload> constructor) {
             this.constructor = constructor;
-            this.stopsLeaps = stopsLeaps;
-        }
-
-        public boolean stopsLeaps() {
-            return stopsLeaps;
         }
     }
 

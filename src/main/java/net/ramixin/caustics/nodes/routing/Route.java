@@ -52,11 +52,11 @@ public class Route {
     }
 
     public Optional<NodeMappedRoute> nodeMapped(CrystalNetwork network) {
-        Optional<Node> maybeSapphire = network.getNodeAt(sapphirePos, NodeIndex.Type.SAPPHIRE);
+        Optional<Node> maybeSapphire = network.nodeIndex().getNodeAt(sapphirePos, NodeIndex.Type.SAPPHIRE);
         if(maybeSapphire.isEmpty()) return Optional.empty();
         List<Node> nodes = new ArrayList<>(path.size());
         for(BlockPos pos : path) {
-            Optional<Node> maybeNode = network.getNodeAt(pos, NodeIndex.Type.TOPAZ);
+            Optional<Node> maybeNode = network.nodeIndex().getNodeAt(pos, NodeIndex.Type.TOPAZ);
             if(maybeNode.isEmpty()) return Optional.empty();
             nodes.add(maybeNode.get());
         }

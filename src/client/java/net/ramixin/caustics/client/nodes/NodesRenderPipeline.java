@@ -136,7 +136,7 @@ public class NodesRenderPipeline {
     }
 
     private HudRenderState extractHud(BlockPos pos, int scrollPos, Route route) {
-        Optional<ClientNode> maybeClosestNode = ClientCrystalNetwork.getInstance().getTargetableNodeAt(pos);
+        Optional<ClientNode> maybeClosestNode = ClientCrystalNetwork.getInstance().getSapphireNodeAt(pos);
         if(maybeClosestNode.isEmpty()) return null;
         ClientNode closestNode = maybeClosestNode.get();
         Component nodeName = extractNodeName(pos);
@@ -155,18 +155,18 @@ public class NodesRenderPipeline {
     }
 
     private static Component extractNodeName(BlockPos pos) {
-        Optional<Frequency> maybeFreq = ClientCrystalNetwork.getInstance().getFrequencyAt(pos);
+        Optional<Frequency> maybeFreq = ClientCrystalNetwork.getInstance().frequencyRegistry().getFrequencyAt(pos);
         if(maybeFreq.isEmpty()) return Component.translatable("caustics.node.unknown_travel");
-        Optional<String> maybeNodeName = ClientCrystalNetwork.getInstance().getFrequencyName(maybeFreq.get());
+        Optional<String> maybeNodeName = ClientCrystalNetwork.getInstance().frequencyRegistry().getFrequencyName(maybeFreq.get());
         return maybeNodeName.map(Component::literal).orElseGet(() -> Component.translatable("caustics.node.unnamed_travel"));
     }
 
     private static Component extractDepositName(ClientNode node, int scrollPos) {
         if(scrollPos >= node.peridotPositions().size() || scrollPos < 0) return Component.translatable("caustics.node.scroll_oob");
         BlockPos pos = node.peridotPositions().get(scrollPos);
-        Optional<Frequency> maybeFreq = ClientCrystalNetwork.getInstance().getFrequencyAt(pos);
+        Optional<Frequency> maybeFreq = ClientCrystalNetwork.getInstance().frequencyRegistry().getFrequencyAt(pos);
         if(maybeFreq.isEmpty()) return Component.translatable("caustics.node.unknown_deposit");
-        Optional<String> maybeDepositName = ClientCrystalNetwork.getInstance().getFrequencyName(maybeFreq.get());
+        Optional<String> maybeDepositName = ClientCrystalNetwork.getInstance().frequencyRegistry().getFrequencyName(maybeFreq.get());
         return maybeDepositName.map(Component::literal).orElseGet(() -> Component.translatable("caustics.node.unnamed_deposit"));
     }
 
