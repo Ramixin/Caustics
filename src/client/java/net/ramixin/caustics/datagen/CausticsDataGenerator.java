@@ -12,5 +12,6 @@ public class CausticsDataGenerator implements DataGeneratorEntrypoint {
         pack.addProvider(CausticsLangProvider::new);
         pack.addProvider(CausticsLootProvider::new);
         pack.addProvider(CausticsRecipeProvider::new);
+        pack.addProvider(CausticsAdvancementProvider::new);
     }
 }

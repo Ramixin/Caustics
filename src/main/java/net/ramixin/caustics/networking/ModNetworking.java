@@ -16,7 +16,8 @@ public class ModNetworking {
         PayloadTypeRegistry.clientboundPlay().register(SignalRangeSyncPayload.TYPE, SignalRangeSyncPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(FrequencySyncPayload.TYPE, FrequencySyncPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(RoutingSyncPayload.TYPE, RoutingSyncPayload.CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(LeapStatusPayload.TYPE, LeapStatusPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(LeapStartPayload.TYPE, LeapStartPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(LeapDropPayload.TYPE, LeapDropPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(SelectionSyncPayload.TYPE, SelectionSyncPayload.CODEC);
 
         PayloadTypeRegistry.serverboundPlay().register(RequestSyncPayload.TYPE, RequestSyncPayload.CODEC);

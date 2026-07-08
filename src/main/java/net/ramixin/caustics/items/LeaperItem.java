@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.blocks.ChargeClusterBlock;
 import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.items.components.LeaperCharge;
@@ -35,7 +36,10 @@ public class LeaperItem extends Item {
     public @NonNull InteractionResult use(@NonNull Level level, @NonNull Player player, @NonNull InteractionHand hand) {
         block : {
             if(!(level instanceof ServerLevel serverLevel)) break block;
-            if(serverLevel.isRaining()) break block;
+            if(serverLevel.isRaining()) {
+                Caustics.displayError(player, "cannot focus light in rain");
+                break block;
+            }
             ItemStack stack = player.getItemInHand(hand);
             if(!stack.has(ModDataComponents.LEAPER_MATERIAL)) break block;
             LeaperMaterial material = stack.get(ModDataComponents.LEAPER_MATERIAL);
@@ -48,7 +52,10 @@ public class LeaperItem extends Item {
                 if(charge.percentage() == 0) break block;
             }
             CrystalNetwork network = CrystalNetwork.get(serverLevel);
-            if(network.leaptionHandler().activateLeap(serverLevel, player.getUUID()))
+            Optional<String> maybeError = network.leaptionHandler().activateLeap(serverLevel, player.getUUID(), hand);
+            if(maybeError.isPresent())
+                Caustics.displayError(player, maybeError.get());
+            else
                 player.startUsingItem(hand);
         }
         return super.use(level, player, hand);

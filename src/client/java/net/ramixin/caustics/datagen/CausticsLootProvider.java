@@ -43,6 +43,8 @@ public class CausticsLootProvider extends FabricBlockLootSubProvider {
         generateGroup(ModBlocks.SUNSTONE_GROUP, ModItems.SUNSTONE_SHARD);
         generateGroup(ModBlocks.SELENITE_GROUP, ModItems.SELENITE_SHARD);
         generateGroup(ModBlocks.TOURMALINE_GROUP, ModItems.TOURMALINE_SHARD);
+
+        dropSelf(ModBlocks.MIRROR);
     }
 
     private void generateGroup(CrystalBlockGroup group, Item shard) {

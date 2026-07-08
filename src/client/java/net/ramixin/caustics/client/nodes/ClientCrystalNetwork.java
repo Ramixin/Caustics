@@ -5,8 +5,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.ramixin.caustics.client.CausticsClient;
+import net.ramixin.caustics.client.ClientLeap;
 import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
 import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
+import net.ramixin.caustics.networking.clientbound.LeapDropPayload;
+import net.ramixin.caustics.networking.clientbound.LeapStartPayload;
 import net.ramixin.caustics.nodes.Network;
 import net.ramixin.caustics.nodes.NodeSyncData;
 import net.ramixin.caustics.nodes.core.FrequencyRegistry;
@@ -37,6 +40,8 @@ public class ClientCrystalNetwork implements Network {
 
     private final Mutable<BlockPos> selectedNode = new MutableObject<>();
     private final MutableInt selectedScrollPos = new MutableInt();
+
+    private final HashMap<UUID, ClientLeap> leaps = new HashMap<>();
 
     public static ClientCrystalNetwork getInstance() {
         return INSTANCE;
@@ -109,6 +114,18 @@ public class ClientCrystalNetwork implements Network {
         return false;
     }
 
+    public void addLeap(LeapStartPayload payload) {
+        leaps.put(payload.player(), new ClientLeap(payload));
+    }
+
+    public void removeLeap(LeapDropPayload payload) {
+        leaps.remove(payload.player());
+    }
+
+    public Optional<ClientLeap> getLeap(UUID profileId) {
+        return Optional.ofNullable(leaps.get(profileId));
+    }
+
     public void clearScrollPos() {
         scrollPos.setValue(0);
     }
@@ -156,7 +173,7 @@ public class ClientCrystalNetwork implements Network {
         if(pos == null) return Optional.empty();
         ClientNode node = sapphireToNode.get(pos);
         if(node == null) {
-            selectedNode.setValue(null);
+            deselectNode();
             return Optional.empty();
         }
         return Optional.of(pos);
@@ -170,7 +187,8 @@ public class ClientCrystalNetwork implements Network {
         registry.syncWith(new FrequencySyncPayload(Map.of(), Map.of()));
         routingTables.clear();
         sapphireToNode.clear();
-        selectedNode.setValue(null);
+        deselectNode();
+        leaps.clear();
     }
 
     @Override

@@ -13,6 +13,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.AmethystClusterBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.blocks.budding.*;
@@ -31,7 +32,7 @@ public class ModBlocks {
     public static final CrystalBlockGroup SELENITE_GROUP = registerGroup("selenite", BuddingSeleniteBlock::new, ChargeClusterBlock::new);
     public static final CrystalBlockGroup TOURMALINE_GROUP = registerGroup("tourmaline", BuddingTourmalineBlock::new, NetworkClusterBlock::new);
 
-    public static final Block MIRROR = register("mirror", MirrorBlock::new, BlockBehaviour.Properties.of());
+    public static final Block MIRROR = register("mirror", MirrorBlock::new, BlockBehaviour.Properties.of().strength(0.3F).sound(SoundType.GLASS));
 
     public static void onInitialize() {
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.NATURAL_BLOCKS).register(event -> {

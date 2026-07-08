@@ -57,6 +57,9 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add("caustics.node.route_direct", "Direct Connection");
         translationBuilder.add("caustics.node.name", "Identified Node:");
         translationBuilder.add("caustics.node.selected", "Selected Node:");
+
+        translationBuilder.add("advancements.caustics.alidade_at_player.title", "Red for an Amazing Reason");
+        translationBuilder.add("advancements.caustics.alidade_at_player.description", "Look at a player through an alidade");
     }
 
     private static void generateGroupTranslations(String name, CrystalBlockGroup group, TranslationBuilder translationBuilder) {

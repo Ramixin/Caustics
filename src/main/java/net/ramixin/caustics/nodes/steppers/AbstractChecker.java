@@ -130,18 +130,21 @@ public abstract class AbstractChecker<T> {
 
         return switch(stance) {
             case FRONT -> {
+                if(curDir == Direction.DOWN || curDir == Direction.UP) yield Optional.empty();
                 if(oppositeFacing == curDir) yield Optional.of(curDir.getClockWise());
                 Direction rotated = curDir.getCounterClockWise();
-                if(oppositeFacing == rotated) yield Optional.of(rotated);
+                if(facing == rotated) yield Optional.of(rotated);
                 yield Optional.empty();
             }
 
             case UP -> {
+                if(curDir == Direction.UP) yield Optional.empty();
                 if(curDir == Direction.DOWN) yield Optional.of(facing);
                 if(oppositeFacing == curDir) yield Optional.of(Direction.UP);
                 yield Optional.empty();
             }
             case DOWN -> {
+                if(curDir == Direction.DOWN) yield Optional.empty();
                 if(curDir == Direction.UP) yield Optional.of(facing);
                 if(oppositeFacing == curDir) yield Optional.of(Direction.DOWN);
                 yield Optional.empty();

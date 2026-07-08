@@ -6,16 +6,13 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.ClientNode;
 import net.ramixin.caustics.client.nodes.NodesRenderPipeline;
 import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
-import net.ramixin.caustics.networking.clientbound.LeapStatusPayload;
 import net.ramixin.caustics.utils.LookUtil;
 
 import java.util.List;
@@ -29,8 +26,7 @@ public class CausticsClient implements ClientModInitializer {
 
     public static int MAX_SIGNAL_RANGE = 256;
 
-    public static final RenderStateDataKey<Double> GHOST_PROGRESS_KEY = RenderStateDataKey.create(() -> "caustics:ghost_progress");
-    public static final RenderStateDataKey<Double> PLAYER_PROGRESS_KEY = RenderStateDataKey.create(() -> "caustics:player_progress");
+    public static final RenderStateDataKey<Double> OPACITY_KEY = RenderStateDataKey.create(() -> "caustics:opacity");
     public static final RenderStateDataKey<Double> OPACITY_DEFAULT_KEY = RenderStateDataKey.create(() -> "caustics:opacity_default");
 
     @Override
@@ -52,17 +48,6 @@ public class CausticsClient implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> ClientCrystalNetwork.getInstance().nuke());
 
         ModMixsonClient.onInitialize();
-
-        ClientPlayNetworking.registerGlobalReceiver(LeapStatusPayload.TYPE, (payload, ctx) -> {
-            switch(payload.status()) {
-                case FAILURE -> onLeapFailure((LeapStatusPayload.Failure) payload, ctx);
-            }
-
-        });
-    }
-
-    private static void onLeapFailure(LeapStatusPayload.Failure failure, ClientPlayNetworking.Context ctx) {
-        ctx.player().sendOverlayMessage(Component.literal("Leap Failed: " + failure.reason()).withStyle(ChatFormatting.RED));
     }
 
     public static void onAlidadeAttack() {

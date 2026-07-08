@@ -9,6 +9,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.decoration.Mannequin;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.component.ResolvableProfile;
@@ -36,7 +37,7 @@ public class LeapGhost extends Avatar {
     }
 
     public static AttributeSupplier createAttributes() {
-        return LivingEntity.createLivingAttributes().build();
+        return LivingEntity.createLivingAttributes().add(Attributes.GRAVITY, 0).build();
     }
 
     @Override

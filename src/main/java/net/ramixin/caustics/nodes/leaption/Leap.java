@@ -1,14 +1,20 @@
 package net.ramixin.caustics.nodes.leaption;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.entities.LeapGhost;
+import net.ramixin.caustics.networking.clientbound.LeapDropPayload;
+import net.ramixin.caustics.networking.clientbound.LeapStartPayload;
 import net.ramixin.caustics.nodes.Node;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import net.ramixin.caustics.nodes.routing.NodeMappedRoute;
+import net.ramixin.caustics.utils.LeaperUtil;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 
@@ -24,12 +30,20 @@ public final class Leap {
     private boolean completed = false;
     private final Mutable<UUID> ghostUUID = new MutableObject<>();
 
-    public Leap(UUID playerUUID, Node node, NodeMappedRoute route, BlockPos sapphirePos, BlockPos peridotPos) {
+    private Leap(UUID playerUUID, Node node, NodeMappedRoute route, BlockPos sapphirePos, BlockPos peridotPos) {
         this.playerUUID = playerUUID;
         this.node = node;
         this.route = route;
         this.sapphirePos = sapphirePos;
         this.peridotPos = peridotPos;
+    }
+
+    public static Leap create(MinecraftServer server, ItemStack leaperStack, UUID playerUUID, Node node, NodeMappedRoute route, BlockPos sapphirePos, BlockPos peridotPos) {
+        long startTick = server.overworld().getGameTime();
+        int chargeUpTicks = LeaperUtil.getChargeUpTicks(leaperStack);
+        LeapStartPayload payload = new LeapStartPayload(playerUUID, startTick, chargeUpTicks, sapphirePos);
+        Caustics.distribute(server, payload);
+        return new Leap(playerUUID, node, route, sapphirePos, peridotPos);
     }
 
     public void tick(ServerLevel level, CrystalNetwork network) {
@@ -80,6 +94,8 @@ public final class Leap {
         Entity entity = level.getEntity(ghostUUID.get());
         if(entity == null) return;
         entity.remove(Entity.RemovalReason.DISCARDED);
+        LeapDropPayload payload = new LeapDropPayload(playerUUID);
+        Caustics.distribute(level.getServer(), payload);
         if(!completed) return;
 
         Player player = level.getPlayerByUUID(playerUUID);

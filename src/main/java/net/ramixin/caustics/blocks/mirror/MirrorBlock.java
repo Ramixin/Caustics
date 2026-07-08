@@ -6,14 +6,16 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.ramixin.caustics.Caustics;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -59,6 +61,30 @@ public class MirrorBlock extends Block {
         return state.setValue(STANCE, getStance(shifting, lookingUp)).setValue(GRIP, grip);
     }
 
+    @Override
+    protected void neighborChanged(@NonNull BlockState state, @NonNull Level level, @NonNull BlockPos pos, @NonNull Block block, @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, block, orientation, movedByPiston);
+        if(!canSurvive(state, level, pos)) level.destroyBlock(pos, true);
+    }
+
+    @Override
+    protected boolean canSurvive(@NonNull BlockState state, @NonNull LevelReader level, @NonNull BlockPos pos) {
+        MirrorGrip grip = state.getValue(GRIP);
+        Direction facing = state.getValue(FACING);
+        return switch (grip) {
+            case STANDING -> level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
+            case UP -> level.getBlockState(pos.above()).isFaceSturdy(level, pos.above(), Direction.DOWN);
+            case RIGHT, BACK -> {
+                BlockPos relPos = pos.relative(facing.getOpposite());
+                yield level.getBlockState(relPos).isFaceSturdy(level, relPos, facing);
+            }
+            case LEFT -> {
+                BlockPos relPos = pos.relative(facing.getClockWise());
+                yield level.getBlockState(relPos).isFaceSturdy(level, relPos, facing.getCounterClockWise());
+            }
+        };
+    }
+
     private MirrorStance getStance(boolean shifting, boolean lookingUp) {
         if(!shifting) return MirrorStance.FRONT;
         return lookingUp ? MirrorStance.UP : MirrorStance.DOWN;
@@ -70,7 +96,6 @@ public class MirrorBlock extends Block {
         if(placedOn.getClockWise() == facing) return MirrorGrip.LEFT;
         if((shifting && placedOn.getCounterClockWise() == facing) || (!shifting && placedOn == facing)) return MirrorGrip.RIGHT;
         if(shifting && placedOn == facing) return MirrorGrip.BACK;
-        Caustics.LOGGER.error("Invalid grip combination: {}, {}, {}, {}", placedOn, facing, shifting, lookingUp);
         return null;
     }
 }

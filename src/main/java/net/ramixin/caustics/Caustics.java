@@ -4,8 +4,15 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.entities.ModEntities;
 import net.ramixin.caustics.items.ModItems;
@@ -52,6 +59,15 @@ public class Caustics implements ModInitializer {
 
     public static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(MOD_ID, path);
+    }
+
+    public static void displayError(Player player, String message) {
+        player.sendOverlayMessage(Component.literal(message).withStyle(ChatFormatting.RED));
+    }
+
+    public static void distribute(MinecraftServer server, CustomPacketPayload payload) {
+        for(ServerPlayer player : server.getPlayerList().getPlayers())
+            ServerPlayNetworking.send(player, payload);
     }
 
 }

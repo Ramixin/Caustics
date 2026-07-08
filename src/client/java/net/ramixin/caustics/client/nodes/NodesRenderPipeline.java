@@ -18,6 +18,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -87,8 +88,11 @@ public class NodesRenderPipeline {
         if(!player.getMainHandItem().is(ModItems.ALIDADE)) return;
         if(!player.isUsingItem()) return;
 
-        Optional<Integer> closest = extractNodes();
-        extractHudLooking(closest);
+        ClientLevel level = ctx.level();
+        if(!level.isRaining()) {
+            Optional<Integer> closest = extractNodes();
+            extractHudLooking(closest);
+        }
         extractHudSelected(ClientCrystalNetwork.getInstance().getSelectedNode());
     }
 
