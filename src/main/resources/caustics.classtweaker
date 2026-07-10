@@ -1,2 +1,1 @@
 classTweaker v1 official
-transitive-inject-interface	net/minecraft/client/entity/ClientAvatarState	net/fabricmc/fabric/api/client/rendering/v1/FabricRenderState

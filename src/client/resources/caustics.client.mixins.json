@@ -5,7 +5,6 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "AbstractClientPlayerMixin",
-    "ClientAvatarStateMixin",
     "EntityRenderDispatcherMixin",
     "GuiGraphicsExtractorMixin",
     "GuiMixin",

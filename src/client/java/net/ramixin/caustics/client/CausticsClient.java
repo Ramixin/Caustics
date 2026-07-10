@@ -1,6 +1,7 @@
 package net.ramixin.caustics.client;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
@@ -11,7 +12,10 @@ import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.ClientNode;
-import net.ramixin.caustics.client.nodes.NodesRenderPipeline;
+import net.ramixin.caustics.client.rendering.AlidadeHudRenderer;
+import net.ramixin.caustics.client.rendering.NodesRenderPipeline;
+import net.ramixin.caustics.client.rendering.LeapParticleRenderPipeline;
+import net.ramixin.caustics.items.ModItems;
 import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
 import net.ramixin.caustics.utils.LookUtil;
 
@@ -32,9 +36,14 @@ public class CausticsClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         NodesRenderPipeline.getInstance().onInitialize();
+        LeapParticleRenderPipeline.getInstance().onInitialize();
+        AlidadeHudRenderer.getInstance().onInitialize();
         ModClientNetworking.onInitialize();
+        ModMixsonClient.onInitialize();
 
         ClientHotbarScrollEvents.ALLOW.register((inventory, _, _, _, dy) -> {
+            if(!inventory.player.isUsingItem()) return true;
+            if(!inventory.player.getUseItem().is(ModItems.ALIDADE)) return true;
             Optional<BlockPos> lookingAt = LookUtil.getLookingAt(inventory.player, LOOK_MANAGER.getPositions());
             if(lookingAt.isEmpty()) {
                 ClientCrystalNetwork.getInstance().clearScrollPos();
@@ -46,8 +55,7 @@ public class CausticsClient implements ClientModInitializer {
 
         LevelRenderEvents.END_MAIN.register(_ -> LOOK_MANAGER.wipe());
         ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> ClientCrystalNetwork.getInstance().nuke());
-
-        ModMixsonClient.onInitialize();
+        ClientTickEvents.END_CLIENT_TICK.register(_ -> ClientCrystalNetwork.getInstance().tick());
     }
 
     public static void onAlidadeAttack() {

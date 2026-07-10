@@ -47,7 +47,10 @@ public class Caustics implements ModInitializer {
         if(FabricLoader.getInstance().isDevelopmentEnvironment())
             CommandRegistrationCallback.EVENT.register(ModCommands::onInitialize);
 
-        ServerTickEvents.END_LEVEL_TICK.register(level -> CrystalNetwork.get(level).tick(level));
+        ServerTickEvents.END_LEVEL_TICK.register(level -> {
+            if(!level.tickRateManager().isFrozen())
+                CrystalNetwork.get(level).tick(level);
+        });
 
         ServerPlayerEvents.JOIN.register(player -> {
             CrystalNetwork network = CrystalNetwork.get(player.level());
@@ -59,6 +62,10 @@ public class Caustics implements ModInitializer {
 
     public static Identifier id(String path) {
         return Identifier.fromNamespaceAndPath(MOD_ID, path);
+    }
+
+    public static String idString(String path) {
+        return Caustics.id(path).toString();
     }
 
     public static void displayError(Player player, String message) {

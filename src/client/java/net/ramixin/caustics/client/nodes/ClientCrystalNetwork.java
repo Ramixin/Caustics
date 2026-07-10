@@ -6,6 +6,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.ramixin.caustics.client.CausticsClient;
 import net.ramixin.caustics.client.ClientLeap;
+import net.ramixin.caustics.client.rendering.particle.LeapParticleEngine;
 import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
 import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
 import net.ramixin.caustics.networking.clientbound.LeapDropPayload;
@@ -43,8 +44,18 @@ public class ClientCrystalNetwork implements Network {
 
     private final HashMap<UUID, ClientLeap> leaps = new HashMap<>();
 
+    private final LeapParticleEngine particleEngine = new LeapParticleEngine();
+
     public static ClientCrystalNetwork getInstance() {
         return INSTANCE;
+    }
+
+    public void tick() {
+        particleEngine.tick();
+    }
+
+    public LeapParticleEngine particleEngine() {
+        return particleEngine;
     }
 
     public void onNodeSync(List<NodeSyncData> syncData) {
@@ -189,6 +200,7 @@ public class ClientCrystalNetwork implements Network {
         sapphireToNode.clear();
         deselectNode();
         leaps.clear();
+        particleEngine.clear();
     }
 
     @Override
