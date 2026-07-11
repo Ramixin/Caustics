@@ -2,6 +2,7 @@ package net.ramixin.caustics;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 
 public interface ModTags {
@@ -13,7 +14,8 @@ public interface ModTags {
         TagKey<Block> TUNABLE_CLUSTER = TagKey.create(Registries.BLOCK, Caustics.id("tunable_cluster"));
     }
 
-
-
-
+    interface Items {
+        TagKey<Item> LENS = TagKey.create(Registries.ITEM, Caustics.id("lens"));
+        TagKey<Item> ALIDADE_LENS = TagKey.create(Registries.ITEM, Caustics.id("alidade_lens"));
+    }
 }

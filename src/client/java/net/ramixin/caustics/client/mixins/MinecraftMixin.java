@@ -9,7 +9,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.ramixin.caustics.client.CausticsClient;
 import net.ramixin.caustics.client.entities.ClientLeapGhost;
-import net.ramixin.caustics.items.ModItems;
+import net.ramixin.caustics.items.components.SpyglassLens;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
-public class MinecraftMixin {
+public abstract class MinecraftMixin {
 
     @Shadow
     @Final
@@ -49,7 +49,7 @@ public class MinecraftMixin {
         if(!orig) return false;
         if(!this.options.keyUse.isDown()) return false;
         if(!this.options.keyAttack.isDown()) return false;
-        return instance.getMainHandItem().is(ModItems.ALIDADE);
+        return SpyglassLens.isAlidade(instance.getUseItem());
     }
 
     @Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/entity/ClientMannequin;registerOverrides(Lnet/minecraft/client/renderer/PlayerSkinRenderCache;)V"))

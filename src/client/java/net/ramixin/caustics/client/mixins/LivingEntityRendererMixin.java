@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(LivingEntityRenderer.class)
-public class LivingEntityRendererMixin {
+public abstract class LivingEntityRendererMixin {
 
     @WrapMethod(method = "getRenderType")
     private <S extends LivingEntityRenderState> @Nullable RenderType forceTransparencyIfLeapRelatedEntity(S state, boolean isBodyVisible, boolean forceTransparent, boolean appearGlowing, Operation<RenderType> original) {

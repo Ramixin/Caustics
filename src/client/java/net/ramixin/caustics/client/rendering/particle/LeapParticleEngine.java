@@ -1,10 +1,12 @@
 package net.ramixin.caustics.client.rendering.particle;
 
-import net.minecraft.core.Vec3i;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.client.ClientLeap;
+import net.ramixin.caustics.client.entities.ClientLeapGhost;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 
 import java.util.*;
@@ -66,11 +68,13 @@ public class LeapParticleEngine {
 
     private final HashMap<UUID, List<LeapParticle>> particles = new HashMap<>();
 
-    public void addParticle(Avatar avatar) {
+    public void addParticle(AbstractClientPlayer avatar) {
+        RandomSource random = avatar.getRandom();
+        if(stopBuilding(random)) return;
+
         Optional<ClientLeap> maybeLeap = ClientCrystalNetwork.getInstance().getLeap(avatar.getUUID());
         if(maybeLeap.isEmpty()) return;
         ClientLeap leap = maybeLeap.get();
-        RandomSource random = avatar.getRandom();
         int[] region = SKIN_REGIONS[random.nextInt(SKIN_REGIONS.length)];
         int u = random.nextIntBetweenInclusive(region[0], region[0] + region[2]);
         int v = random.nextIntBetweenInclusive(region[1], region[1] + region[3]);
@@ -78,10 +82,31 @@ public class LeapParticleEngine {
         double deltaHeight = heights[1] - heights[0];
         Vec3 position = avatar.position().add(random.nextDouble()*0.8-0.9, random.nextDouble() * deltaHeight + heights[0]-0.5, random.nextDouble()*0.8-0.9);
         double speed = random.nextDouble() / 2;
-        Vec3 deltas = leap.sapphirePos().subtract(new Vec3i(0,1,0)).getCenter().subtract(avatar.position()).normalize().multiply(speed, speed, speed);
+        Vec3 deltas = leap.sapphirePos().offset(0,-1,0).getCenter().subtract(avatar.position()).normalize().multiply(speed, speed, speed);
         LeapParticle particle = new LeapParticle(position, deltas,0.9, u, v);
         List<LeapParticle> particles = this.particles.computeIfAbsent(avatar.getUUID(), _ -> new ArrayList<>());
         particles.add(particle);
+    }
+
+    public void addParticle(ClientLeapGhost ghost) {
+        RandomSource random = ghost.getRandom();
+        if(stopBuilding(random)) return;
+        int[] region = SKIN_REGIONS[random.nextInt(SKIN_REGIONS.length)];
+        int u = random.nextIntBetweenInclusive(region[0], region[0] + region[2]);
+        int v = random.nextIntBetweenInclusive(region[1], region[1] + region[3]);
+        Vec3 center = ghost.position().add(-0.5, random.nextDouble() * 2 - 0.5, -0.5);
+        Vec3 position = center.offsetRandom(random, 4);
+        double speed = center.distanceTo(ghost.position()) / 7;
+        Vec3 deltas = center.subtract(position).normalize().multiply(speed, speed, speed);
+        LeapParticle particle = new LeapParticle(position, deltas,0.9, u, v);
+        List<LeapParticle> particles = this.particles.computeIfAbsent(ghost.getProfileId(), _ -> new ArrayList<>());
+        particles.add(particle);
+    }
+
+    private boolean stopBuilding(RandomSource random) {
+        ParticleStatus particleStatus = Minecraft.getInstance().options.particles().get();
+        if(particleStatus == ParticleStatus.MINIMAL) return true;
+        else return particleStatus == ParticleStatus.DECREASED && random.nextInt(3) != 2;
     }
 
     public void tick() {

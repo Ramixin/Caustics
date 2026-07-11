@@ -16,7 +16,7 @@ import net.ramixin.caustics.client.LookManager;
 import net.ramixin.caustics.client.TooltipRenderer;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.ClientNode;
-import net.ramixin.caustics.items.ModItems;
+import net.ramixin.caustics.items.components.SpyglassLens;
 import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.utils.LookUtil;
 import org.jspecify.annotations.NonNull;
@@ -48,7 +48,7 @@ public class AlidadeHudRenderer {
 
         Player player = Minecraft.getInstance().player;
         if(player == null) return;
-        if(!player.getMainHandItem().is(ModItems.ALIDADE)) return;
+        if(!SpyglassLens.isAlidade(player.getUseItem())) return;
         if(!player.isUsingItem()) return;
 
         ClientLevel level = ctx.level();

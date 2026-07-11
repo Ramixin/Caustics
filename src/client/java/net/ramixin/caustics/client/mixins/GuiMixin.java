@@ -9,7 +9,7 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.client.CausticsClient;
-import net.ramixin.caustics.items.ModItems;
+import net.ramixin.caustics.items.components.SpyglassLens;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Gui.class)
-public class GuiMixin {
+public abstract class GuiMixin {
 
     @Shadow
     @Final
@@ -31,7 +31,7 @@ public class GuiMixin {
     @Inject(method = "extractCameraOverlays", at = @At("HEAD"))
     private void updateUsingAlidadeDuringExtraction(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         assert this.minecraft.player != null;
-        usingAlidade = this.minecraft.player.getUseItem().is(ModItems.ALIDADE);
+        usingAlidade = SpyglassLens.isAlidade(this.minecraft.player.getUseItem());
     }
 
     @WrapOperation(method = "extractSpyglassOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V"))

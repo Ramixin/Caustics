@@ -30,7 +30,9 @@ import net.ramixin.caustics.client.rendering.particle.LeapParticleEngine;
 import org.joml.Matrix4f;
 import org.joml.Vector3fc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParticleRenderPipeline.LeapParticleBatchRenderState> {
 
@@ -45,10 +47,10 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParti
     private static final LeapParticleRenderPipeline INSTANCE = new LeapParticleRenderPipeline();
 
     private final List<LeapParticleBatchRenderState> RENDER_STATES = new ArrayList<>();
-    private final List<DrawCommand> DRAW_COMMANDS = new ArrayList<>();
+    private DrawCommand DRAW_COMMAND = null;
 
     protected LeapParticleRenderPipeline() {
-        super("leap_particles", PIPELINE);
+        super("leap_particles", PIPELINE, true);
     }
 
     public static LeapParticleRenderPipeline getInstance() {
@@ -59,13 +61,7 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParti
     protected void extract(LevelExtractionContext ctx) {
         if(Minecraft.getInstance().level == null) return;
         RENDER_STATES.clear();
-        DRAW_COMMANDS.clear();
-
-//        Optional<BlockPos> maybeSelected = ClientCrystalNetwork.getInstance().getSelectedNode();
-//        if(maybeSelected.isEmpty()) return;
-//        BlockPos selected = maybeSelected.get();
-//        RENDER_STATES.add(new LeapParticleBatchRenderState(null, new double[]{selected.getX()}, new double[]{selected.getY()}, new double[]{selected.getZ()}, new float[]{0f}, new float[]{0f}, new float[]{1f}, new float[]{1f}));
-//        if(true) return;
+        DRAW_COMMAND = null;
 
         LeapParticleEngine particleEngine = ClientCrystalNetwork.getInstance().particleEngine();
         List<AbstractClientPlayer> players = ctx.level().players();
@@ -121,7 +117,7 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParti
                     new Vec2(-1f, 1) //bottom left
             };
 
-            Vector3fc[] vertices = billboardVertices(new Vec3(state.x[i], state.y[i], state.z[i]), cameraPos, offsets, 0.04f * state.scale[i]);
+            Vector3fc[] vertices = billboardVertices(new Vec3(state.x[i], state.y[i], state.z[i]), cameraPos, offsets, 0.04f * state.scale[i], 0);
 
             Matrix4f matrix = matrices.last().pose();
 
@@ -137,11 +133,12 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParti
             buffer.addVertex(matrix, vertices[2].x(), vertices[2].y(), vertices[2].z()).setColor(color).setUv(minU, minV).setLight(state.lightmap[i]); //upper right
             buffer.addVertex(matrix, vertices[3].x(), vertices[3].y(), vertices[3].z()).setColor(color).setUv(minU, maxV).setLight(state.lightmap[i]); //bottom left
         }
-        DRAW_COMMANDS.add(new DrawCommand(state.skin, state.x.length * 6));
+        DRAW_COMMAND = new DrawCommand(state.skin);
     }
 
     @Override
     protected void applyRenderPass(RenderPass renderPass, MeshData.DrawState drawParameters, GpuBuffer vertices, VertexFormat format, GpuBuffer indices, VertexFormat.IndexType indexType) {
+        if(DRAW_COMMAND == null) return;
         renderPass.setVertexBuffer(0, vertices);
         renderPass.setIndexBuffer(indices, indexType);
         GpuBufferSlice projectionMatrixBuffer = RenderSystem.getProjectionMatrixBuffer();
@@ -152,16 +149,12 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParti
         renderPass.setUniform("Fog", shaderFog);
         renderPass.bindTexture("Sampler2", Minecraft.getInstance().gameRenderer.lightmap(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
 
-        int indexOffset = 0;
-        for (DrawCommand drawCommand : DRAW_COMMANDS) {
-            AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(drawCommand.skin);
-            TextureSetup setup = TextureSetup.singleTexture(texture.getTextureView(), texture.getSampler());
-            renderPass.bindTexture("Sampler0", setup.texure0(), setup.sampler0());
-            renderPass.drawIndexed(0, indexOffset, drawCommand.vertexCount, 1);
-            indexOffset += drawCommand.vertexCount;
-        }
+        AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(DRAW_COMMAND.skin);
+        TextureSetup setup = TextureSetup.singleTexture(texture.getTextureView(), texture.getSampler());
+        renderPass.bindTexture("Sampler0", setup.texure0(), setup.sampler0());
+        renderPass.drawIndexed(0, 0, drawParameters.indexCount(), 1);
     }
 
     protected record LeapParticleBatchRenderState(Identifier skin, double[] x, double[] y, double[] z, float[] u, float[] v, float[] opacity, int[] lightmap, float[] scale) { }
-    private record DrawCommand(Identifier skin, int vertexCount) { }
+    private record DrawCommand(Identifier skin) { }
 }

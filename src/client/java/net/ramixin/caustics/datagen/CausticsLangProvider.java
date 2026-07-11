@@ -3,6 +3,7 @@ package net.ramixin.caustics.datagen;
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
 import net.minecraft.core.HolderLookup;
+import net.ramixin.caustics.ModTags;
 import net.ramixin.caustics.blocks.CrystalBlockGroup;
 import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.items.ModItems;
@@ -34,7 +35,6 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         generateGroupTranslations("Selenite", ModBlocks.SELENITE_GROUP, translationBuilder);
         generateGroupTranslations("Tourmaline", ModBlocks.TOURMALINE_GROUP, translationBuilder);
 
-        translationBuilder.add(ModItems.ALIDADE, "Alidade");
         translationBuilder.add(ModBlocks.MIRROR, "Mirror");
         translationBuilder.add(ModItems.LEAPER, "Leaper");
 
@@ -45,6 +45,8 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add("caustics.leaper_matieral.tooltip_cooldown", "Cooldown: %s");
 
         translationBuilder.add("caustics.leaper_charge.tooltip", "Charge: %s/%s");
+
+        translationBuilder.add("caustics.spyglass_lens.tooltip", "%s Lens");
 
         translationBuilder.add("caustics.node.unknown_travel", "Unknown Node");
         translationBuilder.add("caustics.node.unnamed_travel", "Unnamed Node");
@@ -59,7 +61,9 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add("caustics.node.selected", "Selected Node:");
 
         translationBuilder.add("advancements.caustics.alidade_at_player.title", "Red for an Amazing Reason");
-        translationBuilder.add("advancements.caustics.alidade_at_player.description", "Look at a player through an alidade");
+        translationBuilder.add("advancements.caustics.alidade_at_player.description", "Look at a player through an alidade spyglass");
+
+        translationBuilder.add(ModTags.Items.ALIDADE_LENS, "Alidade Lens");
     }
 
     private static void generateGroupTranslations(String name, CrystalBlockGroup group, TranslationBuilder translationBuilder) {

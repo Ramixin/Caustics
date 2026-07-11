@@ -1,10 +1,8 @@
 package net.ramixin.caustics.client.entities;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.ClientAvatarEntity;
 import net.minecraft.client.entity.ClientAvatarState;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -53,14 +51,7 @@ public class ClientLeapGhost extends LeapGhost implements ClientAvatarEntity {
                 Caustics.LOGGER.error("Error when trying to look up skin", e);
             }
         }
-        assert Minecraft.getInstance().level != null;
-        for (AbstractClientPlayer player : Minecraft.getInstance().level.players()) {
-            if (player.getUUID().equals(getProfileId())) {
-                ClientCrystalNetwork.getInstance().particleEngine().addParticle(player);
-                break;
-            }
-        }
-
+        ClientCrystalNetwork.getInstance().particleEngine().addParticle(this);
     }
 
     @Override

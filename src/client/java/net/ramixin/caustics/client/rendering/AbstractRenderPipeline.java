@@ -18,6 +18,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.Caustics;
@@ -43,10 +44,12 @@ public abstract class AbstractRenderPipeline<T> {
     private BufferBuilder buffer;
     private final String name;
     private final RenderPipeline pipeline;
+    private final boolean drawPerState;
 
-    protected AbstractRenderPipeline(String name, RenderPipeline pipeline) {
+    protected AbstractRenderPipeline(String name, RenderPipeline pipeline, boolean drawPerState) {
         this.name = name;
         this.pipeline = pipeline;
+        this.drawPerState = drawPerState;
     }
 
     public void onInitialize() {
@@ -65,9 +68,12 @@ public abstract class AbstractRenderPipeline<T> {
     protected void render(LevelRenderContext ctx) {
         List<T> states = this.getStates();
         if(states.isEmpty()) return;
-        for(T state : states)
+        for(T state : states) {
             this.getVertices(ctx, state);
-        this.finish();
+            if(this.drawPerState) this.finish();
+        }
+        if(!this.drawPerState)
+            this.finish();
     }
 
     protected GpuBuffer upload(MeshData.DrawState drawParameters, VertexFormat format, MeshData builtBuffer) {
@@ -140,7 +146,7 @@ public abstract class AbstractRenderPipeline<T> {
         this.buffer = null;
     }
 
-    protected static Vector3fc[] billboardVertices(Vec3 position, Vec3 cameraPos, Vec2[] offsets, float scale) {
+    protected static Vector3fc[] billboardVertices(Vec3 position, Vec3 cameraPos, Vec2[] offsets, float scale, double theta) {
         Camera camera = Minecraft.getInstance()
                 .gameRenderer
                 .getMainCamera();
@@ -152,13 +158,18 @@ public abstract class AbstractRenderPipeline<T> {
         float cy = (float)(position.y + 0.5 - cameraPos.y);
         float cz = (float)(position.z + 0.5 - cameraPos.z);
 
+        float cos = Mth.cos(theta);
+        float sin = Mth.sin(theta);
+
         Vector3fc[] vertices = new Vector3fc[4];
         for(int i = 0; i < 4; i++) {
             Vec2 offset = offsets[i];
+            float x = offset.x * cos - offset.y * sin;
+            float y = offset.x * sin + offset.y * cos;
             vertices[i] = new Vector3f(
-                    cx + (right.x * offset.x + up.x * offset.y) * scale,
-                    cy + (right.y * offset.x + up.y * offset.y) * scale,
-                    cz + (right.z * offset.x + up.z * offset.y) * scale
+                    cx + (right.x * x + up.x * y) * scale,
+                    cy + (right.y * x + up.y * y) * scale,
+                    cz + (right.z * x + up.z * y) * scale
             );
         }
         return vertices;

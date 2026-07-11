@@ -3,17 +3,23 @@ package net.ramixin.caustics.datagen;
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.Blocks;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.items.ModItems;
+import net.ramixin.caustics.items.components.ModDataComponents;
+import net.ramixin.caustics.items.components.SpyglassLens;
 import org.jspecify.annotations.NonNull;
 
 import java.util.concurrent.CompletableFuture;
@@ -57,15 +63,21 @@ public class CausticsRecipeProvider extends FabricRecipeProvider {
                         .unlockedBy("has_iron", has(Items.AMETHYST_SHARD))
                         .save(output, getKey("tuning_fork"));
 
-                shaped(RecipeCategory.TOOLS, ModItems.ALIDADE)
+
+                new ShapedRecipeBuilder(
+                        BuiltInRegistries.ITEM,
+                        RecipeCategory.TOOLS,
+                        new ItemStackTemplate(Items.SPYGLASS, DataComponentPatch.builder().set(
+                                ModDataComponents.SPYGLASS_LENS,
+                                new SpyglassLens(BuiltInRegistries.ITEM.wrapAsHolder(ModItems.BERYL_SHARD))
+                        ).build()))
+                        .pattern(" B ")
                         .pattern(" C ")
-                        .pattern(" G ")
-                        .pattern(" G ")
-                        .define('C', ModItems.BERYL_SHARD)
-                        .define('G', Items.GOLD_INGOT)
+                        .pattern(" C ")
+                        .define('B', ModItems.BERYL_SHARD)
+                        .define('C', Items.COPPER_INGOT)
                         .unlockedBy("has_beryl", has(ModItems.BERYL_SHARD))
                         .save(output, getKey("alidade"));
-
             }
         };
     }

@@ -5,12 +5,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
+import net.ramixin.caustics.client.rendering.node.IconHolder;
+import net.ramixin.caustics.client.rendering.node.NodeIcon;
 import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.utils.LookUtil;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class LookManager {
@@ -19,8 +20,8 @@ public class LookManager {
     private Route[] routes;
     private Vec3[] vectors;
     private double[] angles;
+    private NodeIcon[] icons;
     private final Mutable<Set<Integer>> indices = new MutableObject<>();
-    private final Mutable<Set<BlockPos>> ambiguities = new MutableObject<>();
 
     public BlockPos[] getPositions() {
         if(positions == null) {
@@ -29,6 +30,18 @@ public class LookManager {
             routes = positionsAndRoutes.getSecond();
         }
         return positions;
+    }
+
+    public NodeIcon[] getIcons() {
+        if(icons == null) {
+            BlockPos[] positions = getPositions();
+            icons = new NodeIcon[positions.length];
+            IconHolder iconHolder = ClientCrystalNetwork.getInstance().iconHolder();
+            for (int i = 0; i < positions.length; i++)
+                icons[i] = iconHolder.get(positions[i]).orElseThrow();
+
+        }
+        return icons;
     }
 
     public Route[] getRoutes() {
@@ -67,24 +80,12 @@ public class LookManager {
         return indices.get();
     }
 
-    public Set<BlockPos> getAmbiguities() {
-        if(ambiguities.get() == null) {
-            Set<Integer> indices = getAmbiguityIndices();
-            BlockPos[] positions = getPositions();
-            Set<BlockPos> set = new HashSet<>();
-            for(int i : indices)
-                set.add(positions[i]);
-            ambiguities.setValue(set);
-        }
-        return ambiguities.get();
-    }
-
     public void wipe() {
         positions = null;
         vectors = null;
         angles = null;
+        icons = null;
         indices.setValue(null);
-        ambiguities.setValue(null);
     }
 
 }

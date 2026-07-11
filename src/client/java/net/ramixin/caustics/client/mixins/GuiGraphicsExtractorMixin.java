@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 @Mixin(GuiGraphicsExtractor.class)
-public class GuiGraphicsExtractorMixin implements GuiGraphicsExtractorDuck {
+public abstract class GuiGraphicsExtractorMixin implements GuiGraphicsExtractorDuck {
 
     @Shadow
     private @Nullable Runnable deferredTooltip;

@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Mixin(AvatarRenderer.class)
-public class AvatarRendererMixin {
+public abstract class AvatarRendererMixin {
 
     @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V", at = @At("TAIL"))
     private <AvatarLikeEntity extends Avatar & ClientAvatarEntity> void setOpacityIfLeapGhostOrPlayer(AvatarLikeEntity entity, AvatarRenderState state, float partialTicks, CallbackInfo ci) {

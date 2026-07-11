@@ -3,7 +3,6 @@ package net.ramixin.caustics.networking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
-import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
 import net.ramixin.caustics.networking.clientbound.*;
 import net.ramixin.caustics.networking.serverbound.RequestSyncPayload;
@@ -34,7 +33,6 @@ public class ModNetworking {
 
     private static void handleSelectionSync(SelectionSyncPayload selectionSyncPayload, ServerPlayNetworking.Context context) {
         ServerPlayer player = context.player();
-        Caustics.LOGGER.info("received selection from {}: sapphire {}, peridot {}", player.getName().getString(), selectionSyncPayload.sapphirePos(), selectionSyncPayload.peridotPos());
         CrystalNetwork.get(player.level()).leaptionHandler().setSelection(player.getUUID(), selectionSyncPayload.sapphirePos(), selectionSyncPayload.peridotPos());
     }
 

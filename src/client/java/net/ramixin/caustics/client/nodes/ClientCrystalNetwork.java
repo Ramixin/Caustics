@@ -2,11 +2,16 @@ package net.ramixin.caustics.client.nodes;
 
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
 import net.ramixin.caustics.client.CausticsClient;
 import net.ramixin.caustics.client.ClientLeap;
+import net.ramixin.caustics.client.rendering.node.IconHolder;
+import net.ramixin.caustics.client.rendering.node.NodeIcon;
 import net.ramixin.caustics.client.rendering.particle.LeapParticleEngine;
+import net.ramixin.caustics.items.components.SpyglassLens;
 import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
 import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
 import net.ramixin.caustics.networking.clientbound.LeapDropPayload;
@@ -45,6 +50,7 @@ public class ClientCrystalNetwork implements Network {
     private final HashMap<UUID, ClientLeap> leaps = new HashMap<>();
 
     private final LeapParticleEngine particleEngine = new LeapParticleEngine();
+    private final IconHolder iconHolder = new IconHolder();
 
     public static ClientCrystalNetwork getInstance() {
         return INSTANCE;
@@ -52,6 +58,16 @@ public class ClientCrystalNetwork implements Network {
 
     public void tick() {
         particleEngine.tick();
+        if(Minecraft.getInstance().level == null) return;
+        for(AbstractClientPlayer player : Minecraft.getInstance().level.players()) {
+            if(!leaps.containsKey(player.getUUID())) continue;
+            particleEngine.addParticle(player);
+        }
+        LocalPlayer player = Minecraft.getInstance().player;
+        if(player == null) return;
+        if(!player.isUsingItem()) return;
+        if(!SpyglassLens.isAlidade(player.getUseItem())) return;
+        iconHolder.tick();
     }
 
     public LeapParticleEngine particleEngine() {
@@ -59,12 +75,17 @@ public class ClientCrystalNetwork implements Network {
     }
 
     public void onNodeSync(List<NodeSyncData> syncData) {
+        if(Minecraft.getInstance().level == null) return;
+        RandomSource random = Minecraft.getInstance().level.getRandom();
         sapphireToNode.clear();
         topazToNode.clear();
 
         for(NodeSyncData data : syncData) {
             ClientNode node = ClientNode.fromSyncData(data);
-            for(BlockPos pos : data.sapphirePositions()) sapphireToNode.put(pos, node);
+            for(BlockPos pos : data.sapphirePositions()) {
+                sapphireToNode.put(pos, node);
+                iconHolder.add(pos, random);
+            }
             for(BlockPos pos : data.topazPositions()) topazToNode.put(pos, node);
             for(BlockPos pos : data.tourmalinePositions()) tourmalineToNode.put(pos, node);
         }
@@ -83,6 +104,7 @@ public class ClientCrystalNetwork implements Network {
         Set<BlockPos> jammers = tourmalineToNode.keySet();
         for(BlockPos pos : sapphireToNode.keySet()) {
             if(!sapphireToNode.get(pos).visible()) continue;
+            if(!iconHolder.has(pos)) continue;
             if(pos.distToCenterSqr(player.position()) >= CausticsClient.MAX_SIGNAL_RANGE) continue;
             if(!canConnect(player.blockPosition(), pos, jammers, CausticsClient.MAX_SIGNAL_RANGE)) continue;
             visiblePositions.add(pos);
@@ -109,7 +131,8 @@ public class ClientCrystalNetwork implements Network {
                 }
             }
         }
-
+        for (BlockPos visiblePosition : visiblePositions)
+            iconHolder.add(visiblePosition, player.getRandom());
         return new Pair<>(visiblePositions.toArray(BlockPos[]::new), routes.toArray(Route[]::new));
     }
 
@@ -141,14 +164,20 @@ public class ClientCrystalNetwork implements Network {
         scrollPos.setValue(0);
     }
 
-    public void deltaScrollPos(double dy) {
+    public void deltaScrollPos(double dy, Optional<NodeIcon> icon) {
         if(dy < 0) {
-            if(scrollPos.intValue() > 0) scrollPos.decrement();
+            if(scrollPos.intValue() > 0) {
+                scrollPos.decrement();
+                icon.ifPresent(NodeIcon::negativeBump);
+            }
         } else {
             BlockPos lookingAt = lastLookingAt.get();
             if(lookingAt == null) return;
             ClientNode node = sapphireToNode.get(lookingAt);
-            if(scrollPos.intValue() < node.peridotPositions().size()-1) scrollPos.increment();
+            if(scrollPos.intValue() < node.peridotPositions().size()-1) {
+                scrollPos.increment();
+                icon.ifPresent(NodeIcon::bump);
+            }
         }
 
     }
@@ -194,6 +223,10 @@ public class ClientCrystalNetwork implements Network {
         return selectedScrollPos.intValue();
     }
 
+    public IconHolder iconHolder() {
+        return iconHolder;
+    }
+
     public void nuke() {
         registry.syncWith(new FrequencySyncPayload(Map.of(), Map.of()));
         routingTables.clear();
@@ -201,6 +234,7 @@ public class ClientCrystalNetwork implements Network {
         deselectNode();
         leaps.clear();
         particleEngine.clear();
+        iconHolder.clear();
     }
 
     @Override

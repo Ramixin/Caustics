@@ -6,7 +6,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.ramixin.caustics.items.ModItems;
+import net.ramixin.caustics.items.components.SpyglassLens;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
@@ -19,7 +19,7 @@ public abstract class AbstractClientPlayerMixin extends Player {
 
     @WrapOperation(method = "getFieldOfViewModifier", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;isScoping()Z"))
     private boolean preventFOVChangeUnlessIfUsingAlidade(AbstractClientPlayer instance, Operation<Boolean> original) {
-        return original.call(instance) && !getUseItem().is(ModItems.ALIDADE);
+        return original.call(instance) && !SpyglassLens.isAlidade(instance.getUseItem());
     }
 
 }

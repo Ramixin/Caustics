@@ -12,14 +12,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.CausticsClient;
 import net.ramixin.caustics.client.LookManager;
-import net.ramixin.caustics.items.ModItems;
-import net.ramixin.caustics.utils.LookUtil;
+import net.ramixin.caustics.client.rendering.node.NodeIcon;
+import net.ramixin.caustics.items.components.SpyglassLens;
 import org.joml.Matrix4f;
 import org.joml.Vector3fc;
 
@@ -43,7 +44,7 @@ public class NodesRenderPipeline extends AbstractRenderPipeline<NodesRenderPipel
     private static final NodesRenderPipeline INSTANCE = new NodesRenderPipeline();
 
     protected NodesRenderPipeline() {
-        super("alidade_nodes", PIPELINE);
+        super("alidade_nodes", PIPELINE, false);
     }
 
     public static NodesRenderPipeline getInstance() {
@@ -57,26 +58,27 @@ public class NodesRenderPipeline extends AbstractRenderPipeline<NodesRenderPipel
 
         Player player = Minecraft.getInstance().player;
         if(player == null) return;
-        if(!player.getMainHandItem().is(ModItems.ALIDADE)) return;
+        if(!SpyglassLens.isAlidade(player.getUseItem())) return;
         if(!player.isUsingItem()) return;
 
         ClientLevel level = ctx.level();
         if(level.isRaining()) return;
-        extractNodes();
-    }
-
-    private void extractNodes() {
         LookManager lookManager = CausticsClient.LOOK_MANAGER;
         BlockPos[] positions = lookManager.getPositions();
-        double[] angles = lookManager.getAngles();
-        Optional<Integer> closest = LookUtil.calculateClosestLooking(angles);
+        NodeIcon[] icons = lookManager.getIcons();
+        if(positions.length != icons.length)
+            throw new IllegalStateException("Positions and icons must be the same length");
         Set<Integer> ambiguities = lookManager.getAmbiguityIndices();
+        float partialTicks = ctx.deltaTracker().getGameTimeDeltaPartialTick(false);
         for(int i = 0; i < positions.length; i++) {
             BlockPos pos = positions[i];
+            NodeIcon icon = icons[i];
+            if(icon == null) continue;
             boolean ambiguous = ambiguities.contains(i);
-            boolean lookingAt = !ambiguous && closest.isPresent() && closest.get().equals(i);
+            double angle = Mth.lerp(partialTicks, icon.previousAngle(), icon.angle());
+            float lookedAt = Mth.lerp(partialTicks, icon.previousLookedAt(), icon.lookedAt()) / 2f;
 
-            RENDER_STATES.add(new NodeRenderState(pos.getX(), pos.getY(), pos.getZ(), lookingAt, ambiguous));
+            RENDER_STATES.add(new NodeRenderState(pos.getX(), pos.getY(), pos.getZ(), angle, lookedAt, ambiguous));
         }
     }
 
@@ -89,29 +91,31 @@ public class NodesRenderPipeline extends AbstractRenderPipeline<NodesRenderPipel
         double dy = cameraPos.y - state.y;
         double dz = cameraPos.z - state.z;
         double dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-        float scale = (float) (dist * (state.lookingAt ? 0.0625f : 0.05f));
+        float scale = (float) (dist * Mth.lerp(state.lookedAt, 0.05f, 0.0625f));
 
         Vec2[] offsets = new Vec2[] {
                 new Vec2(0, 1),
                 new Vec2(1, 0),
-                new Vec2(0, -1),
+                new Vec2(0, -1f),
                 new Vec2(-1, 0)
         };
 
-        Vector3fc[] vertices = billboardVertices(new Vec3(state.x, state.y, state.z), cameraPos, offsets, scale);
+        Vector3fc[] vertices = billboardVertices(new Vec3(state.x, state.y, state.z), cameraPos, offsets, scale, state.angle / Math.PI / 32);
 
+        matrices.pushPose();
         Matrix4f matrix = matrices.last().pose();
 
+        int value = (int) (state.lookedAt * 255);
         int color;
-        if(state.ambiguous) color = 0xFF_00_00_FF;
-        else if(state.lookingAt) color = 0xFF_00_FF_00;
-        else color = 0xFF_FF_00_00;
+        if(state.ambiguous) color = 0x99_00_00_FF;
+        else color = 0x99_00_00_00 | (255-value << 16) | ((value) << 8);
 
         BufferBuilder buffer = getBuffer();
         for(int i = 0; i < 4; i++) {
             Vector3fc v = vertices[i];
             buffer.addVertex(matrix, v.x(), v.y(), v.z()).setColor(color);
         }
+        matrices.popPose();
     }
 
     @Override
@@ -129,5 +133,5 @@ public class NodesRenderPipeline extends AbstractRenderPipeline<NodesRenderPipel
         return RENDER_STATES;
     }
 
-    protected record NodeRenderState(int x, int y, int z, boolean lookingAt, boolean ambiguous) { }
+    protected record NodeRenderState(int x, int y, int z, double angle, float lookedAt, boolean ambiguous) { }
 }

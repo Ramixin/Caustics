@@ -12,8 +12,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.items.ModItems;
+import net.ramixin.caustics.ModTags;
+import net.ramixin.caustics.items.components.ModDataComponents;
+import net.ramixin.caustics.items.components.predicates.SpyglassLensPredicate;
 import org.jspecify.annotations.NonNull;
 
 import java.util.concurrent.CompletableFuture;
@@ -32,7 +35,7 @@ public class CausticsAdvancementProvider extends FabricAdvancementProvider {
 
         Advancement.Builder.advancement()
                 .display(
-                        ModItems.ALIDADE,
+                        Items.SPYGLASS,
                         Component.translatable("advancements.caustics.alidade_at_player.title"),
                         Component.translatable("advancements.caustics.alidade_at_player.description"),
                         null,
@@ -44,7 +47,12 @@ public class CausticsAdvancementProvider extends FabricAdvancementProvider {
                 .addCriterion("look_at_player", UsingItemTrigger.TriggerInstance.lookingAt(
                         EntityPredicate.Builder.entity().subPredicate(PlayerPredicate.Builder.player().setLookingAt(
                                 EntityPredicate.Builder.entity().entityType(EntityTypePredicate.of(entityTypes, EntityType.PLAYER))
-                        ).build()),  ItemPredicate.Builder.item().of(items, ModItems.ALIDADE)
+                        ).build()),  ItemPredicate.Builder.item().of(items, Items.SPYGLASS).withComponents(
+                                DataComponentMatchers.Builder.components().partial(
+                                        ModDataComponents.SPYGLASS_LENS_PREDICATE,
+                                        new SpyglassLensPredicate(ModTags.Items.ALIDADE_LENS)
+                                ).build()
+                        )
                 ))
                 .parent(createPlaceholder(Identifier.withDefaultNamespace("adventure/spyglass_at_parrot")))
                 .save(consumer, Caustics.id("alidade_at_player"));
