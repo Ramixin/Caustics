@@ -44,7 +44,7 @@ public class NodeIcon {
     }
 
     public void negativeBump() {
-        targetBump -= 37;
+        targetBump -= 47;
     }
 
     public double angle() {

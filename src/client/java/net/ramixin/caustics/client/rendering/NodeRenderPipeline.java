@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public class NodesRenderPipeline extends AbstractRenderPipeline<NodesRenderPipeline.NodeRenderState> {
+public class NodeRenderPipeline extends AbstractRenderPipeline<NodeRenderPipeline.NodeRenderState> {
 
     private static final RenderPipeline PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
             .withLocation(Caustics.id("pipeline/node"))
@@ -41,13 +41,13 @@ public class NodesRenderPipeline extends AbstractRenderPipeline<NodesRenderPipel
 
     private static final List<NodeRenderState> RENDER_STATES = new ArrayList<>();
 
-    private static final NodesRenderPipeline INSTANCE = new NodesRenderPipeline();
+    private static final NodeRenderPipeline INSTANCE = new NodeRenderPipeline();
 
-    protected NodesRenderPipeline() {
+    protected NodeRenderPipeline() {
         super("alidade_nodes", PIPELINE, false);
     }
 
-    public static NodesRenderPipeline getInstance() {
+    public static NodeRenderPipeline getInstance() {
         return INSTANCE;
     }
 
@@ -102,7 +102,6 @@ public class NodesRenderPipeline extends AbstractRenderPipeline<NodesRenderPipel
 
         Vector3fc[] vertices = billboardVertices(new Vec3(state.x, state.y, state.z), cameraPos, offsets, scale, state.angle / Math.PI / 32);
 
-        matrices.pushPose();
         Matrix4f matrix = matrices.last().pose();
 
         int value = (int) (state.lookedAt * 255);
@@ -115,7 +114,6 @@ public class NodesRenderPipeline extends AbstractRenderPipeline<NodesRenderPipel
             Vector3fc v = vertices[i];
             buffer.addVertex(matrix, v.x(), v.y(), v.z()).setColor(color);
         }
-        matrices.popPose();
     }
 
     @Override

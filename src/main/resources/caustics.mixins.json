@@ -4,6 +4,7 @@
   "package": "net.ramixin.caustics.mixins",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "ItemStackMixin",
     "ItemTooltipContextMixin",
     "PlayerMixin",
     "SpyglassItemMixin"

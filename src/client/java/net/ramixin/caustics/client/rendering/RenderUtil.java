@@ -2,9 +2,10 @@ package net.ramixin.caustics.client.rendering;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
-import net.ramixin.caustics.client.nodes.ClientNode;
 import net.ramixin.caustics.items.components.Frequency;
+import net.ramixin.caustics.nodes.core.FrequencyRegistry;
 import net.ramixin.caustics.nodes.routing.Route;
 
 import java.util.ArrayList;
@@ -29,13 +30,16 @@ public interface RenderUtil {
         return maybeNodeName.map(Component::literal).orElseGet(() -> Component.translatable("caustics.node.unnamed_travel"));
     }
 
-    static Component extractDepositName(ClientNode node, int scrollPos) {
-        if(scrollPos >= node.peridotPositions().size() || scrollPos < 0) return Component.translatable("caustics.node.scroll_oob");
-        BlockPos pos = node.peridotPositions().get(scrollPos);
-        Optional<Frequency> maybeFreq = ClientCrystalNetwork.getInstance().frequencyRegistry().getFrequencyAt(pos);
-        if(maybeFreq.isEmpty()) return Component.translatable("caustics.node.unknown_deposit");
-        Optional<String> maybeDepositName = ClientCrystalNetwork.getInstance().frequencyRegistry().getFrequencyName(maybeFreq.get());
-        return maybeDepositName.map(Component::literal).orElseGet(() -> Component.translatable("caustics.node.unnamed_deposit"));
+    static MutableComponent getFrequencyName(BlockPos pos, Component unnamedDefault) {
+        return getFrequencyName(pos, unnamedDefault, true);
+    }
+
+    static MutableComponent getFrequencyName(BlockPos pos, Component unnamedDefault, boolean unknownIsUnnamed) {
+        FrequencyRegistry registry = ClientCrystalNetwork.getInstance().frequencyRegistry();
+        Optional<Frequency> maybeFreq = registry.getFrequencyAt(pos);
+        if(maybeFreq.isEmpty()) return unknownIsUnnamed ? unnamedDefault.copy() : Component.translatable("caustics.frequency.unknown");
+        Optional<String> maybeDepositName = registry.getFrequencyName(maybeFreq.get());
+        return maybeDepositName.map(Component::literal).orElse(unnamedDefault.copy());
     }
 
 }

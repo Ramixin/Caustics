@@ -1,9 +1,9 @@
 package net.ramixin.caustics.client.rendering.particle;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.client.ClientLeap;
 import net.ramixin.caustics.client.entities.ClientLeapGhost;
@@ -68,9 +68,9 @@ public class LeapParticleEngine {
 
     private final HashMap<UUID, List<LeapParticle>> particles = new HashMap<>();
 
-    public void addParticle(AbstractClientPlayer avatar) {
+    public void addParticle(Player avatar) {
         RandomSource random = avatar.getRandom();
-        if(stopBuilding(random)) return;
+        if(reduce(random)) return;
 
         Optional<ClientLeap> maybeLeap = ClientCrystalNetwork.getInstance().getLeap(avatar.getUUID());
         if(maybeLeap.isEmpty()) return;
@@ -90,7 +90,7 @@ public class LeapParticleEngine {
 
     public void addParticle(ClientLeapGhost ghost) {
         RandomSource random = ghost.getRandom();
-        if(stopBuilding(random)) return;
+        if(reduce(random)) return;
         int[] region = SKIN_REGIONS[random.nextInt(SKIN_REGIONS.length)];
         int u = random.nextIntBetweenInclusive(region[0], region[0] + region[2]);
         int v = random.nextIntBetweenInclusive(region[1], region[1] + region[3]);
@@ -103,7 +103,7 @@ public class LeapParticleEngine {
         particles.add(particle);
     }
 
-    private boolean stopBuilding(RandomSource random) {
+    private boolean reduce(RandomSource random) {
         ParticleStatus particleStatus = Minecraft.getInstance().options.particles().get();
         if(particleStatus == ParticleStatus.MINIMAL) return true;
         else return particleStatus == ParticleStatus.DECREASED && random.nextInt(3) != 2;

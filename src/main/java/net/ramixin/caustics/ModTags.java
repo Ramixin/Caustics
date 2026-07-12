@@ -17,5 +17,7 @@ public interface ModTags {
     interface Items {
         TagKey<Item> LENS = TagKey.create(Registries.ITEM, Caustics.id("lens"));
         TagKey<Item> ALIDADE_LENS = TagKey.create(Registries.ITEM, Caustics.id("alidade_lens"));
+        TagKey<Item> DOWSER_LENS = TagKey.create(Registries.ITEM, Caustics.id("dowser_lens"));
+        TagKey<Item> TELESCOPE_LENS = TagKey.create(Registries.ITEM, Caustics.id("telescope_lens"));
     }
 }

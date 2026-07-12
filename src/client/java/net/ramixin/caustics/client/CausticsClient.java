@@ -13,8 +13,9 @@ import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.ClientNode;
 import net.ramixin.caustics.client.rendering.AlidadeHudRenderer;
+import net.ramixin.caustics.client.rendering.JammerRenderPipeline;
 import net.ramixin.caustics.client.rendering.LeapParticleRenderPipeline;
-import net.ramixin.caustics.client.rendering.NodesRenderPipeline;
+import net.ramixin.caustics.client.rendering.NodeRenderPipeline;
 import net.ramixin.caustics.client.rendering.node.NodeIcon;
 import net.ramixin.caustics.items.components.SpyglassLens;
 import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
@@ -26,18 +27,20 @@ import java.util.Optional;
 public class CausticsClient implements ClientModInitializer {
 
     public static final Identifier ALIDADE_GUI_TEXTURE = Caustics.id("textures/misc/alidade_scope.png");
+    public static final Identifier DOWSER_GUI_TEXTURE = Caustics.id("textures/misc/dowser_scope.png");
 
     public static final LookManager LOOK_MANAGER = new LookManager();
 
-    public static int MAX_SIGNAL_RANGE = 256;
+    public static int MAX_SIGNAL_RANGE = 256 * 256;
 
     public static final RenderStateDataKey<Double> OPACITY_KEY = RenderStateDataKey.create(() -> "caustics:opacity");
     public static final RenderStateDataKey<Double> OPACITY_DEFAULT_KEY = RenderStateDataKey.create(() -> "caustics:opacity_default");
 
     @Override
     public void onInitializeClient() {
-        NodesRenderPipeline.getInstance().onInitialize();
+        NodeRenderPipeline.getInstance().onInitialize();
         LeapParticleRenderPipeline.getInstance().onInitialize();
+        JammerRenderPipeline.getInstance().onInitialize();
         AlidadeHudRenderer.getInstance().onInitialize();
         ModClientNetworking.onInitialize();
         ModMixsonClient.onInitialize();

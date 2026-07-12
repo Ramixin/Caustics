@@ -21,10 +21,22 @@ public record SpyglassLens(Holder<Item> item) implements TooltipProvider {
     public static final Codec<SpyglassLens> CODEC = Item.CODEC.xmap(SpyglassLens::new, SpyglassLens::item);
     public static final StreamCodec<RegistryFriendlyByteBuf, SpyglassLens> STREAM_CODEC = Item.STREAM_CODEC.map(SpyglassLens::new, SpyglassLens::item);
 
+    public static boolean isTelescope(ItemStack stack) {
+        SpyglassLens lens = stack.get(ModDataComponents.SPYGLASS_LENS);
+        if(lens == null) return false;
+        return lens.item.is(ModTags.Items.TELESCOPE_LENS);
+    }
+
     public static boolean isAlidade(ItemStack stack) {
         SpyglassLens lens = stack.get(ModDataComponents.SPYGLASS_LENS);
         if(lens == null) return false;
         return lens.item.is(ModTags.Items.ALIDADE_LENS);
+    }
+
+    public static boolean isDowser(ItemStack stack) {
+        SpyglassLens lens = stack.get(ModDataComponents.SPYGLASS_LENS);
+        if(lens == null) return false;
+        return lens.item.is(ModTags.Items.DOWSER_LENS);
     }
 
     @Override

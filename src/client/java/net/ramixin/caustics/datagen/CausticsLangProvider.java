@@ -39,7 +39,8 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add(ModItems.LEAPER, "Leaper");
 
         translationBuilder.add("caustics.frequency.tooltip_header", "Tuned Frequency:");
-        translationBuilder.add("caustics.frequency.unnamed", "Unnamed Frequency");
+        translationBuilder.add("caustics.frequency.unnamed.peridot", "Unnamed Peridot");
+        translationBuilder.add("caustics.frequency.unknown", "Unknown Frequency");
 
         translationBuilder.add("caustics.leaper_matieral.tooltip_charge_up", "Charge Up: %s");
         translationBuilder.add("caustics.leaper_matieral.tooltip_cooldown", "Cooldown: %s");
@@ -64,6 +65,13 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add("advancements.caustics.alidade_at_player.description", "Look at a player through an alidade spyglass");
 
         translationBuilder.add(ModTags.Items.ALIDADE_LENS, "Alidade Lens");
+        translationBuilder.add(ModTags.Items.LENS, "Lens");
+        translationBuilder.add(ModTags.Items.TELESCOPE_LENS, "Telescope Lens");
+        translationBuilder.add(ModTags.Items.DOWSER_LENS, "Dowser Lens");
+
+        translationBuilder.add("caustics.spyglass_lens.telescope", "Telescope");
+        translationBuilder.add("caustics.spyglass_lens.dowser", "Dowser");
+        translationBuilder.add("caustics.spyglass_lens.alidade", "Alidade");
     }
 
     private static void generateGroupTranslations(String name, CrystalBlockGroup group, TranslationBuilder translationBuilder) {

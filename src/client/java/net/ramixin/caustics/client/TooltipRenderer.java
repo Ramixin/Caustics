@@ -1,5 +1,6 @@
 package net.ramixin.caustics.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
@@ -21,11 +22,11 @@ public class TooltipRenderer {
     private final MutableInt height = new MutableInt();
     private final Mutable<Function<List<Component>, Integer>> alignment = new MutableObject<>(null);
 
-    public TooltipRenderer(GuiGraphicsExtractor context, Font textRenderer) {
+    public TooltipRenderer(GuiGraphicsExtractor context) {
         GuiGraphicsExtractorDuck duck = GuiGraphicsExtractorDuck.get(context);
         duck.caustics$enableTooltipBatching();
         this.tooltipBatcher = duck::caustics$addTooltipToBatch;
-        this.textRenderer = textRenderer;
+        this.textRenderer = Minecraft.getInstance().font;
     }
 
     public void render(List<Component> text, int yOffset) {
@@ -43,7 +44,6 @@ public class TooltipRenderer {
             if(text.size() == 1) height.add(16);
             else height.add(8 + text.size() * 10);
         });
-
     }
 
     public void resetHeight() {

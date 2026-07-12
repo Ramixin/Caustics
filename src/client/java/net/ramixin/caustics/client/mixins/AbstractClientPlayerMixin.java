@@ -19,7 +19,7 @@ public abstract class AbstractClientPlayerMixin extends Player {
 
     @WrapOperation(method = "getFieldOfViewModifier", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;isScoping()Z"))
     private boolean preventFOVChangeUnlessIfUsingAlidade(AbstractClientPlayer instance, Operation<Boolean> original) {
-        return original.call(instance) && !SpyglassLens.isAlidade(instance.getUseItem());
+        return original.call(instance) && SpyglassLens.isTelescope(instance.getUseItem());
     }
 
 }

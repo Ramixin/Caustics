@@ -6,6 +6,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.client.CausticsClient;
 import net.ramixin.caustics.client.ClientLeap;
 import net.ramixin.caustics.client.rendering.node.IconHolder;
@@ -79,6 +80,7 @@ public class ClientCrystalNetwork implements Network {
         RandomSource random = Minecraft.getInstance().level.getRandom();
         sapphireToNode.clear();
         topazToNode.clear();
+        tourmalineToNode.clear();
 
         for(NodeSyncData data : syncData) {
             ClientNode node = ClientNode.fromSyncData(data);
@@ -146,6 +148,14 @@ public class ClientCrystalNetwork implements Network {
         if(sapphireToNode.containsKey(pos)) return sapphireToNode.get(pos).visible();
         else if(topazToNode.containsKey(pos)) return topazToNode.get(pos).visible();
         return false;
+    }
+
+    public Set<BlockPos> getActiveJammers(Vec3 position) {
+        Set<BlockPos> result = new HashSet<>();
+        for(BlockPos pos : tourmalineToNode.keySet()) {
+            if(position.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) < CausticsClient.MAX_SIGNAL_RANGE) result.add(pos);
+        }
+        return result;
     }
 
     public void addLeap(LeapStartPayload payload) {

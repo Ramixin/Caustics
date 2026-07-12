@@ -27,17 +27,22 @@ public abstract class GuiMixin {
 
     @Unique
     private boolean usingAlidade = false;
+    @Unique
+    private boolean usingDowser = false;
 
     @Inject(method = "extractCameraOverlays", at = @At("HEAD"))
-    private void updateUsingAlidadeDuringExtraction(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+    private void updateUsingSpecialSpyglassDuringExtraction(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         assert this.minecraft.player != null;
         usingAlidade = SpyglassLens.isAlidade(this.minecraft.player.getUseItem());
+        usingDowser = SpyglassLens.isDowser(this.minecraft.player.getUseItem());
     }
 
     @WrapOperation(method = "extractSpyglassOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V"))
-    private void changeScopingTextureIfUsingAlidade(GuiGraphicsExtractor instance, RenderPipeline renderPipeline, Identifier texture, int x, int y, float u, float v, int width, int height, int textureWidth, int textureHeight, Operation<Void> original) {
+    private void changeScopingTextureIfUsingSpecialSpyglass(GuiGraphicsExtractor instance, RenderPipeline renderPipeline, Identifier texture, int x, int y, float u, float v, int width, int height, int textureWidth, int textureHeight, Operation<Void> original) {
         if(usingAlidade)
             texture = CausticsClient.ALIDADE_GUI_TEXTURE;
+        else if(usingDowser)
+            texture = CausticsClient.DOWSER_GUI_TEXTURE;
         original.call(instance, renderPipeline, texture, x, y, u, v, width, height, textureWidth, textureHeight);
     }
 

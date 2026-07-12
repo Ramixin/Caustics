@@ -11,6 +11,7 @@ import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
@@ -64,22 +65,26 @@ public class CausticsRecipeProvider extends FabricRecipeProvider {
                         .save(output, getKey("tuning_fork"));
 
 
-                new ShapedRecipeBuilder(
-                        BuiltInRegistries.ITEM,
-                        RecipeCategory.TOOLS,
-                        new ItemStackTemplate(Items.SPYGLASS, DataComponentPatch.builder().set(
-                                ModDataComponents.SPYGLASS_LENS,
-                                new SpyglassLens(BuiltInRegistries.ITEM.wrapAsHolder(ModItems.BERYL_SHARD))
-                        ).build()))
-                        .pattern(" B ")
-                        .pattern(" C ")
-                        .pattern(" C ")
-                        .define('B', ModItems.BERYL_SHARD)
-                        .define('C', Items.COPPER_INGOT)
-                        .unlockedBy("has_beryl", has(ModItems.BERYL_SHARD))
-                        .save(output, getKey("alidade"));
+                createSpyglassRecipe(this, ModItems.BERYL_SHARD, "beryl").save(output, getKey("alidade"));
+                createSpyglassRecipe(this, ModItems.TOURMALINE_SHARD, "tourmaline").save(output, getKey("dowser"));
             }
         };
+    }
+
+    private static ShapedRecipeBuilder createSpyglassRecipe(RecipeProvider provider, Item crystal, String crystal_name) {
+            return new ShapedRecipeBuilder(
+                    BuiltInRegistries.ITEM,
+                    RecipeCategory.TOOLS,
+                    new ItemStackTemplate(Items.SPYGLASS, DataComponentPatch.builder().set(
+                            ModDataComponents.SPYGLASS_LENS,
+                            new SpyglassLens(BuiltInRegistries.ITEM.wrapAsHolder(crystal))
+                    ).build()))
+                    .pattern(" # ")
+                    .pattern(" C ")
+                    .pattern(" C ")
+                    .define('#', crystal)
+                    .define('C', Items.COPPER_INGOT)
+                    .unlockedBy("has_"+ crystal_name, provider.has(crystal));
     }
 
     private static ResourceKey<Recipe<?>> getKey(String name) {
