@@ -7,6 +7,7 @@ import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
@@ -21,22 +22,26 @@ public record SpyglassLens(Holder<Item> item) implements TooltipProvider {
     public static final Codec<SpyglassLens> CODEC = Item.CODEC.xmap(SpyglassLens::new, SpyglassLens::item);
     public static final StreamCodec<RegistryFriendlyByteBuf, SpyglassLens> STREAM_CODEC = Item.STREAM_CODEC.map(SpyglassLens::new, SpyglassLens::item);
 
+    public static boolean isCollimator(ItemStack stack) {
+        return is(stack, ModTags.Items.COLLIMATOR_LENS);
+    }
+
     public static boolean isTelescope(ItemStack stack) {
-        SpyglassLens lens = stack.get(ModDataComponents.SPYGLASS_LENS);
-        if(lens == null) return false;
-        return lens.item.is(ModTags.Items.TELESCOPE_LENS);
+        return is(stack, ModTags.Items.TELESCOPE_LENS);
     }
 
     public static boolean isAlidade(ItemStack stack) {
-        SpyglassLens lens = stack.get(ModDataComponents.SPYGLASS_LENS);
-        if(lens == null) return false;
-        return lens.item.is(ModTags.Items.ALIDADE_LENS);
+        return is(stack, ModTags.Items.ALIDADE_LENS);
     }
 
     public static boolean isDowser(ItemStack stack) {
+        return is(stack, ModTags.Items.DOWSER_LENS);
+    }
+
+    public static boolean is(ItemStack stack, TagKey<Item> lens_tag) {
         SpyglassLens lens = stack.get(ModDataComponents.SPYGLASS_LENS);
         if(lens == null) return false;
-        return lens.item.is(ModTags.Items.DOWSER_LENS);
+        return lens.item.is(lens_tag);
     }
 
     @Override

@@ -1,4 +1,4 @@
-package net.ramixin.caustics.client.rendering.particle;
+package net.ramixin.caustics.client.nodes;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;

@@ -1,7 +1,8 @@
 {
   "values": [
-    "minecraft:amethyst_shard",
-    "caustics:beryl_shard",
-    "caustics:tourmaline_shard"
+    "#caustics:alidade_lens",
+    "#caustics:dowser_lens",
+    "#caustics:telescope_lens",
+    "#caustics:collimator_lens"
   ]
 }

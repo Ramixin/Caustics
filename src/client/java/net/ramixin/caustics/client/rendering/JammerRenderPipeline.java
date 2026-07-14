@@ -25,7 +25,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public class JammerRenderPipeline extends AbstractRenderPipeline<JammerRenderPipeline.NodeRenderState> {
+import static net.ramixin.caustics.client.rendering.RenderUtil.billboardVertices;
+import static net.ramixin.caustics.client.rendering.RenderUtil.getDistanceScale;
+
+public class JammerRenderPipeline extends AbstractRenderPipeline<JammerRenderPipeline.JammerRenderState> {
 
     private static final RenderPipeline PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
             .withLocation(Caustics.id("pipeline/jammer"))
@@ -35,7 +38,7 @@ public class JammerRenderPipeline extends AbstractRenderPipeline<JammerRenderPip
             .build()
     );
 
-    private static final List<NodeRenderState> RENDER_STATES = new ArrayList<>();
+    private static final List<JammerRenderState> RENDER_STATES = new ArrayList<>();
 
     private static final JammerRenderPipeline INSTANCE = new JammerRenderPipeline();
 
@@ -59,36 +62,29 @@ public class JammerRenderPipeline extends AbstractRenderPipeline<JammerRenderPip
 
         Set<BlockPos> activeJammers = ClientCrystalNetwork.getInstance().getActiveJammers(player.position());
         for(BlockPos pos : activeJammers) {
-            RENDER_STATES.add(new NodeRenderState(pos.getX(), pos.getY(), pos.getZ()));
+            RENDER_STATES.add(new JammerRenderState(pos.getX(), pos.getY(), pos.getZ()));
         }
     }
 
     @Override
-    protected void getVertices(LevelRenderContext ctx, NodeRenderState state) {
+    protected void getVertices(LevelRenderContext ctx, JammerRenderState state) {
         PoseStack matrices = ctx.poseStack();
         Vec3 cameraPos = ctx.levelState().cameraRenderState.pos;
-
-        double dx = cameraPos.x - state.x;
-        double dy = cameraPos.y - state.y;
-        double dz = cameraPos.z - state.z;
-        double dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-        float scale = (float) (dist * 0.05f);
-
+        float scale = getDistanceScale(cameraPos, state.x, state.y, state.z, 0.05);
         Vec2[] offsets = new Vec2[] {
-                new Vec2(0, 1),
-                new Vec2(1, 0),
-                new Vec2(0, -1f),
+                new Vec2(0, 1f),
+                new Vec2(0.9f, 0),
+                new Vec2(0, -1.3f),
                 new Vec2(-1, 0)
         };
-
-        Vector3fc[] vertices = billboardVertices(new Vec3(state.x, state.y, state.z), cameraPos, offsets, scale, 0);
-
+        Vector3fc[] vertices = billboardVertices(state.x, state.y, state.z, cameraPos, offsets, scale, 0);
         Matrix4f matrix = matrices.last().pose();
-
         BufferBuilder buffer = getBuffer();
+
+        int color = 0x99_99_E2_FF;
         for(int i = 0; i < 4; i++) {
             Vector3fc v = vertices[i];
-            buffer.addVertex(matrix, v.x(), v.y(), v.z()).setColor(0xCC_FF_FF_FF);
+            buffer.addVertex(matrix, v.x(), v.y(), v.z()).setColor(color);
         }
     }
 
@@ -103,9 +99,9 @@ public class JammerRenderPipeline extends AbstractRenderPipeline<JammerRenderPip
     }
 
     @Override
-    protected List<NodeRenderState> getStates() {
+    protected List<JammerRenderState> getStates() {
         return RENDER_STATES;
     }
 
-    protected record NodeRenderState(int x, int y, int z) { }
+    protected record JammerRenderState(int x, int y, int z) { }
 }

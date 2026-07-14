@@ -100,7 +100,7 @@ public class ModMixsonClient {
         JsonObject model = new JsonObject();
         model.addProperty("parent", "caustics:item/leaper_template");
         JsonObject textures = new JsonObject();
-        textures.addProperty("crystal", "caustics:item/leaper/crystal/sapphire_shard");
+        textures.addProperty("crystal", "caustics:item/leaper/crystal/beryl_shard");
         textures.addProperty("decoration", String.format("%s:item/leaper/decoration/%s", decoration.getNamespace(), decoration.getPath()));
         textures.addProperty("handle", String.format("%s:item/leaper/handle/%s", handle.getNamespace(), handle.getPath()));
         String core;

@@ -3,7 +3,6 @@ package net.ramixin.caustics.utils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.ramixin.caustics.nodes.routing.Route;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -31,14 +30,6 @@ public interface LookUtil {
                     .normalize();
         }
         return vectors;
-    }
-
-    static Optional<Route> getRouteToPos(BlockPos[] positions, Route[] routes, BlockPos pos) {
-        for(int i = 0; i < positions.length; i++) {
-            if(!positions[i].equals(pos)) continue;
-            return Optional.of(routes[i]);
-        }
-        return Optional.empty();
     }
 
     static double[] calculateDisplacementAngles(Player player, Vec3[] vectors) {

@@ -1,4 +1,4 @@
-package net.ramixin.caustics.client;
+package net.ramixin.caustics.client.rendering;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;

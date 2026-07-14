@@ -1,8 +1,9 @@
-package net.ramixin.caustics.client.rendering.node;
+package net.ramixin.caustics.client.nodes.icons;
 
-import net.minecraft.util.RandomSource;
+import net.minecraft.core.BlockPos;
+import net.ramixin.caustics.client.cache.IconCache;
 
-public class NodeIcon {
+public class AlidadeIcon extends NodeIcon {
 
     private double angle;
     private double previousAngle;
@@ -12,10 +13,12 @@ public class NodeIcon {
     private int lookedAt;
     private int previousLookedAt;
 
-    public NodeIcon(RandomSource random) {
-        angle = random.nextDouble();
+    public AlidadeIcon(BlockPos pos) {
+        super(pos);
+        angle = IconCache.RANDOM.nextDouble();
     }
 
+    @Override
     public void tick(boolean lookingAt) {
         previousAngle = angle;
         previousLookedAt = lookedAt;

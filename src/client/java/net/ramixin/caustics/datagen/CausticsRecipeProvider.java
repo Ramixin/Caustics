@@ -67,6 +67,7 @@ public class CausticsRecipeProvider extends FabricRecipeProvider {
 
                 createSpyglassRecipe(this, ModItems.BERYL_SHARD, "beryl").save(output, getKey("alidade"));
                 createSpyglassRecipe(this, ModItems.TOURMALINE_SHARD, "tourmaline").save(output, getKey("dowser"));
+                createSpyglassRecipe(this, ModItems.SUNSTONE_SHARD, "sunstone").save(output, getKey("collimator"));
             }
         };
     }

@@ -10,13 +10,14 @@ import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.Caustics;
+import net.ramixin.caustics.client.cache.AlidadeIconCache;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.ClientNode;
+import net.ramixin.caustics.client.nodes.icons.AlidadeIcon;
 import net.ramixin.caustics.client.rendering.AlidadeHudRenderer;
 import net.ramixin.caustics.client.rendering.JammerRenderPipeline;
 import net.ramixin.caustics.client.rendering.LeapParticleRenderPipeline;
 import net.ramixin.caustics.client.rendering.NodeRenderPipeline;
-import net.ramixin.caustics.client.rendering.node.NodeIcon;
 import net.ramixin.caustics.items.components.SpyglassLens;
 import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
 import net.ramixin.caustics.utils.LookUtil;
@@ -28,8 +29,7 @@ public class CausticsClient implements ClientModInitializer {
 
     public static final Identifier ALIDADE_GUI_TEXTURE = Caustics.id("textures/misc/alidade_scope.png");
     public static final Identifier DOWSER_GUI_TEXTURE = Caustics.id("textures/misc/dowser_scope.png");
-
-    public static final LookManager LOOK_MANAGER = new LookManager();
+    public static final Identifier COLLIMATOR_GUI_TEXTURE = Caustics.id("textures/misc/collimator_scope.png");
 
     public static int MAX_SIGNAL_RANGE = 256 * 256;
 
@@ -48,17 +48,19 @@ public class CausticsClient implements ClientModInitializer {
         ClientHotbarScrollEvents.ALLOW.register((inventory, _, _, _, dy) -> {
             if(!inventory.player.isUsingItem()) return true;
             if(!SpyglassLens.isAlidade(inventory.player.getUseItem())) return true;
-            Optional<BlockPos> lookingAt = LookUtil.getLookingAt(inventory.player, LOOK_MANAGER.getPositions());
+            AlidadeIconCache alidadeCache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+            BlockPos[] positions = alidadeCache.getPositions();
+            Optional<BlockPos> lookingAt = LookUtil.getLookingAt(inventory.player, positions);
             if(lookingAt.isEmpty()) {
                 ClientCrystalNetwork.getInstance().clearScrollPos();
                 return true;
             }
-            Optional<NodeIcon> maybeIcon = ClientCrystalNetwork.getInstance().iconHolder().get(lookingAt.get());
-            ClientCrystalNetwork.getInstance().deltaScrollPos(-dy, maybeIcon);
+            AlidadeIcon icon = alidadeCache.get(lookingAt.get());
+            ClientCrystalNetwork.getInstance().deltaScrollPos(-dy, icon);
             return false;
         });
 
-        LevelRenderEvents.END_MAIN.register(_ -> LOOK_MANAGER.wipe());
+        LevelRenderEvents.END_MAIN.register(_ -> ClientCrystalNetwork.getInstance().iconIndex().wipe());
         ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> ClientCrystalNetwork.getInstance().nuke());
         ClientTickEvents.END_CLIENT_TICK.register(minecraft -> {
             if(minecraft.level == null) return;
@@ -68,16 +70,17 @@ public class CausticsClient implements ClientModInitializer {
     }
 
     public static void onAlidadeAttack() {
-        Optional<Integer> closest = LookUtil.calculateClosestLooking(LOOK_MANAGER.getAngles());
+        AlidadeIconCache alidadeCache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+        Optional<Integer> closest = LookUtil.calculateClosestLooking(alidadeCache.getAngles());
         if(closest.isEmpty()) return;
-        BlockPos sapphirePos = LOOK_MANAGER.getPositions()[closest.get()];
+        BlockPos sapphirePos = alidadeCache.getPositions()[closest.get()];
         Optional<ClientNode> maybeNode = ClientCrystalNetwork.getInstance().getSapphireNodeAt(sapphirePos);
         if(maybeNode.isEmpty()) return;
-        List<BlockPos> peridotPositions = maybeNode.get().peridotPositions();
+        List<BlockPos> peridotPositions = maybeNode.get().peridot();
         int scrollPos = ClientCrystalNetwork.getInstance().getSelectedScrollPos();
         if(scrollPos >= peridotPositions.size() || scrollPos < 0) return;
-        Optional<NodeIcon> nodeIcon = ClientCrystalNetwork.getInstance().iconHolder().get(sapphirePos);
-        nodeIcon.ifPresent(NodeIcon::bump);
+        AlidadeIcon icon = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache().get(sapphirePos);
+        icon.bump();
         BlockPos peridotPos = peridotPositions.get(scrollPos);
         ClientCrystalNetwork.getInstance().selectNode(sapphirePos);
         ClientPlayNetworking.send(new SelectionSyncPayload(sapphirePos, peridotPos));

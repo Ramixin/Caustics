@@ -25,14 +25,16 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
-import net.ramixin.caustics.client.rendering.particle.LeapParticle;
-import net.ramixin.caustics.client.rendering.particle.LeapParticleEngine;
+import net.ramixin.caustics.client.nodes.LeapParticle;
+import net.ramixin.caustics.client.nodes.LeapParticleEngine;
 import org.joml.Matrix4f;
 import org.joml.Vector3fc;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static net.ramixin.caustics.client.rendering.RenderUtil.billboardVertices;
 
 public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParticleRenderPipeline.LeapParticleBatchRenderState> {
 
@@ -109,18 +111,14 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParti
         Vec3 cameraPos = ctx.levelState().cameraRenderState.pos;
         BufferBuilder buffer = getBuffer();
         for(int i = 0; i < state.x.length; i++) {
-
             Vec2[] offsets = new Vec2[] {
                     new Vec2(1f, 1), //bottom right
                     new Vec2(1f, -1f), //upper right
-                    new Vec2(-1f, -1), //upper right
+                    new Vec2(-1f, -1), //upper left
                     new Vec2(-1f, 1) //bottom left
             };
-
-            Vector3fc[] vertices = billboardVertices(new Vec3(state.x[i], state.y[i], state.z[i]), cameraPos, offsets, 0.04f * state.scale[i], 0);
-
+            Vector3fc[] vertices = billboardVertices(state.x[i], state.y[i], state.z[i], cameraPos, offsets, 0.04f * state.scale[i], 0);
             Matrix4f matrix = matrices.last().pose();
-
             int color = ((int)(state.opacity[i] * 255) << 24) | 0xFF_FF_FF;
 
             float minU = state.u[i] / 64f;
@@ -143,14 +141,14 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParti
         renderPass.setIndexBuffer(indices, indexType);
         GpuBufferSlice projectionMatrixBuffer = RenderSystem.getProjectionMatrixBuffer();
         if(projectionMatrixBuffer == null) return;
-        renderPass.setUniform("Projection", projectionMatrixBuffer);
         GpuBufferSlice shaderFog = RenderSystem.getShaderFog();
         if(shaderFog == null) return;
-        renderPass.setUniform("Fog", shaderFog);
-        renderPass.bindTexture("Sampler2", Minecraft.getInstance().gameRenderer.lightmap(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-
         AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(DRAW_COMMAND.skin);
         TextureSetup setup = TextureSetup.singleTexture(texture.getTextureView(), texture.getSampler());
+
+        renderPass.setUniform("Projection", projectionMatrixBuffer);
+        renderPass.setUniform("Fog", shaderFog);
+        renderPass.bindTexture("Sampler2", Minecraft.getInstance().gameRenderer.lightmap(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
         renderPass.bindTexture("Sampler0", setup.texure0(), setup.sampler0());
         renderPass.drawIndexed(0, 0, drawParameters.indexCount(), 1);
     }

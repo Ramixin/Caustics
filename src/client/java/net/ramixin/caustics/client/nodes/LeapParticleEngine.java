@@ -1,13 +1,11 @@
-package net.ramixin.caustics.client.rendering.particle;
+package net.ramixin.caustics.client.nodes;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.ramixin.caustics.client.ClientLeap;
 import net.ramixin.caustics.client.entities.ClientLeapGhost;
-import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 
 import java.util.*;
 

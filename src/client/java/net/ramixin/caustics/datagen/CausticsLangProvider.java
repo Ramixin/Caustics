@@ -51,9 +51,6 @@ public class CausticsLangProvider extends FabricLanguageProvider {
 
         translationBuilder.add("caustics.node.unknown_travel", "Unknown Node");
         translationBuilder.add("caustics.node.unnamed_travel", "Unnamed Node");
-        translationBuilder.add("caustics.node.scroll_oob", "ScrollPos is OOB");
-        translationBuilder.add("caustics.node.unknown_deposit", "Unknown Deposit");
-        translationBuilder.add("caustics.node.unnamed_deposit", "Unnamed Deposit");
         translationBuilder.add("caustics.node.frequencies", "Node Networks:");
         translationBuilder.add("caustics.node.deposit", "Target Deposit:");
         translationBuilder.add("caustics.node.route_start", "Route:");
@@ -68,10 +65,12 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add(ModTags.Items.LENS, "Lens");
         translationBuilder.add(ModTags.Items.TELESCOPE_LENS, "Telescope Lens");
         translationBuilder.add(ModTags.Items.DOWSER_LENS, "Dowser Lens");
+        translationBuilder.add(ModTags.Items.COLLIMATOR_LENS, "Collimator Lens");
 
-        translationBuilder.add("caustics.spyglass_lens.telescope", "Telescope");
-        translationBuilder.add("caustics.spyglass_lens.dowser", "Dowser");
-        translationBuilder.add("caustics.spyglass_lens.alidade", "Alidade");
+        translationBuilder.add("caustics.spyglass_lens.sunstone_shard", "Collimator");
+        translationBuilder.add("minecraft.spyglass_lens.amethyst_shard", "Telescope");
+        translationBuilder.add("caustics.spyglass_lens.tourmaline_shard", "Dowser");
+        translationBuilder.add("caustics.spyglass_lens.beryl_shard", "Alidade");
     }
 
     private static void generateGroupTranslations(String name, CrystalBlockGroup group, TranslationBuilder translationBuilder) {

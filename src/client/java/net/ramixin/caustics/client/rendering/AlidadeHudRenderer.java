@@ -13,9 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Player;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.client.CausticsClient;
-import net.ramixin.caustics.client.LookManager;
-import net.ramixin.caustics.client.TooltipRenderer;
+import net.ramixin.caustics.client.cache.AlidadeIconCache;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.ClientNode;
 import net.ramixin.caustics.items.components.SpyglassLens;
@@ -58,8 +56,8 @@ public class AlidadeHudRenderer {
 
         ClientLevel level = ctx.level();
         if(!level.isRaining()) {
-            LookManager lookManager = CausticsClient.LOOK_MANAGER;
-            double[] angles = lookManager.getAngles();
+            AlidadeIconCache alidadeViewCache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+            double[] angles = alidadeViewCache.getAngles();
             extractHudLooking(LookUtil.calculateClosestLooking(angles));
         }
         extractHudSelected(ClientCrystalNetwork.getInstance().getSelectedNode());
@@ -69,9 +67,9 @@ public class AlidadeHudRenderer {
         if(maybeClosest.isEmpty()) return;
         int closestIndex = maybeClosest.get();
 
-        LookManager lookManager = CausticsClient.LOOK_MANAGER;
-        BlockPos closestPos = lookManager.getPositions()[closestIndex];
-        Route route = lookManager.getRoutes()[closestIndex];
+        AlidadeIconCache cache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+        BlockPos closestPos = cache.getPositions()[closestIndex];
+        Route route = cache.getRoutes()[closestIndex];
         ClientCrystalNetwork.getInstance().setLastLookingAt(closestPos);
 
         LOOKING_RENDER_STATE = extractHud(closestPos, ClientCrystalNetwork.getInstance().getScrollPos(), route, false);
@@ -82,14 +80,15 @@ public class AlidadeHudRenderer {
         BlockPos pos = selectedNode.get();
         int scrollPos = ClientCrystalNetwork.getInstance().getSelectedScrollPos();
         int i = -1;
-        BlockPos[] positions = CausticsClient.LOOK_MANAGER.getPositions();
+        AlidadeIconCache cache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+        BlockPos[] positions = cache.getPositions();
         for(int j = 0; j < positions.length; j++) {
             if(!positions[j].equals(pos)) continue;
             i = j;
             break;
         }
         if(i == -1) return;
-        SELECTED_RENDER_STATE = extractHud(pos, scrollPos, CausticsClient.LOOK_MANAGER.getRoutes()[i], true);
+        SELECTED_RENDER_STATE = extractHud(pos, scrollPos, cache.getRoutes()[i], true);
     }
 
     private HudRenderState extractHud(BlockPos pos, int scrollPos, Route route, boolean single) {
@@ -103,7 +102,7 @@ public class AlidadeHudRenderer {
     }
 
     private List<Component> extractDepositsPositions(ClientNode node, int scrollPos, boolean single) {
-        List<BlockPos> peridotPositions = node.peridotPositions();
+        List<BlockPos> peridotPositions = node.peridot();
         if(scrollPos >= peridotPositions.size() || scrollPos < 0) return List.of();
         if(single) return List.of(getFrequencyName(peridotPositions.get(scrollPos), UNNAMED_PERIDOT));
 

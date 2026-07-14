@@ -1,4 +1,4 @@
-package net.ramixin.caustics.client;
+package net.ramixin.caustics.client.nodes;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;

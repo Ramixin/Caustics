@@ -17,9 +17,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.client.CausticsClient;
-import net.ramixin.caustics.client.LookManager;
-import net.ramixin.caustics.client.rendering.node.NodeIcon;
+import net.ramixin.caustics.client.cache.AlidadeIconCache;
+import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
+import net.ramixin.caustics.client.nodes.icons.AlidadeIcon;
 import net.ramixin.caustics.items.components.SpyglassLens;
 import org.joml.Matrix4f;
 import org.joml.Vector3fc;
@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import static net.ramixin.caustics.client.rendering.RenderUtil.billboardVertices;
+import static net.ramixin.caustics.client.rendering.RenderUtil.getDistanceScale;
 
 public class NodeRenderPipeline extends AbstractRenderPipeline<NodeRenderPipeline.NodeRenderState> {
 
@@ -63,17 +66,13 @@ public class NodeRenderPipeline extends AbstractRenderPipeline<NodeRenderPipelin
 
         ClientLevel level = ctx.level();
         if(level.isRaining()) return;
-        LookManager lookManager = CausticsClient.LOOK_MANAGER;
-        BlockPos[] positions = lookManager.getPositions();
-        NodeIcon[] icons = lookManager.getIcons();
-        if(positions.length != icons.length)
-            throw new IllegalStateException("Positions and icons must be the same length");
-        Set<Integer> ambiguities = lookManager.getAmbiguityIndices();
+        AlidadeIconCache cache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+        AlidadeIcon[] icons = cache.getIcons();
+        Set<Integer> ambiguities = cache.getAmbiguityIndices();
         float partialTicks = ctx.deltaTracker().getGameTimeDeltaPartialTick(false);
-        for(int i = 0; i < positions.length; i++) {
-            BlockPos pos = positions[i];
-            NodeIcon icon = icons[i];
-            if(icon == null) continue;
+        for(int i = 0; i < icons.length; i++) {
+            AlidadeIcon icon = icons[i];
+            BlockPos pos = icon.getPos();
             boolean ambiguous = ambiguities.contains(i);
             double angle = Mth.lerp(partialTicks, icon.previousAngle(), icon.angle());
             float lookedAt = Mth.lerp(partialTicks, icon.previousLookedAt(), icon.lookedAt()) / 2f;
@@ -87,26 +86,22 @@ public class NodeRenderPipeline extends AbstractRenderPipeline<NodeRenderPipelin
         PoseStack matrices = ctx.poseStack();
         Vec3 cameraPos = ctx.levelState().cameraRenderState.pos;
 
-        double dx = cameraPos.x - state.x;
-        double dy = cameraPos.y - state.y;
-        double dz = cameraPos.z - state.z;
-        double dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-        float scale = (float) (dist * Mth.lerp(state.lookedAt, 0.05f, 0.0625f));
+        float scale = getDistanceScale(cameraPos, state.x, state.y, state.z, Mth.lerp(state.lookedAt, 0.05, 0.0625));
 
         Vec2[] offsets = new Vec2[] {
                 new Vec2(0, 1),
                 new Vec2(1, 0),
-                new Vec2(0, -1f),
+                new Vec2(0, -1),
                 new Vec2(-1, 0)
         };
 
-        Vector3fc[] vertices = billboardVertices(new Vec3(state.x, state.y, state.z), cameraPos, offsets, scale, state.angle / Math.PI / 32);
+        Vector3fc[] vertices = billboardVertices(state.x, state.y, state.z, cameraPos, offsets, scale, state.angle / Math.PI / 32);
 
         Matrix4f matrix = matrices.last().pose();
 
         int value = (int) (state.lookedAt * 255);
         int color;
-        if(state.ambiguous) color = 0x99_00_00_FF;
+        if(state.ambiguous) color = 0x99_99_99_99;
         else color = 0x99_00_00_00 | (255-value << 16) | ((value) << 8);
 
         BufferBuilder buffer = getBuffer();

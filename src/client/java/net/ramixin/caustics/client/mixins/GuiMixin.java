@@ -29,12 +29,15 @@ public abstract class GuiMixin {
     private boolean usingAlidade = false;
     @Unique
     private boolean usingDowser = false;
+    @Unique
+    private boolean usingCollimator = false;
 
     @Inject(method = "extractCameraOverlays", at = @At("HEAD"))
     private void updateUsingSpecialSpyglassDuringExtraction(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         assert this.minecraft.player != null;
         usingAlidade = SpyglassLens.isAlidade(this.minecraft.player.getUseItem());
         usingDowser = SpyglassLens.isDowser(this.minecraft.player.getUseItem());
+        usingCollimator = SpyglassLens.isCollimator(this.minecraft.player.getUseItem());
     }
 
     @WrapOperation(method = "extractSpyglassOverlay", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V"))
@@ -43,6 +46,8 @@ public abstract class GuiMixin {
             texture = CausticsClient.ALIDADE_GUI_TEXTURE;
         else if(usingDowser)
             texture = CausticsClient.DOWSER_GUI_TEXTURE;
+        else if(usingCollimator)
+            texture = CausticsClient.COLLIMATOR_GUI_TEXTURE;
         original.call(instance, renderPipeline, texture, x, y, u, v, width, height, textureWidth, textureHeight);
     }
 

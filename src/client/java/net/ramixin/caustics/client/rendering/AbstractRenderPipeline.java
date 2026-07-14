@@ -14,17 +14,12 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec2;
-import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.Caustics;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
@@ -144,35 +139,6 @@ public abstract class AbstractRenderPipeline<T> {
 
         this.vertexBuffer.rotate();
         this.buffer = null;
-    }
-
-    protected static Vector3fc[] billboardVertices(Vec3 position, Vec3 cameraPos, Vec2[] offsets, float scale, double theta) {
-        Camera camera = Minecraft.getInstance()
-                .gameRenderer
-                .getMainCamera();
-
-        Vector3f right = camera.leftVector().negate(new Vector3f());
-        Vector3f up = camera.upVector().negate(new Vector3f());
-
-        float cx = (float)(position.x + 0.5 - cameraPos.x);
-        float cy = (float)(position.y + 0.5 - cameraPos.y);
-        float cz = (float)(position.z + 0.5 - cameraPos.z);
-
-        float cos = Mth.cos(theta);
-        float sin = Mth.sin(theta);
-
-        Vector3fc[] vertices = new Vector3fc[4];
-        for(int i = 0; i < 4; i++) {
-            Vec2 offset = offsets[i];
-            float x = offset.x * cos - offset.y * sin;
-            float y = offset.x * sin + offset.y * cos;
-            vertices[i] = new Vector3f(
-                    cx + (right.x * x + up.x * y) * scale,
-                    cy + (right.y * x + up.y * y) * scale,
-                    cz + (right.z * x + up.z * y) * scale
-            );
-        }
-        return vertices;
     }
 
 }

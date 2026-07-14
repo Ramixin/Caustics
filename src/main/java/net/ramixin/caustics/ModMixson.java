@@ -59,7 +59,7 @@ public class ModMixson {
         recipe.addProperty("category", "equipment");
         recipe.addProperty("group", "leaper_"+handle);
         JsonObject key = new JsonObject();
-        key.addProperty("S", "caustics:sapphire_shard");
+        key.addProperty("S", "caustics:beryl_shard");
         key.addProperty("D", decoration.toString());
         key.addProperty("H", handle.toString());
         if(hasCore)
