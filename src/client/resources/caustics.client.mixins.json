@@ -19,6 +19,8 @@
   },
   "mixins": [
     "AvatarRendererMixin",
-    "LivingEntityRendererMixin"
+    "ClientTextTooltipMixin",
+    "LivingEntityRendererMixin",
+    "TooltipRenderUtilMixin"
   ]
 }

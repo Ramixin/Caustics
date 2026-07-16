@@ -1,17 +1,17 @@
 package net.ramixin.caustics.client.nodes;
 
-import net.ramixin.caustics.client.cache.AlidadeIconCache;
-import net.ramixin.caustics.client.cache.SimpleIconCache;
+import net.ramixin.caustics.client.nodes.cache.AlidadeIconCache;
+import net.ramixin.caustics.client.nodes.cache.DowserIconCache;
+import net.ramixin.caustics.client.nodes.cache.SimpleIconCache;
 import net.ramixin.caustics.client.nodes.icons.CollimatorIcon;
-import net.ramixin.caustics.client.nodes.icons.DowserIcon;
 
-public class IconIndex {
+public class IconCaches {
 
     private final AlidadeIconCache alidadeCache = new AlidadeIconCache();
     private final SimpleIconCache<CollimatorIcon> collimatorCache = new SimpleIconCache<>(CollimatorIcon[]::new, CollimatorIcon::new);
-    private final SimpleIconCache<DowserIcon> dowserCache = new SimpleIconCache<>(DowserIcon[]::new, DowserIcon::new);
+    private final DowserIconCache dowserCache = new DowserIconCache();
 
-    protected IconIndex() {}
+    protected IconCaches() {}
 
     public void tick() {
         alidadeCache.tick();
@@ -19,7 +19,7 @@ public class IconIndex {
         dowserCache.tick();
     }
 
-    public AlidadeIconCache alidadeCache() {
+    public AlidadeIconCache alidade() {
         return alidadeCache;
     }
 
@@ -27,17 +27,17 @@ public class IconIndex {
         return collimatorCache;
     }
 
-    public SimpleIconCache<DowserIcon> dowserCache() {
+    public DowserIconCache dowserCache() {
         return dowserCache;
     }
 
-    public void wipe() {
+    public void wipeAll() {
         alidadeCache.wipe();
         collimatorCache.wipe();
         dowserCache.wipe();
     }
 
-    public void clear() {
+    public void clearAll() {
         alidadeCache.clear();
         collimatorCache.clear();
         dowserCache.clear();

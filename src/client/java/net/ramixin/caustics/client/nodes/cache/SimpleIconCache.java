@@ -1,4 +1,4 @@
-package net.ramixin.caustics.client.cache;
+package net.ramixin.caustics.client.nodes.cache;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;

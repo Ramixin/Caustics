@@ -1,5 +1,6 @@
 package net.ramixin.caustics.client.rendering;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
@@ -11,11 +12,12 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.client.cache.AlidadeIconCache;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.ClientNode;
+import net.ramixin.caustics.client.nodes.cache.AlidadeIconCache;
 import net.ramixin.caustics.items.components.SpyglassLens;
 import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.utils.LookUtil;
@@ -34,6 +36,8 @@ public class AlidadeHudRenderer {
     private static final String EMPTY_PREFIX = "  ";
 
     private HudRenderState LOOKING_RENDER_STATE = null;
+    private int ticksLooking;
+    private int prevTicksLooking;
     private HudRenderState SELECTED_RENDER_STATE = null;
 
     private AlidadeHudRenderer() {
@@ -43,36 +47,60 @@ public class AlidadeHudRenderer {
     public void onInitialize() {
         LevelRenderEvents.END_EXTRACTION.register(this::extract);
         HudElementRegistry.addLast(Caustics.id("alidade_node_info"), this::renderHud);
+        ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
+    }
+
+    private void onTick(Minecraft minecraft) {
+        Player player = minecraft.player;
+        if(player == null) return;
+        if(!player.isUsingItem() || !SpyglassLens.isAlidade(player.getUseItem())) return;
+        prevTicksLooking = ticksLooking;
+        AlidadeIconCache alidadeViewCache = ClientCrystalNetwork.getInstance().caches().alidade();
+        double[] angles = alidadeViewCache.getAngles();
+        if(LookUtil.calculateClosestLooking(angles).isEmpty()) {
+            if(ticksLooking > 0) ticksLooking--;
+        } else
+            if(ticksLooking < 2) ticksLooking++;
     }
 
     private void extract(LevelExtractionContext ctx) {
-        LOOKING_RENDER_STATE = null;
-        SELECTED_RENDER_STATE = null;
-
         Player player = Minecraft.getInstance().player;
         if(player == null) return;
-        if(!player.isUsingItem()) return;
-        if(!SpyglassLens.isAlidade(player.getUseItem())) return;
+        if(!player.isUsingItem() || !SpyglassLens.isAlidade(player.getUseItem())) {
+            ticksLooking = 0;
+            prevTicksLooking = 0;
+            LOOKING_RENDER_STATE = null;
+            SELECTED_RENDER_STATE = null;
+            return;
+        }
+        float partialTicks = ctx.deltaTracker().getGameTimeDeltaPartialTick(true);
+        if(ticksLooking != 0 && LOOKING_RENDER_STATE != null)
+            LOOKING_RENDER_STATE = LOOKING_RENDER_STATE.updateProgress(partialTicks, prevTicksLooking, ticksLooking);
+        else
+            LOOKING_RENDER_STATE = null;
+        SELECTED_RENDER_STATE = null;
+
 
         ClientLevel level = ctx.level();
         if(!level.isRaining()) {
-            AlidadeIconCache alidadeViewCache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+            AlidadeIconCache alidadeViewCache = ClientCrystalNetwork.getInstance().caches().alidade();
             double[] angles = alidadeViewCache.getAngles();
-            extractHudLooking(LookUtil.calculateClosestLooking(angles));
+            extractHudLooking(LookUtil.calculateClosestLooking(angles), partialTicks);
         }
         extractHudSelected(ClientCrystalNetwork.getInstance().getSelectedNode());
     }
 
-    private void extractHudLooking(Optional<Integer> maybeClosest) {
+    private void extractHudLooking(Optional<Integer> maybeClosest, float partialTicks) {
         if(maybeClosest.isEmpty()) return;
         int closestIndex = maybeClosest.get();
 
-        AlidadeIconCache cache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+        AlidadeIconCache cache = ClientCrystalNetwork.getInstance().caches().alidade();
         BlockPos closestPos = cache.getPositions()[closestIndex];
         Route route = cache.getRoutes()[closestIndex];
         ClientCrystalNetwork.getInstance().setLastLookingAt(closestPos);
+        float progress = Mth.lerp(partialTicks, prevTicksLooking, ticksLooking) / 2f;
 
-        LOOKING_RENDER_STATE = extractHud(closestPos, ClientCrystalNetwork.getInstance().getScrollPos(), route, false);
+        LOOKING_RENDER_STATE = extractHud(closestPos, ClientCrystalNetwork.getInstance().getScrollPos(), route, false, progress);
     }
 
     private void extractHudSelected(Optional<BlockPos> selectedNode) {
@@ -80,7 +108,7 @@ public class AlidadeHudRenderer {
         BlockPos pos = selectedNode.get();
         int scrollPos = ClientCrystalNetwork.getInstance().getSelectedScrollPos();
         int i = -1;
-        AlidadeIconCache cache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+        AlidadeIconCache cache = ClientCrystalNetwork.getInstance().caches().alidade();
         BlockPos[] positions = cache.getPositions();
         for(int j = 0; j < positions.length; j++) {
             if(!positions[j].equals(pos)) continue;
@@ -88,17 +116,17 @@ public class AlidadeHudRenderer {
             break;
         }
         if(i == -1) return;
-        SELECTED_RENDER_STATE = extractHud(pos, scrollPos, cache.getRoutes()[i], true);
+        SELECTED_RENDER_STATE = extractHud(pos, scrollPos, cache.getRoutes()[i], true, 1f);
     }
 
-    private HudRenderState extractHud(BlockPos pos, int scrollPos, Route route, boolean single) {
+    private HudRenderState extractHud(BlockPos pos, int scrollPos, Route route, boolean single, float progress) {
         Optional<ClientNode> maybeClosestNode = ClientCrystalNetwork.getInstance().getSapphireNodeAt(pos);
         if(maybeClosestNode.isEmpty()) return null;
         ClientNode closestNode = maybeClosestNode.get();
         Component nodeName = extractNodeName(pos);
         List<Component> deposits = extractDepositsPositions(closestNode, scrollPos, single);
         List<Component> routeStrings = extractRoute(route);
-        return new HudRenderState(nodeName, deposits, routeStrings);
+        return new HudRenderState(nodeName, deposits, routeStrings, progress);
     }
 
     private List<Component> extractDepositsPositions(ClientNode node, int scrollPos, boolean single) {
@@ -150,6 +178,7 @@ public class AlidadeHudRenderer {
         renderer.resetHeight();
 
         if(LOOKING_RENDER_STATE != null) {
+            renderer.setAlpha((int) (255 * LOOKING_RENDER_STATE.progress));
             renderer.leftAlign(105);
             renderer.render(List.of(Component.translatable("caustics.node.name")), 22);
             renderHudInternal(LOOKING_RENDER_STATE, renderer);
@@ -178,5 +207,10 @@ public class AlidadeHudRenderer {
         return INSTANCE;
     }
 
-    private record HudRenderState(Component nodeName, List<Component> deposits, List<Component> route) { }
+    private record HudRenderState(Component nodeName, List<Component> deposits, List<Component> route, float progress) {
+
+        public HudRenderState updateProgress(float partialTicks, int prev, int current) {
+            return new HudRenderState(nodeName, deposits, route, Mth.lerp(partialTicks, prev, current) / 2f);
+        }
+    }
 }

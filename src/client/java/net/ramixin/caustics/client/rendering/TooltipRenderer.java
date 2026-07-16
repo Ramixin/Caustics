@@ -21,6 +21,7 @@ public class TooltipRenderer {
     private final Font textRenderer;
     private final MutableInt height = new MutableInt();
     private final Mutable<Function<List<Component>, Integer>> alignment = new MutableObject<>(null);
+    private final MutableInt alpha = new MutableInt(255);
 
     public TooltipRenderer(GuiGraphicsExtractor context) {
         GuiGraphicsExtractorDuck duck = GuiGraphicsExtractorDuck.get(context);
@@ -31,6 +32,7 @@ public class TooltipRenderer {
 
     public void render(List<Component> text, int yOffset) {
         tooltipBatcher.accept(context -> {
+            GuiGraphicsExtractorDuck.get(context).caustics$setAlpha(alpha.intValue());
             if(alignment.get() == null) throw new IllegalStateException("TooltipRenderer alignment not set");
             context.tooltip(
                     textRenderer,
@@ -70,6 +72,10 @@ public class TooltipRenderer {
 
     public int getTextWidth(Component text) {
         return textRenderer.width(text);
+    }
+
+    public void setAlpha(int alpha) {
+        tooltipBatcher.accept(_ -> this.alpha.setValue(alpha));
     }
 
 }

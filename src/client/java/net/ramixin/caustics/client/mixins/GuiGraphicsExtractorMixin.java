@@ -18,6 +18,8 @@ public abstract class GuiGraphicsExtractorMixin implements GuiGraphicsExtractorD
     private @Nullable Runnable deferredTooltip;
     @Unique
     private final List<Consumer<GuiGraphicsExtractor>> tooltipBatches = new ArrayList<>();
+    @Unique
+    private int alpha = 255;
 
     @Unique
     @Override
@@ -34,5 +36,17 @@ public abstract class GuiGraphicsExtractorMixin implements GuiGraphicsExtractorD
     @Override
     public void caustics$addTooltipToBatch(Consumer<GuiGraphicsExtractor> runnable) {
         tooltipBatches.add(runnable);
+    }
+
+    @Unique
+    @Override
+    public int caustics$getAlpha() {
+        return alpha;
+    }
+
+    @Unique
+    @Override
+    public void caustics$setAlpha(int alpha) {
+        this.alpha = alpha;
     }
 }

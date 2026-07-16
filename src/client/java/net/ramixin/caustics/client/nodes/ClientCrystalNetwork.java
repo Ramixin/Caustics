@@ -47,7 +47,7 @@ public class ClientCrystalNetwork implements Network {
     private final HashMap<UUID, ClientLeap> leaps = new HashMap<>();
 
     private final LeapParticleEngine particleEngine = new LeapParticleEngine();
-    private final IconIndex iconIndex = new IconIndex();
+    private final IconCaches iconCaches = new IconCaches();
 
     public static ClientCrystalNetwork getInstance() {
         return INSTANCE;
@@ -64,7 +64,7 @@ public class ClientCrystalNetwork implements Network {
         if(player == null) return;
         if(!player.isUsingItem()) return;
         if(!player.getUseItem().is(Items.SPYGLASS)) return;
-        iconIndex.tick();
+        iconCaches.tick();
     }
 
     public LeapParticleEngine particleEngine() {
@@ -78,7 +78,7 @@ public class ClientCrystalNetwork implements Network {
         tourmaline.clear();
 
         for(NodeSyncData data : syncData) {
-            ClientNode node = new ClientNode(data, iconIndex);
+            ClientNode node = new ClientNode(data, iconCaches);
             for(BlockPos pos : data.sapphirePositions()) sapphireToNode.put(pos, node);
             for(BlockPos pos : data.topazPositions()) topazToNode.put(pos, node);
             tourmaline.addAll(data.tourmalinePositions());
@@ -224,8 +224,8 @@ public class ClientCrystalNetwork implements Network {
         return selectedScrollPos.intValue();
     }
 
-    public IconIndex iconIndex() {
-        return iconIndex;
+    public IconCaches caches() {
+        return iconCaches;
     }
 
     public void nuke() {
@@ -235,7 +235,7 @@ public class ClientCrystalNetwork implements Network {
         deselectNode();
         leaps.clear();
         particleEngine.clear();
-        iconIndex.clear();
+        iconCaches.clearAll();
     }
 
     @Override

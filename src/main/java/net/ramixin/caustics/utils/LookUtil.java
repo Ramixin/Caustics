@@ -25,7 +25,7 @@ public interface LookUtil {
         for(int i = 0; i < positions.length; i++) {
             BlockPos pos = positions[i];
             vectors[i] = new Vec3(pos)
-                    .add(0.5, -1, 0.5)
+                    .add(0.5, -1.1, 0.5)
                     .subtract(playerPos)
                     .normalize();
         }

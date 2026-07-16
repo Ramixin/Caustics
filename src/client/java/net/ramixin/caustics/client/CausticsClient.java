@@ -10,12 +10,11 @@ import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.ramixin.caustics.Caustics;
-import net.ramixin.caustics.client.cache.AlidadeIconCache;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.ClientNode;
+import net.ramixin.caustics.client.nodes.cache.AlidadeIconCache;
 import net.ramixin.caustics.client.nodes.icons.AlidadeIcon;
 import net.ramixin.caustics.client.rendering.AlidadeHudRenderer;
-import net.ramixin.caustics.client.rendering.JammerRenderPipeline;
 import net.ramixin.caustics.client.rendering.LeapParticleRenderPipeline;
 import net.ramixin.caustics.client.rendering.NodeRenderPipeline;
 import net.ramixin.caustics.items.components.SpyglassLens;
@@ -40,7 +39,6 @@ public class CausticsClient implements ClientModInitializer {
     public void onInitializeClient() {
         NodeRenderPipeline.getInstance().onInitialize();
         LeapParticleRenderPipeline.getInstance().onInitialize();
-        JammerRenderPipeline.getInstance().onInitialize();
         AlidadeHudRenderer.getInstance().onInitialize();
         ModClientNetworking.onInitialize();
         ModMixsonClient.onInitialize();
@@ -48,7 +46,7 @@ public class CausticsClient implements ClientModInitializer {
         ClientHotbarScrollEvents.ALLOW.register((inventory, _, _, _, dy) -> {
             if(!inventory.player.isUsingItem()) return true;
             if(!SpyglassLens.isAlidade(inventory.player.getUseItem())) return true;
-            AlidadeIconCache alidadeCache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+            AlidadeIconCache alidadeCache = ClientCrystalNetwork.getInstance().caches().alidade();
             BlockPos[] positions = alidadeCache.getPositions();
             Optional<BlockPos> lookingAt = LookUtil.getLookingAt(inventory.player, positions);
             if(lookingAt.isEmpty()) {
@@ -60,7 +58,7 @@ public class CausticsClient implements ClientModInitializer {
             return false;
         });
 
-        LevelRenderEvents.END_MAIN.register(_ -> ClientCrystalNetwork.getInstance().iconIndex().wipe());
+        LevelRenderEvents.END_MAIN.register(_ -> ClientCrystalNetwork.getInstance().caches().wipeAll());
         ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> ClientCrystalNetwork.getInstance().nuke());
         ClientTickEvents.END_CLIENT_TICK.register(minecraft -> {
             if(minecraft.level == null) return;
@@ -70,7 +68,7 @@ public class CausticsClient implements ClientModInitializer {
     }
 
     public static void onAlidadeAttack() {
-        AlidadeIconCache alidadeCache = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache();
+        AlidadeIconCache alidadeCache = ClientCrystalNetwork.getInstance().caches().alidade();
         Optional<Integer> closest = LookUtil.calculateClosestLooking(alidadeCache.getAngles());
         if(closest.isEmpty()) return;
         BlockPos sapphirePos = alidadeCache.getPositions()[closest.get()];
@@ -79,7 +77,7 @@ public class CausticsClient implements ClientModInitializer {
         List<BlockPos> peridotPositions = maybeNode.get().peridot();
         int scrollPos = ClientCrystalNetwork.getInstance().getSelectedScrollPos();
         if(scrollPos >= peridotPositions.size() || scrollPos < 0) return;
-        AlidadeIcon icon = ClientCrystalNetwork.getInstance().iconIndex().alidadeCache().get(sapphirePos);
+        AlidadeIcon icon = ClientCrystalNetwork.getInstance().caches().alidade().get(sapphirePos);
         icon.bump();
         BlockPos peridotPos = peridotPositions.get(scrollPos);
         ClientCrystalNetwork.getInstance().selectNode(sapphirePos);

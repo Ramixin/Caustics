@@ -36,7 +36,7 @@ import java.util.UUID;
 
 import static net.ramixin.caustics.client.rendering.RenderUtil.billboardVertices;
 
-public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParticleRenderPipeline.LeapParticleBatchRenderState> {
+public class LeapParticleRenderPipeline extends AbstractRenderPipeline {
 
     private static final RenderPipeline PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.PARTICLE_SNIPPET)
             .withLocation(Caustics.id("pipeline/leap_particle"))
@@ -48,11 +48,11 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParti
     );
     private static final LeapParticleRenderPipeline INSTANCE = new LeapParticleRenderPipeline();
 
-    private final List<LeapParticleBatchRenderState> RENDER_STATES = new ArrayList<>();
+    private final List<RenderState> RENDER_STATES = new ArrayList<>();
     private DrawCommand DRAW_COMMAND = null;
 
     protected LeapParticleRenderPipeline() {
-        super("leap_particles", PIPELINE, true);
+        super("leap_particles", PIPELINE);
     }
 
     public static LeapParticleRenderPipeline getInstance() {
@@ -95,18 +95,20 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParti
                 scale[i] = (float) particle.scale(partialTicks);
             }
             PlayerSkin skin = Minecraft.getInstance().playerSkinRenderCache().getOrDefault(player.getProfile()).playerSkin();
-            LeapParticleBatchRenderState renderState = new LeapParticleBatchRenderState(skin.body().texturePath(), x, y, z, u, v, opacity, lightmap, scale);
+            RenderState renderState = new RenderState(skin.body().texturePath(), x, y, z, u, v, opacity, lightmap, scale);
             RENDER_STATES.add(renderState);
         }
     }
 
     @Override
-    protected List<LeapParticleBatchRenderState> getStates() {
-        return RENDER_STATES;
+    protected void getVertices(LevelRenderContext ctx, Runnable submit) {
+        for(RenderState state : RENDER_STATES) {
+            getStateVertices(ctx, state);
+            submit.run();
+        }
     }
 
-    @Override
-    protected void getVertices(LevelRenderContext ctx, LeapParticleBatchRenderState state) {
+    protected void getStateVertices(LevelRenderContext ctx, RenderState state) {
         PoseStack matrices = ctx.poseStack();
         Vec3 cameraPos = ctx.levelState().cameraRenderState.pos;
         BufferBuilder buffer = getBuffer();
@@ -153,6 +155,6 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline<LeapParti
         renderPass.drawIndexed(0, 0, drawParameters.indexCount(), 1);
     }
 
-    protected record LeapParticleBatchRenderState(Identifier skin, double[] x, double[] y, double[] z, float[] u, float[] v, float[] opacity, int[] lightmap, float[] scale) { }
+    protected record RenderState(Identifier skin, double[] x, double[] y, double[] z, float[] u, float[] v, float[] opacity, int[] lightmap, float[] scale) { }
     private record DrawCommand(Identifier skin) { }
 }

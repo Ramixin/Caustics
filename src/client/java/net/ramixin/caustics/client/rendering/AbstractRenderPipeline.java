@@ -24,11 +24,10 @@ import org.joml.Vector4f;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
-public abstract class AbstractRenderPipeline<T> {
+public abstract class AbstractRenderPipeline {
 
     private final ByteBufferBuilder ALLOCATOR = new ByteBufferBuilder(RenderType.BIG_BUFFER_SIZE);
     private final Vector4f COLOR_MODULATOR = new Vector4f(1f, 1f, 1f, 1f);
@@ -39,12 +38,10 @@ public abstract class AbstractRenderPipeline<T> {
     private BufferBuilder buffer;
     private final String name;
     private final RenderPipeline pipeline;
-    private final boolean drawPerState;
 
-    protected AbstractRenderPipeline(String name, RenderPipeline pipeline, boolean drawPerState) {
+    protected AbstractRenderPipeline(String name, RenderPipeline pipeline) {
         this.name = name;
         this.pipeline = pipeline;
-        this.drawPerState = drawPerState;
     }
 
     public void onInitialize() {
@@ -54,21 +51,12 @@ public abstract class AbstractRenderPipeline<T> {
 
     protected abstract void extract(LevelExtractionContext ctx);
 
-    protected abstract List<T> getStates();
-
-    protected abstract void getVertices(LevelRenderContext ctx, T state);
+    protected abstract void getVertices(LevelRenderContext ctx, Runnable submit);
 
     protected abstract void applyRenderPass(RenderPass renderPass, MeshData.DrawState drawParameters, GpuBuffer vertices, VertexFormat format, GpuBuffer indices, VertexFormat.IndexType indexType);
 
     protected void render(LevelRenderContext ctx) {
-        List<T> states = this.getStates();
-        if(states.isEmpty()) return;
-        for(T state : states) {
-            this.getVertices(ctx, state);
-            if(this.drawPerState) this.finish();
-        }
-        if(!this.drawPerState)
-            this.finish();
+        getVertices(ctx, this::finish);
     }
 
     protected GpuBuffer upload(MeshData.DrawState drawParameters, VertexFormat format, MeshData builtBuffer) {

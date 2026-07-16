@@ -1,4 +1,4 @@
-package net.ramixin.caustics.client.cache;
+package net.ramixin.caustics.client.nodes.cache;
 
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;

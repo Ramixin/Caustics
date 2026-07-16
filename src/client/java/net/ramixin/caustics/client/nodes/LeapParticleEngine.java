@@ -78,7 +78,7 @@ public class LeapParticleEngine {
         int v = random.nextIntBetweenInclusive(region[1], region[1] + region[3]);
         double[] heights = PART_HEIGHTS[region[4]];
         double deltaHeight = heights[1] - heights[0];
-        Vec3 position = avatar.position().add(random.nextDouble()*0.8-0.9, random.nextDouble() * deltaHeight + heights[0]-0.5, random.nextDouble()*0.8-0.9);
+        Vec3 position = avatar.position().add(random.nextDouble()*0.8-0.4, random.nextDouble() * deltaHeight + heights[0], random.nextDouble()*0.8-0.4);
         double speed = random.nextDouble() / 2;
         Vec3 deltas = leap.sapphirePos().offset(0,-1,0).getCenter().subtract(avatar.position()).normalize().multiply(speed, speed, speed);
         LeapParticle particle = new LeapParticle(position, deltas,0.9, u, v);

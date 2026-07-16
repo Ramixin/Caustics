@@ -65,9 +65,9 @@ public interface RenderUtil {
         Vector3f right = camera.leftVector().negate(new Vector3f());
         Vector3f up = camera.upVector().negate(new Vector3f());
 
-        float cx = (float)(x1 + 0.5 - cameraPos.x);
-        float cy = (float)(y1 + 0.5 - cameraPos.y);
-        float cz = (float)(z1 + 0.5 - cameraPos.z);
+        float cx = (float)(x1 - cameraPos.x);
+        float cy = (float)(y1 - cameraPos.y);
+        float cz = (float)(z1 - cameraPos.z);
 
         float cos = Mth.cos(theta);
         float sin = Mth.sin(theta);
@@ -84,6 +84,13 @@ public interface RenderUtil {
             );
         }
         return vertices;
+    }
+
+    static int lerpColor(float t, int color1, int color2, int alpha) {
+        int r = Mth.lerpInt(t, (color1 >> 16) & 0xFF, (color2 >> 16) & 0xFF);
+        int g = Mth.lerpInt(t, (color1 >> 8) & 0xFF, (color2 >> 8) & 0xFF);
+        int b = Mth.lerpInt(t, color1 & 0xFF, color2 & 0xFF);
+        return (alpha << 24) | (r << 16) | (g << 8) | b;
     }
 
 }

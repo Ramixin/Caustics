@@ -1,8 +1,7 @@
-package net.ramixin.caustics.client.cache;
+package net.ramixin.caustics.client.nodes.cache;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.client.nodes.icons.NodeIcon;
 import net.ramixin.caustics.utils.LookUtil;
@@ -15,8 +14,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 public abstract class IconCache<T extends NodeIcon> {
-
-    public static final RandomSource RANDOM = RandomSource.create();
 
     protected final Map<BlockPos, T> cache = new HashMap<>();
     private final Function<Integer, T[]> arrayConstructor;
