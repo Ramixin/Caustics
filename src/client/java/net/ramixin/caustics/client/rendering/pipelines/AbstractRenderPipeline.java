@@ -1,4 +1,4 @@
-package net.ramixin.caustics.client.rendering;
+package net.ramixin.caustics.client.rendering.pipelines;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;

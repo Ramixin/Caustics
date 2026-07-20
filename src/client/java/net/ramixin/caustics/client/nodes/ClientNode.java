@@ -1,11 +1,14 @@
 package net.ramixin.caustics.client.nodes;
 
 import net.minecraft.core.BlockPos;
+import net.ramixin.caustics.client.nodes.cache.AbstractIconCache;
 import net.ramixin.caustics.client.nodes.icons.AlidadeIcon;
 import net.ramixin.caustics.client.nodes.icons.CollimatorIcon;
 import net.ramixin.caustics.client.nodes.icons.DowserIcon;
+import net.ramixin.caustics.client.nodes.icons.NodeIcon;
 import net.ramixin.caustics.nodes.NodeSyncData;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,13 +21,26 @@ public final class ClientNode {
     private final List<DowserIcon> tourmaline;
     private final boolean visible;
 
-    public ClientNode(NodeSyncData syncData, IconCaches index) {
-        this.sapphires = syncData.sapphirePositions().stream().map(index.alidade()::get).toList();
+    public ClientNode(NodeSyncData syncData, IconCaches caches) {
+        this.sapphires = updateIcons(caches.alidade(), syncData.sapphirePositions());
         this.topazes = syncData.topazPositions();
         this.peridots = syncData.peridotPositions();
-        this.sunstones = syncData.sunstonePositions().stream().map(index.collimatorCache()::get).toList();
-        this.tourmaline = syncData.tourmalinePositions().stream().map(index.dowserCache()::get).toList();
+        this.sunstones = updateIcons(caches.collimator(), syncData.sunstonePositions(), syncData.sapphirePositions(), syncData.topazPositions(), syncData.peridotPositions());
+        this.tourmaline = updateIcons(caches.dowserCache(), syncData.tourmalinePositions());
         this.visible = syncData.visible();
+    }
+
+    @SafeVarargs
+    private <T extends NodeIcon> List<T> updateIcons(AbstractIconCache<T> cache, List<BlockPos>... lists) {
+        List<T> icons = new ArrayList<>();
+        for(List<BlockPos> list : lists) {
+            for(BlockPos pos : list) {
+                T cached = cache.get(pos);
+                cache.associateNode(pos, this);
+                icons.add(cached);
+            }
+        }
+        return icons;
     }
 
     public List<BlockPos> peridot() {
@@ -50,6 +66,4 @@ public final class ClientNode {
                 "tourmaline=" + tourmaline + ", " +
                 "visible=" + visible;
     }
-
-
 }

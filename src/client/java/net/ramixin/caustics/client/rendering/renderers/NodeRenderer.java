@@ -5,7 +5,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
-import net.ramixin.caustics.client.nodes.cache.IconCache;
+import net.ramixin.caustics.client.nodes.cache.AbstractIconCache;
 import net.ramixin.caustics.client.nodes.icons.NodeIcon;
 
 import java.util.ArrayDeque;
@@ -14,10 +14,10 @@ import java.util.Set;
 public abstract class NodeRenderer<I extends NodeIcon, S> {
 
     private final ArrayDeque<S> states = new ArrayDeque<>();
-    private final IconCache<I> cache;
+    private final AbstractIconCache<I> cache;
     private final TagKey<Item> lensTag;
 
-    public NodeRenderer(IconCache<I> cache, TagKey<Item> lensTag) {
+    public NodeRenderer(AbstractIconCache<I> cache, TagKey<Item> lensTag) {
         this.cache = cache;
         this.lensTag = lensTag;
     }

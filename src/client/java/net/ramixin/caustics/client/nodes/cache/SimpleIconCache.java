@@ -11,7 +11,7 @@ import net.ramixin.caustics.utils.RoutingUtil;
 import java.util.Set;
 import java.util.function.Function;
 
-public class SimpleIconCache<T extends NodeIcon> extends IconCache<T> {
+public class SimpleIconCache<T extends NodeIcon> extends AbstractIconCache<T> {
 
     private BlockPos[] positions;
 

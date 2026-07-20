@@ -17,7 +17,6 @@ import net.ramixin.caustics.blocks.ModBlocks;
 import net.ramixin.caustics.entities.ModEntities;
 import net.ramixin.caustics.items.ModItems;
 import net.ramixin.caustics.items.components.ModDataComponents;
-import net.ramixin.caustics.menus.ModMenus;
 import net.ramixin.caustics.networking.ModNetworking;
 import net.ramixin.caustics.nodes.core.CrystalNetwork;
 import net.ramixin.caustics.registries.ModRegistries;
@@ -41,7 +40,6 @@ public class Caustics implements ModInitializer {
         ModFeatures.onInitialize();
         ModMixson.onInitialize();
         ModGameRules.onInitialize();
-        ModMenus.onInitialize();
         ModNetworking.onInitialize();
 
         if(FabricLoader.getInstance().isDevelopmentEnvironment())

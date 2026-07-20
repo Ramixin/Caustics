@@ -8,7 +8,7 @@ import net.ramixin.caustics.client.nodes.icons.DowserIcon;
 
 import java.util.Set;
 
-public class DowserIconCache extends IconCache<DowserIcon> {
+public class DowserIconCache extends AbstractIconCache<DowserIcon> {
 
     public DowserIconCache() {
         super(DowserIcon[]::new, DowserIcon::new);

@@ -20,7 +20,7 @@ public class CollimatorRenderer extends NodeRenderer<CollimatorIcon, CollimatorR
     private static final float SIZE = 1 / Mth.sqrt(2f);
 
     public CollimatorRenderer() {
-        super(ClientCrystalNetwork.getInstance().caches().collimatorCache(), ModTags.Items.COLLIMATOR_LENS);
+        super(ClientCrystalNetwork.getInstance().caches().collimator(), ModTags.Items.COLLIMATOR_LENS);
     }
 
     @Override

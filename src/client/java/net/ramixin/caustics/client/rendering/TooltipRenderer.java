@@ -30,6 +30,10 @@ public class TooltipRenderer {
         this.textRenderer = Minecraft.getInstance().font;
     }
 
+    public void render(Component text, int yOffset) {
+        render(List.of(text), yOffset);
+    }
+
     public void render(List<Component> text, int yOffset) {
         tooltipBatcher.accept(context -> {
             GuiGraphicsExtractorDuck.get(context).caustics$setAlpha(alpha.intValue());

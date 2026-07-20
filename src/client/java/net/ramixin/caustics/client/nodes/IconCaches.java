@@ -23,7 +23,7 @@ public class IconCaches {
         return alidadeCache;
     }
 
-    public SimpleIconCache<CollimatorIcon> collimatorCache() {
+    public SimpleIconCache<CollimatorIcon> collimator() {
         return collimatorCache;
     }
 
@@ -41,6 +41,12 @@ public class IconCaches {
         alidadeCache.clear();
         collimatorCache.clear();
         dowserCache.clear();
+    }
+
+    public void clearMapAll() {
+        alidadeCache.clearMap();
+        collimatorCache.clearMap();
+        dowserCache.clearMap();
     }
 
 }

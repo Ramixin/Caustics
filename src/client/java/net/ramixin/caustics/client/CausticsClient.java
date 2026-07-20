@@ -3,26 +3,22 @@ package net.ramixin.caustics.client;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
-import net.minecraft.core.BlockPos;
+import net.fabricmc.fabric.api.event.player.ItemEvents;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
-import net.ramixin.caustics.client.nodes.ClientNode;
-import net.ramixin.caustics.client.nodes.cache.AlidadeIconCache;
-import net.ramixin.caustics.client.nodes.icons.AlidadeIcon;
-import net.ramixin.caustics.client.rendering.AlidadeHudRenderer;
-import net.ramixin.caustics.client.rendering.LeapParticleRenderPipeline;
-import net.ramixin.caustics.client.rendering.NodeRenderPipeline;
+import net.ramixin.caustics.client.rendering.huds.AbstractHud;
+import net.ramixin.caustics.client.rendering.huds.AlidadeHud;
+import net.ramixin.caustics.client.rendering.huds.CollimatorHud;
+import net.ramixin.caustics.client.rendering.huds.ListeningHud;
+import net.ramixin.caustics.client.rendering.pipelines.LeapParticleRenderPipeline;
+import net.ramixin.caustics.client.rendering.pipelines.NodeRenderPipeline;
 import net.ramixin.caustics.items.components.SpyglassLens;
-import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
-import net.ramixin.caustics.utils.LookUtil;
-
-import java.util.List;
-import java.util.Optional;
 
 public class CausticsClient implements ClientModInitializer {
 
@@ -35,27 +31,20 @@ public class CausticsClient implements ClientModInitializer {
     public static final RenderStateDataKey<Double> OPACITY_KEY = RenderStateDataKey.create(() -> "caustics:opacity");
     public static final RenderStateDataKey<Double> OPACITY_DEFAULT_KEY = RenderStateDataKey.create(() -> "caustics:opacity_default");
 
+    public static AbstractHud<?, ?, ?> hud = null;
+
     @Override
     public void onInitializeClient() {
         NodeRenderPipeline.getInstance().onInitialize();
         LeapParticleRenderPipeline.getInstance().onInitialize();
-        AlidadeHudRenderer.getInstance().onInitialize();
+        AbstractHud.onInitialize();
         ModClientNetworking.onInitialize();
         ModMixsonClient.onInitialize();
 
-        ClientHotbarScrollEvents.ALLOW.register((inventory, _, _, _, dy) -> {
-            if(!inventory.player.isUsingItem()) return true;
-            if(!SpyglassLens.isAlidade(inventory.player.getUseItem())) return true;
-            AlidadeIconCache alidadeCache = ClientCrystalNetwork.getInstance().caches().alidade();
-            BlockPos[] positions = alidadeCache.getPositions();
-            Optional<BlockPos> lookingAt = LookUtil.getLookingAt(inventory.player, positions);
-            if(lookingAt.isEmpty()) {
-                ClientCrystalNetwork.getInstance().clearScrollPos();
-                return true;
-            }
-            AlidadeIcon icon = alidadeCache.get(lookingAt.get());
-            ClientCrystalNetwork.getInstance().deltaScrollPos(-dy, icon);
-            return false;
+        ClientHotbarScrollEvents.ALLOW.register((_, _, _, _, dy) -> {
+            if(CausticsClient.hud instanceof ListeningHud listener)
+                return !listener.mouseScrolled(dy);
+            return true;
         });
 
         LevelRenderEvents.END_MAIN.register(_ -> ClientCrystalNetwork.getInstance().caches().wipeAll());
@@ -65,23 +54,29 @@ public class CausticsClient implements ClientModInitializer {
             if(minecraft.level.tickRateManager().isFrozen()) return;
             ClientCrystalNetwork.getInstance().tick();
         });
-    }
 
-    public static void onAlidadeAttack() {
-        AlidadeIconCache alidadeCache = ClientCrystalNetwork.getInstance().caches().alidade();
-        Optional<Integer> closest = LookUtil.calculateClosestLooking(alidadeCache.getAngles());
-        if(closest.isEmpty()) return;
-        BlockPos sapphirePos = alidadeCache.getPositions()[closest.get()];
-        Optional<ClientNode> maybeNode = ClientCrystalNetwork.getInstance().getSapphireNodeAt(sapphirePos);
-        if(maybeNode.isEmpty()) return;
-        List<BlockPos> peridotPositions = maybeNode.get().peridot();
-        int scrollPos = ClientCrystalNetwork.getInstance().getSelectedScrollPos();
-        if(scrollPos >= peridotPositions.size() || scrollPos < 0) return;
-        AlidadeIcon icon = ClientCrystalNetwork.getInstance().caches().alidade().get(sapphirePos);
-        icon.bump();
-        BlockPos peridotPos = peridotPositions.get(scrollPos);
-        ClientCrystalNetwork.getInstance().selectNode(sapphirePos);
-        ClientPlayNetworking.send(new SelectionSyncPayload(sapphirePos, peridotPos));
+        ClientTickEvents.START_CLIENT_TICK.register(minecraft -> {
+            if(minecraft.player == null) return;
+            if(hud == null) return;
+            if(!hud.isCloseable()) return;
+            if(minecraft.player.isUsingItem()) return;
+            hud = null;
+            Caustics.LOGGER.info("HUD disabled");
+        });
 
+
+        ItemEvents.USE.register((level, player, hand) -> {
+            if(!level.isClientSide()) return null;
+            ItemStack stack = player.getItemInHand(hand);
+            if(!stack.is(Items.SPYGLASS)) return null;
+            if(SpyglassLens.isAlidade(stack)) {
+                hud = new AlidadeHud();
+                Caustics.LOGGER.info("Alidade HUD enabled");
+            } else if(SpyglassLens.isCollimator(stack)) {
+                hud = new CollimatorHud();
+                Caustics.LOGGER.info("Collimator HUD enabled");
+            }
+            return null;
+        });
     }
 }

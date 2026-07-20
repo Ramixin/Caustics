@@ -8,7 +8,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.client.CausticsClient;
-import net.ramixin.caustics.client.nodes.icons.NodeIcon;
 import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
 import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
 import net.ramixin.caustics.networking.clientbound.LeapDropPayload;
@@ -18,9 +17,6 @@ import net.ramixin.caustics.nodes.NodeSyncData;
 import net.ramixin.caustics.nodes.core.FrequencyRegistry;
 import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.nodes.routing.RoutingTable;
-import org.apache.commons.lang3.mutable.Mutable;
-import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.util.*;
 
@@ -34,20 +30,14 @@ public class ClientCrystalNetwork implements Network {
     private final HashMap<BlockPos, ClientNode> topazToNode = new HashMap<>();
     private final Set<BlockPos> tourmaline = new HashSet<>();
 
-    private final MutableInt scrollPos = new MutableInt();
-    private final Mutable<BlockPos> lastLookingAt = new MutableObject<>();
-
     private final FrequencyRegistry registry = new FrequencyRegistry();
 
     private final Map<BlockPos, RoutingTable> routingTables = new HashMap<>();
 
-    private final Mutable<BlockPos> selectedNode = new MutableObject<>();
-    private final MutableInt selectedScrollPos = new MutableInt();
-
     private final HashMap<UUID, ClientLeap> leaps = new HashMap<>();
 
     private final LeapParticleEngine particleEngine = new LeapParticleEngine();
-    private final IconCaches iconCaches = new IconCaches();
+    private final IconCaches caches = new IconCaches();
 
     public static ClientCrystalNetwork getInstance() {
         return INSTANCE;
@@ -64,7 +54,7 @@ public class ClientCrystalNetwork implements Network {
         if(player == null) return;
         if(!player.isUsingItem()) return;
         if(!player.getUseItem().is(Items.SPYGLASS)) return;
-        iconCaches.tick();
+        caches.tick();
     }
 
     public LeapParticleEngine particleEngine() {
@@ -73,12 +63,10 @@ public class ClientCrystalNetwork implements Network {
 
     public void onNodeSync(List<NodeSyncData> syncData) {
         if(Minecraft.getInstance().level == null) return;
-        sapphireToNode.clear();
-        topazToNode.clear();
-        tourmaline.clear();
+        caches.clearMapAll();
 
         for(NodeSyncData data : syncData) {
-            ClientNode node = new ClientNode(data, iconCaches);
+            ClientNode node = new ClientNode(data, caches);
             for(BlockPos pos : data.sapphirePositions()) sapphireToNode.put(pos, node);
             for(BlockPos pos : data.topazPositions()) topazToNode.put(pos, node);
             tourmaline.addAll(data.tourmalinePositions());
@@ -161,81 +149,22 @@ public class ClientCrystalNetwork implements Network {
         return Optional.ofNullable(leaps.get(profileId));
     }
 
-    public void clearScrollPos() {
-        scrollPos.setValue(0);
-    }
-
-    public <T extends NodeIcon> void deltaScrollPos(double dy, T icon) {
-        if(dy < 0) {
-            if(scrollPos.intValue() > 0) {
-                scrollPos.decrement();
-                icon.negativeBump();
-            }
-        } else {
-            BlockPos lookingAt = lastLookingAt.get();
-            if(lookingAt == null) return;
-            ClientNode node = sapphireToNode.get(lookingAt);
-            if(scrollPos.intValue() < node.peridot().size()-1) {
-                scrollPos.increment();
-                icon.bump();
-            }
-        }
-
-    }
-
-    public int getScrollPos() {
-        return scrollPos.intValue();
-    }
-
-    public void setLastLookingAt(BlockPos pos) {
-        if(!pos.equals(lastLookingAt.get())) clearScrollPos();
-        lastLookingAt.setValue(pos);
-    }
-
     public void onRoutingSync(Map<BlockPos, RoutingTable> routingTables) {
         this.routingTables.clear();
         this.routingTables.putAll(routingTables);
     }
 
-    public void selectNode(BlockPos pos) {
-        ClientNode node = sapphireToNode.get(pos);
-        if(node == null) return;
-        if(node.peridot().isEmpty()) return;
-        selectedNode.setValue(pos);
-        selectedScrollPos.setValue(scrollPos.intValue());
-    }
-
-    public void deselectNode() {
-        selectedNode.setValue(null);
-    }
-
-    public Optional<BlockPos> getSelectedNode() {
-        BlockPos pos = selectedNode.get();
-        if(pos == null) return Optional.empty();
-        ClientNode node = sapphireToNode.get(pos);
-        if(node == null) {
-            deselectNode();
-            return Optional.empty();
-        }
-        return Optional.of(pos);
-    }
-
-    public int getSelectedScrollPos() {
-        return selectedScrollPos.intValue();
-    }
-
     public IconCaches caches() {
-        return iconCaches;
+        return caches;
     }
 
     public void nuke() {
         registry.syncWith(new FrequencySyncPayload(Map.of(), Map.of()));
         routingTables.clear();
         sapphireToNode.clear();
-        deselectNode();
         leaps.clear();
         particleEngine.clear();
-        iconCaches.clearAll();
+        caches.clearAll();
     }
 
     @Override
@@ -244,6 +173,6 @@ public class ClientCrystalNetwork implements Network {
     }
 
     public void setSelection(SelectionSyncPayload payload) {
-        selectedNode.setValue(payload.sapphirePos());
+        caches.alidade().selectNode(payload.sapphirePos());
     }
 }

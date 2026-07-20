@@ -6,7 +6,7 @@ import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.icons.AlidadeIcon;
 import net.ramixin.caustics.nodes.routing.Route;
 
-public class AlidadeIconCache extends IconCache<AlidadeIcon> {
+public class AlidadeIconCache extends AbstractIconCache<AlidadeIcon> {
 
     private BlockPos[] positions;
     private Route[] routes;
