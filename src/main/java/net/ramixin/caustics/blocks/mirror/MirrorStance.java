@@ -4,15 +4,14 @@ import net.minecraft.util.StringRepresentable;
 import org.jspecify.annotations.NonNull;
 
 public enum MirrorStance implements StringRepresentable {
-    UP("up", -45),
-    DOWN("down", 45),
-    FRONT("front", 0);
+    UP("up"),
+    DOWN("down"),
+    FRONT("front");
 
     public final String name;
-    public final int reflectionYaw;
-    MirrorStance(String name, int reflectionYaw) {
+
+    MirrorStance(String name) {
         this.name = name;
-        this.reflectionYaw = reflectionYaw;
     }
 
     @Override

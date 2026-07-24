@@ -39,10 +39,6 @@ public abstract class AbstractIconCache<T extends NodeIcon> {
 
     public abstract BlockPos[] getPositions();
 
-    public void add(BlockPos pos, T icon) {
-        cache.put(pos, icon);
-    }
-
     public void associateNode(BlockPos pos, ClientNode node) {
         nodeMap.put(pos, node);
     }
@@ -97,10 +93,12 @@ public abstract class AbstractIconCache<T extends NodeIcon> {
         scrollPos = 0;
     }
 
-    public void selectNode(BlockPos pos) {
-        ClientNode node = nodeMap.get(pos);
-        if(node == null) return;
-        if(node.peridot().isEmpty()) return;
+    public void resetSelection() {
+        selectedPos = null;
+        selectedScrollPos = 0;
+    }
+
+    public void select(BlockPos pos) {
         selectedPos = pos;
         selectedScrollPos = scrollPos;
     }

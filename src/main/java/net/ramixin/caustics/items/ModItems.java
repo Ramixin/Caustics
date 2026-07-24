@@ -28,8 +28,6 @@ public class ModItems {
     public static final Item SELENITE_SHARD = register("selenite_shard", Item::new, new Item.Properties());
     public static final Item TOURMALINE_SHARD = register("tourmaline_shard", Item::new, new Item.Properties());
 
-    public static final Item TUNING_FORK = register("tuning_fork", TuningForkItem::new, new Item.Properties().stacksTo(1));
-
     public static final Item LEAPER = register("leaper", LeaperItem::new, new Item.Properties().stacksTo(1));
 
     public static void onInitialize() {
@@ -38,8 +36,6 @@ public class ModItems {
                     SAPPHIRE_SHARD, BERYL_SHARD, PERIDOT_SHARD, TOPAZ_SHARD, SUNSTONE_SHARD, SELENITE_SHARD, TOURMALINE_SHARD));
 
         CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(event -> {
-            event.insertAfter(Items.BRUSH, TUNING_FORK);
-
             for(Holder<Item> itemHolder : BuiltInRegistries.ITEM.getTagOrEmpty(ModTags.Items.LENS)) {
                 Item item = itemHolder.value();
                 ItemStack stack = new ItemStack(Items.SPYGLASS);

@@ -61,17 +61,21 @@ public class TooltipRenderer {
     }
 
     public void rightAlign(int xOffset) {
-        tooltipBatcher.accept(_ -> alignment.setValue((text) -> rightAlignInternal(xOffset, text)));
+        tooltipBatcher.accept(_ -> alignment.setValue((text) -> xOffset - maxWidth(text)));
     }
 
-    private int rightAlignInternal(int xOffset, List<Component> text) {
+    public void centerAlign(int xOffset) {
+        tooltipBatcher.accept(_ -> alignment.setValue((text) -> (xOffset - maxWidth(text)) / 2));
+    }
+
+    private int maxWidth(List<Component> text) {
         int width = 0;
         for(Component component : text) {
             int componentWidth = getTextWidth(component);
             if(componentWidth > width)
                 width = componentWidth;
         }
-        return xOffset - width;
+        return width;
     }
 
     public int getTextWidth(Component text) {

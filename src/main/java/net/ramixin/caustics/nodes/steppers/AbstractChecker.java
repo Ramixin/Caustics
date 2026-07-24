@@ -36,7 +36,7 @@ public abstract class AbstractChecker<T> {
 
     protected abstract T defaultValue();
 
-    protected abstract T hitBlockValue(ServerLevel level, BlockPos pos);
+    protected abstract T hitBlockValue(ServerLevel level);
 
     protected abstract T leftBuildHeightValue();
 
@@ -86,13 +86,13 @@ public abstract class AbstractChecker<T> {
         if(nextState.is(ModBlocks.MIRROR)) {
             Optional<Direction> maybeDir = applyMirror(nextState);
             if(maybeDir.isEmpty()) {
-                verdict(hitBlockValue(level, curPos), level, tracker);
+                verdict(hitBlockValue(level), level, tracker);
                 return false;
             }
             curDir = maybeDir.get();
         }
         else if(!nextState.is(BlockTags.AIR)) {
-            verdict(hitBlockValue(level, curPos), level, tracker);
+            verdict(hitBlockValue(level), level, tracker);
             return false;
         }
         if(level.isOutsideBuildHeight(curPos)) {

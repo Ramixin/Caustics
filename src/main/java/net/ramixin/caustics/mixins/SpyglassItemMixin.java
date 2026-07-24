@@ -19,7 +19,7 @@ import java.util.Optional;
 @Mixin(SpyglassItem.class)
 public abstract class SpyglassItemMixin extends Item {
 
-    public SpyglassItemMixin(Properties properties) {
+    private SpyglassItemMixin(Properties properties) {
         super(properties);
     }
 

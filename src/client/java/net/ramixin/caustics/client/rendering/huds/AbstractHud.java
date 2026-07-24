@@ -14,9 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.ramixin.caustics.Caustics;
 import net.ramixin.caustics.client.CausticsClient;
-import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
 import net.ramixin.caustics.client.nodes.cache.AbstractIconCache;
-import net.ramixin.caustics.client.nodes.cache.AlidadeIconCache;
 import net.ramixin.caustics.client.nodes.icons.NodeIcon;
 import net.ramixin.caustics.client.rendering.TooltipRenderer;
 import net.ramixin.caustics.items.components.SpyglassLens;
@@ -32,7 +30,6 @@ public abstract class AbstractHud<I extends NodeIcon, S extends AbstractHud.Prog
     protected S selectedState;
     protected int ticksLooking = 0;
     protected int prevTicksLooking = 0;
-    private boolean closeable = false;
 
     public AbstractHud(C cache, TagKey<Item> lensTag) {
         this.cache = cache;
@@ -72,7 +69,6 @@ public abstract class AbstractHud<I extends NodeIcon, S extends AbstractHud.Prog
     }
 
     protected void onTick(Minecraft minecraft) {
-        closeable = true;
         Player player = minecraft.player;
         if(player == null) return;
         if(!player.isUsingItem() || !SpyglassLens.is(player.getUseItem(), lensTag)) return;
@@ -87,7 +83,7 @@ public abstract class AbstractHud<I extends NodeIcon, S extends AbstractHud.Prog
     protected void extract(LevelExtractionContext ctx) {
         Player player = Minecraft.getInstance().player;
         if(player == null) return;
-        if(!player.isUsingItem() || !SpyglassLens.isAlidade(player.getUseItem())) {
+        if(!player.isUsingItem() || !SpyglassLens.is(player.getUseItem(),lensTag)) {
             ticksLooking = 0;
             prevTicksLooking = 0;
             lookingState = null;
@@ -104,15 +100,10 @@ public abstract class AbstractHud<I extends NodeIcon, S extends AbstractHud.Prog
 
         ClientLevel level = ctx.level();
         if(!level.isRaining()) {
-            AlidadeIconCache alidadeViewCache = ClientCrystalNetwork.getInstance().caches().alidade();
-            double[] angles = alidadeViewCache.getAngles();
+            double[] angles = cache.getAngles();
             lookingState = extractHudLooking(LookUtil.calculateClosestLooking(angles), partialTicks);
         }
         selectedState = extractHudSelected(cache.getSelectedPos());
-    }
-
-    public boolean isCloseable() {
-        return closeable;
     }
 
     protected interface ProgressState<T extends ProgressState<T>> {

@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import net.ramixin.caustics.client.CausticsClient;
-import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
+import net.ramixin.caustics.networking.bidirectional.AlidadeSelectionSyncPayload;
 import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
 import net.ramixin.caustics.networking.clientbound.LeapDropPayload;
 import net.ramixin.caustics.networking.clientbound.LeapStartPayload;
@@ -64,6 +64,9 @@ public class ClientCrystalNetwork implements Network {
     public void onNodeSync(List<NodeSyncData> syncData) {
         if(Minecraft.getInstance().level == null) return;
         caches.clearMapAll();
+        sapphireToNode.clear();
+        topazToNode.clear();
+        tourmaline.clear();
 
         for(NodeSyncData data : syncData) {
             ClientNode node = new ClientNode(data, caches);
@@ -172,7 +175,7 @@ public class ClientCrystalNetwork implements Network {
         return registry;
     }
 
-    public void setSelection(SelectionSyncPayload payload) {
-        caches.alidade().selectNode(payload.sapphirePos());
+    public void setSelection(AlidadeSelectionSyncPayload payload) {
+        caches.alidade().select(payload.sapphirePos());
     }
 }

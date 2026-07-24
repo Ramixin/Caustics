@@ -16,10 +16,6 @@ public class NodeIcon {
         this.pos = pos;
     }
 
-    public BlockPos getPos() {
-        return pos;
-    }
-
     public Vec3 getCenterPos() {
         return pos.getCenter();
     }

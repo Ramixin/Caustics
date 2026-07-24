@@ -55,8 +55,6 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add("caustics.node.deposit", "Target Deposit:");
         translationBuilder.add("caustics.node.route_start", "Route:");
         translationBuilder.add("caustics.node.route_direct", "Direct Connection");
-        translationBuilder.add("caustics.node.name", "Identified Node:");
-        translationBuilder.add("caustics.node.selected", "Selected Node:");
 
         translationBuilder.add("advancements.caustics.alidade_at_player.title", "Red for an Amazing Reason");
         translationBuilder.add("advancements.caustics.alidade_at_player.description", "Look at a player through an alidade spyglass");
@@ -71,6 +69,21 @@ public class CausticsLangProvider extends FabricLanguageProvider {
         translationBuilder.add("minecraft.spyglass_lens.amethyst_shard", "Telescope");
         translationBuilder.add("caustics.spyglass_lens.tourmaline_shard", "Dowser");
         translationBuilder.add("caustics.spyglass_lens.beryl_shard", "Alidade");
+
+        generateHud("alidade", "Identified Node", "Selected Node", translationBuilder);
+        generateHud("collimator", "Identified Frequency", "Selected Frequency", translationBuilder);
+        translationBuilder.add("caustics.hud.collimator.unnamed", "Unnamed Cluster");
+        translationBuilder.add("caustics.hud.collimator.copy", "Left Click to copy");
+        translationBuilder.add("caustics.hud.collimator.tune", "Left Click to tune");
+        translationBuilder.add("caustics.hud.collimator.clear", "Left Click to clear");
+        translationBuilder.add("caustics.hud.collimator.rename", "Press %s to rename");
+        translationBuilder.add("caustics.hud.collimator.can_release", "(You don't have to hold Right Click by the way)");
+        translationBuilder.add("caustics.hud.collimator.type", "Enter the new name. Press Right Click to confirm.");
+    }
+
+    private static void generateHud(String hudName, String looking, String selected, TranslationBuilder translationBuilder) {
+        translationBuilder.add("caustics.hud." + hudName + ".looking", looking);
+        translationBuilder.add("caustics.hud." + hudName + ".selected", selected);
     }
 
     private static void generateGroupTranslations(String name, CrystalBlockGroup group, TranslationBuilder translationBuilder) {

@@ -19,7 +19,7 @@ public class DepositChecker extends AbstractChecker<Optional<BlockPos>> {
     }
 
     @Override
-    protected Optional<BlockPos> hitBlockValue(ServerLevel level, BlockPos pos) {
+    protected Optional<BlockPos> hitBlockValue(ServerLevel level) {
         Optional<BlockPos> maybeOut = backtrack();
         if(maybeOut.isEmpty()) return Optional.empty();
         BlockPos outPos = maybeOut.get();

@@ -219,13 +219,5 @@ public final class Node {
         protected boolean hasCharge() {
             return !chargedPositions.isEmpty();
         }
-
-        protected Optional<BlockPos> popCharge() {
-            if(chargedPositions.isEmpty()) return Optional.empty();
-            BlockPos next = chargedPositions.iterator().next();
-            chargedPositions.remove(next);
-            return Optional.of(next);
-        }
-
     }
 }

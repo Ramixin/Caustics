@@ -137,7 +137,7 @@ public class LeapParticleRenderPipeline extends AbstractRenderPipeline {
     }
 
     @Override
-    protected void applyRenderPass(RenderPass renderPass, MeshData.DrawState drawParameters, GpuBuffer vertices, VertexFormat format, GpuBuffer indices, VertexFormat.IndexType indexType) {
+    protected void applyRenderPass(RenderPass renderPass, MeshData.DrawState drawParameters, GpuBuffer vertices, GpuBuffer indices, VertexFormat.IndexType indexType) {
         if(DRAW_COMMAND == null) return;
         renderPass.setVertexBuffer(0, vertices);
         renderPass.setIndexBuffer(indices, indexType);

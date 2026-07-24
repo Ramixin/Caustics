@@ -21,6 +21,7 @@ public class FrequencyRegistry {
     private final Map<BlockPos, Frequency> frequencies = new HashMap<>();
     private final Map<Frequency, String> frequencyNames = new HashMap<>();
     private boolean pushTracker = false;
+    private int sweepCounter = 0;
 
     private FrequencyRegistry(Map<BlockPos, Frequency> frequencies, Map<Frequency, String> frequencyNames) {
         this.frequencies.putAll(frequencies);
@@ -35,6 +36,9 @@ public class FrequencyRegistry {
             network.getTracker().push(Tracker.Task.FREQUENCY_SYNC, Tracker.Task.DIRTY);
             pushTracker = false;
         }
+        if(sweepCounter < 1_000) return;
+        sweepCounter = 0;
+        frequencyNames.keySet().removeIf(freq -> !frequencies.containsValue(freq));
     }
 
     public void syncWith(FrequencySyncPayload payload) {
@@ -79,4 +83,8 @@ public class FrequencyRegistry {
         frequencyNames.clear();
     }
 
+    public void free(BlockPos pos) {
+        frequencies.remove(pos);
+        pushTracker = true;
+    }
 }

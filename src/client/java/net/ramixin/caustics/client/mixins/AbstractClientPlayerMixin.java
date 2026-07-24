@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(AbstractClientPlayer.class)
 public abstract class AbstractClientPlayerMixin extends Player {
 
-    public AbstractClientPlayerMixin(Level level, GameProfile gameProfile) {
+    private AbstractClientPlayerMixin(Level level, GameProfile gameProfile) {
         super(level, gameProfile);
     }
 

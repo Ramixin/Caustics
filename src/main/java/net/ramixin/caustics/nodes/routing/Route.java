@@ -37,10 +37,6 @@ public class Route {
         this.sapphirePos = sapphirePos;
     }
 
-    public BlockPos sapphirePos() {
-        return sapphirePos;
-    }
-
 
     private void write(FriendlyByteBuf buf) {
         buf.writeCollection(path, BlockPos.STREAM_CODEC);

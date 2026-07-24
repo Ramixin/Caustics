@@ -54,17 +54,6 @@ public class CausticsRecipeProvider extends FabricRecipeProvider {
                         .unlockedBy("has_glass", has(Blocks.TINTED_GLASS))
                         .save(output, getKey("mirror"));
 
-                shaped(RecipeCategory.TOOLS, ModItems.TUNING_FORK)
-                        .pattern("A A")
-                        .pattern("ACA")
-                        .pattern(" S ")
-                        .define('A', Items.AMETHYST_SHARD)
-                        .define('C', Items.COPPER_INGOT)
-                        .define('S', Items.STICK)
-                        .unlockedBy("has_iron", has(Items.AMETHYST_SHARD))
-                        .save(output, getKey("tuning_fork"));
-
-
                 createSpyglassRecipe(this, ModItems.BERYL_SHARD, "beryl").save(output, getKey("alidade"));
                 createSpyglassRecipe(this, ModItems.TOURMALINE_SHARD, "tourmaline").save(output, getKey("dowser"));
                 createSpyglassRecipe(this, ModItems.SUNSTONE_SHARD, "sunstone").save(output, getKey("collimator"));

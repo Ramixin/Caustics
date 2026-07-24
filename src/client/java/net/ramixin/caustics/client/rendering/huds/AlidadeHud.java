@@ -14,7 +14,7 @@ import net.ramixin.caustics.client.nodes.ClientNode;
 import net.ramixin.caustics.client.nodes.cache.AlidadeIconCache;
 import net.ramixin.caustics.client.nodes.icons.AlidadeIcon;
 import net.ramixin.caustics.client.rendering.TooltipRenderer;
-import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
+import net.ramixin.caustics.networking.bidirectional.AlidadeSelectionSyncPayload;
 import net.ramixin.caustics.nodes.routing.Route;
 import net.ramixin.caustics.utils.LookUtil;
 
@@ -28,8 +28,8 @@ public class AlidadeHud extends AbstractHud<AlidadeIcon, AlidadeHud.HudRenderSta
 
     private static final Component UNNAMED_PERIDOT = Component.translatable("caustics.frequency.unnamed.peridot");
     private static final String EMPTY_PREFIX = "  ";
-    private static final Component SELECTED_HEADER = Component.translatable("caustics.node.selected");
-    private static final Component LOOKING_HEADER = Component.translatable("caustics.node.name");
+    private static final Component SELECTED_HEADER = Component.translatable("caustics.hud.alidade.selected");
+    private static final Component LOOKING_HEADER = Component.translatable("caustics.hud.collimator.looking");
 
     public AlidadeHud() {
         super(ClientCrystalNetwork.getInstance().caches().alidade(), ModTags.Items.ALIDADE_LENS);
@@ -52,7 +52,7 @@ public class AlidadeHud extends AbstractHud<AlidadeIcon, AlidadeHud.HudRenderSta
     protected HudRenderState extractHudSelected(Optional<BlockPos> selectedNode) {
         if(selectedNode.isEmpty()) return null;
         BlockPos pos = selectedNode.get();
-        int scrollPos = cache.getScrollPos();
+        int scrollPos = cache.getSelectedScrollPos();
         int i = -1;
         AlidadeIconCache cache = ClientCrystalNetwork.getInstance().caches().alidade();
         BlockPos[] positions = cache.getPositions();
@@ -130,22 +130,25 @@ public class AlidadeHud extends AbstractHud<AlidadeIcon, AlidadeHud.HudRenderSta
     }
 
     @Override
-    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean released) {
+        if(released) return false;
         if(event.button() != 0) return false;
-        AlidadeIconCache alidadeCache = ClientCrystalNetwork.getInstance().caches().alidade();
-        Optional<Integer> closest = LookUtil.calculateClosestLooking(alidadeCache.getAngles());
-        if(closest.isEmpty()) return false;
-        BlockPos sapphirePos = alidadeCache.getPositions()[closest.get()];
+        Optional<Integer> closest = LookUtil.calculateClosestLooking(cache.getAngles());
+        if(closest.isEmpty()) {
+            cache.resetSelection();
+            return false;
+        }
+        BlockPos sapphirePos = cache.getPositions()[closest.get()];
         Optional<ClientNode> maybeNode = ClientCrystalNetwork.getInstance().getSapphireNodeAt(sapphirePos);
         if(maybeNode.isEmpty()) return false;
         List<BlockPos> peridotPositions = maybeNode.get().peridot();
         int scrollPos = cache.getSelectedScrollPos();
         if(scrollPos >= peridotPositions.size() || scrollPos < 0) return false;
-        AlidadeIcon icon = ClientCrystalNetwork.getInstance().caches().alidade().get(sapphirePos);
+        AlidadeIcon icon = cache.get(sapphirePos);
         icon.bump();
         BlockPos peridotPos = peridotPositions.get(scrollPos);
-        cache.selectNode(sapphirePos);
-        ClientPlayNetworking.send(new SelectionSyncPayload(sapphirePos, peridotPos));
+        cache.select(sapphirePos);
+        ClientPlayNetworking.send(new AlidadeSelectionSyncPayload(sapphirePos, peridotPos));
         return true;
     }
 

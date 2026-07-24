@@ -67,8 +67,6 @@ public class CausticsModelProvider extends FabricModelProvider {
         generators.generateFlatItem(ModItems.SELENITE_SHARD, ModelTemplates.FLAT_ITEM);
         generators.generateFlatItem(ModItems.TOURMALINE_SHARD, ModelTemplates.FLAT_ITEM);
 
-        generators.generateSpyglass(ModItems.TUNING_FORK);
-
         generateGroupItems(ModBlocks.SAPPHIRE_GROUP, generators);
         generateGroupItems(ModBlocks.BERYL_GROUP, generators);
         generateGroupItems(ModBlocks.PERIDOT_GROUP, generators);

@@ -34,7 +34,7 @@ public abstract class MouseHandlerMixin {
             Window window = this.minecraft.getWindow();
             double xm = this.getScaledXPos(window);
             double ym = this.getScaledYPos(window);
-            if(hud.mouseClicked(new MouseButtonEvent(xm, ym, rawButtonInfo), false))
+            if(hud.mouseClicked(new MouseButtonEvent(xm, ym, rawButtonInfo), action != 1))
                 ci.cancel();
         }
     }

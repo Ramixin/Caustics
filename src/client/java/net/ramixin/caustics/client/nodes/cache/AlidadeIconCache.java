@@ -3,8 +3,11 @@ package net.ramixin.caustics.client.nodes.cache;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.ramixin.caustics.client.nodes.ClientCrystalNetwork;
+import net.ramixin.caustics.client.nodes.ClientNode;
 import net.ramixin.caustics.client.nodes.icons.AlidadeIcon;
 import net.ramixin.caustics.nodes.routing.Route;
+
+import java.util.Optional;
 
 public class AlidadeIconCache extends AbstractIconCache<AlidadeIcon> {
 
@@ -37,5 +40,14 @@ public class AlidadeIconCache extends AbstractIconCache<AlidadeIcon> {
         super.wipe();
         positions = null;
         routes = null;
+    }
+
+    @Override
+    public void select(BlockPos pos) {
+        Optional<ClientNode> maybeNode = getNode(pos);
+        if(maybeNode.isEmpty()) return;
+        ClientNode node = maybeNode.get();
+        if(node.peridot().isEmpty()) return;
+        super.select(pos);
     }
 }

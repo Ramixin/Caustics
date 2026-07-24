@@ -67,13 +67,4 @@ public interface LookUtil {
             }
         return ambiguities;
     }
-
-    static boolean isAmbiguous(Vec3[] vectors, int i) {
-        for(int j = 0; j < vectors.length; j++) {
-            if(i == j) continue;
-            double angle = Math.toDegrees(Math.acos(Math.clamp(vectors[i].dot(vectors[j]), -1.0, 1.0)));
-            if(angle <= ambiguityThreshold) return true;
-        }
-        return false;
-    }
 }

@@ -21,8 +21,12 @@
     "AvatarRendererMixin",
     "ClientTextTooltipMixin",
     "KeyboardHandlerMixin",
+    "LivingEntityMixin",
     "LivingEntityRendererMixin",
     "MouseHandlerMixin",
     "TooltipRenderUtilMixin"
-  ]
+  ],
+  "mixinextras": {
+    "minVersion": "0.5.4"
+  }
 }

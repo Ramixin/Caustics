@@ -18,7 +18,7 @@ public class VisibilityChecker extends AbstractChecker<Boolean> {
     }
 
     @Override
-    protected Boolean hitBlockValue(ServerLevel level, BlockPos pos) {
+    protected Boolean hitBlockValue(ServerLevel level) {
         return false;
     }
 

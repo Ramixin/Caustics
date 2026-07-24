@@ -7,12 +7,12 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.ramixin.caustics.Caustics;
 import org.jspecify.annotations.NonNull;
 
-public record SelectionSyncPayload(BlockPos sapphirePos, BlockPos peridotPos) implements CustomPacketPayload {
+public record AlidadeSelectionSyncPayload(BlockPos sapphirePos, BlockPos peridotPos) implements CustomPacketPayload {
 
-    public static final Type<SelectionSyncPayload> TYPE = new Type<>(Caustics.id("selection_sync"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, SelectionSyncPayload> CODEC = StreamCodec.ofMember(SelectionSyncPayload::write, SelectionSyncPayload::new);
+    public static final Type<AlidadeSelectionSyncPayload> TYPE = new Type<>(Caustics.id("selection_sync"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, AlidadeSelectionSyncPayload> CODEC = StreamCodec.ofMember(AlidadeSelectionSyncPayload::write, AlidadeSelectionSyncPayload::new);
 
-    private SelectionSyncPayload(RegistryFriendlyByteBuf buf) {
+    private AlidadeSelectionSyncPayload(RegistryFriendlyByteBuf buf) {
         this(buf.readBlockPos(), buf.readBlockPos());
     }
 

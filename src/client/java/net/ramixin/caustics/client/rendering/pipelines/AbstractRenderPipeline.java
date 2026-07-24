@@ -53,7 +53,7 @@ public abstract class AbstractRenderPipeline {
 
     protected abstract void getVertices(LevelRenderContext ctx, Runnable submit);
 
-    protected abstract void applyRenderPass(RenderPass renderPass, MeshData.DrawState drawParameters, GpuBuffer vertices, VertexFormat format, GpuBuffer indices, VertexFormat.IndexType indexType);
+    protected abstract void applyRenderPass(RenderPass renderPass, MeshData.DrawState drawParameters, GpuBuffer vertices, GpuBuffer indices, VertexFormat.IndexType indexType);
 
     protected void render(LevelRenderContext ctx) {
         getVertices(ctx, this::finish);
@@ -78,7 +78,7 @@ public abstract class AbstractRenderPipeline {
         return vertexBuffer.currentBuffer();
     }
 
-    protected void draw(MeshData builtBuffer, MeshData.DrawState drawParameters, GpuBuffer vertices, VertexFormat format) {
+    protected void draw(MeshData builtBuffer, MeshData.DrawState drawParameters, GpuBuffer vertices) {
         Minecraft client = Minecraft.getInstance();
         // Sort the quads if there is translucency
         builtBuffer.sortQuads(ALLOCATOR, RenderSystem.getProjectionType().vertexSorting());
@@ -101,7 +101,7 @@ public abstract class AbstractRenderPipeline {
             RenderSystem.bindDefaultUniforms(renderPass);
             renderPass.setUniform("DynamicTransforms", dynamicTransforms);
 
-            applyRenderPass(renderPass, drawParameters, vertices, format, indices, indexType);
+            applyRenderPass(renderPass, drawParameters, vertices, indices, indexType);
         }
 
         builtBuffer.close();
@@ -123,7 +123,7 @@ public abstract class AbstractRenderPipeline {
         VertexFormat format = drawParameters.format();
 
         GpuBuffer vertices = upload(drawParameters, format, builtBuffer);
-        draw(builtBuffer, drawParameters, vertices, format);
+        draw(builtBuffer, drawParameters, vertices);
 
         this.vertexBuffer.rotate();
         this.buffer = null;

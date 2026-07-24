@@ -17,10 +17,6 @@ public class NodeMappedRoute extends Route {
         this.sapphireNode = sapphireNode;
     }
 
-    public List<Node> nodes() {
-        return pathNodes;
-    }
-
     public int calculateLightLost() {
         int total = 0;
         int max = pathNodes.size() * 15 + 15;

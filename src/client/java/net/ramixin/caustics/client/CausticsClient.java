@@ -40,6 +40,7 @@ public class CausticsClient implements ClientModInitializer {
         AbstractHud.onInitialize();
         ModClientNetworking.onInitialize();
         ModMixsonClient.onInitialize();
+        ModKeys.onInitialize();
 
         ClientHotbarScrollEvents.ALLOW.register((_, _, _, _, dy) -> {
             if(CausticsClient.hud instanceof ListeningHud listener)
@@ -52,30 +53,21 @@ public class CausticsClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(minecraft -> {
             if(minecraft.level == null) return;
             if(minecraft.level.tickRateManager().isFrozen()) return;
+            if(hud instanceof CollimatorHud collimatorHud)
+                if(ModKeys.renameFreq.consumeClick())
+                    collimatorHud.startRename();
+
             ClientCrystalNetwork.getInstance().tick();
         });
-
-        ClientTickEvents.START_CLIENT_TICK.register(minecraft -> {
-            if(minecraft.player == null) return;
-            if(hud == null) return;
-            if(!hud.isCloseable()) return;
-            if(minecraft.player.isUsingItem()) return;
-            hud = null;
-            Caustics.LOGGER.info("HUD disabled");
-        });
-
 
         ItemEvents.USE.register((level, player, hand) -> {
             if(!level.isClientSide()) return null;
             ItemStack stack = player.getItemInHand(hand);
             if(!stack.is(Items.SPYGLASS)) return null;
-            if(SpyglassLens.isAlidade(stack)) {
+            if(SpyglassLens.isAlidade(stack))
                 hud = new AlidadeHud();
-                Caustics.LOGGER.info("Alidade HUD enabled");
-            } else if(SpyglassLens.isCollimator(stack)) {
+            else if(SpyglassLens.isCollimator(stack))
                 hud = new CollimatorHud();
-                Caustics.LOGGER.info("Collimator HUD enabled");
-            }
             return null;
         });
     }

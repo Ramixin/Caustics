@@ -4,7 +4,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.ramixin.caustics.ModGameRules;
-import net.ramixin.caustics.networking.bidirectional.SelectionSyncPayload;
+import net.ramixin.caustics.networking.bidirectional.AlidadeSelectionSyncPayload;
 import net.ramixin.caustics.networking.clientbound.FrequencySyncPayload;
 import net.ramixin.caustics.networking.clientbound.NodeSyncPayload;
 import net.ramixin.caustics.networking.clientbound.RoutingSyncPayload;
@@ -56,7 +56,7 @@ public class NetworkSynchronizer {
         ServerPlayNetworking.send(player, new SignalRangeSyncPayload(player.level().getGameRules().get(ModGameRules.SIGNAL_RANGE)));
         Selection selection = network.leaptionHandler().getSelection(player.getUUID());
         if(selection != null)
-            ServerPlayNetworking.send(player, new SelectionSyncPayload(selection.sapphirePos(), selection.peridotPos()));
+            ServerPlayNetworking.send(player, new AlidadeSelectionSyncPayload(selection.sapphirePos(), selection.peridotPos()));
     }
 
     public void resync(ServerPlayer player, CrystalNetwork network) {
